@@ -1,0 +1,100 @@
+import React, { useState } from 'react';
+import { Sale as SaleType, DataProduct } from '../../types';
+import { mockSales } from '../../data';
+import Placeholder from '../ui/Placeholder';
+import Modal from '../ui/Modal';
+import SaleForm from './SaleForm';
+
+interface SaleProps {
+    products: DataProduct[];
+    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+}
+
+const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
+    const [sales, setSales] = useState<SaleType[]>(mockSales);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleAddSale = (newSaleData: Omit<SaleType, 'id' | 'total'>) => {
+        const total = newSaleData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+        const newSale: SaleType = {
+            ...newSaleData,
+            id: `SALE-${String(sales.length + 1).padStart(3, '0')}`,
+            total,
+        };
+
+        setSales(prev => [newSale, ...prev]);
+
+        const updatedProducts = products.map(p => {
+            const itemSold = newSale.items.find(item => item.productId === p.id);
+            if (itemSold) {
+                const newStock = p.stock - itemSold.quantity;
+                // FIX: Explicitly type `newStatus` to match the `DataProduct` status type and resolve the type error.
+                const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = newStock > 10 ? 'In Stock' : (newStock > 0 ? 'Low Stock' : 'Out of Stock');
+                return {
+                    ...p,
+                    stock: newStock,
+                    status: newStatus,
+                    history: [
+                        ...p.history,
+                        {
+                            date: newSale.saleDate,
+                            action: 'Sale',
+                            change: -itemSold.quantity,
+                            newStock,
+                        }
+                    ]
+                };
+            }
+            return p;
+        });
+        setProducts(updatedProducts);
+
+        setIsModalOpen(false);
+    };
+
+    return (
+        <Placeholder title="Sales">
+             <div className="flex justify-end mb-4">
+                 <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors"
+                >
+                    New Sale
+                </button>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sale ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                        {sales.map(s => (
+                             <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{s.id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{s.customer}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{s.saleDate}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">${s.total.toFixed(2)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {isModalOpen && (
+                <Modal title="Record New Sale" onClose={() => setIsModalOpen(false)}>
+                    <SaleForm
+                        products={products}
+                        onAdd={handleAddSale}
+                        onCancel={() => setIsModalOpen(false)}
+                    />
+                </Modal>
+            )}
+        </Placeholder>
+    );
+};
+
+export default Sale;
