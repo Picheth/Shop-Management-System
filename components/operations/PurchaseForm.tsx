@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { DataProduct, LineItem, Purchase } from '../../types';
+import { DataProduct, LineItem, Purchase, Branch } from '../../types';
 
 type PurchaseFormData = Omit<Purchase, 'id' | 'total'>;
 
 interface PurchaseFormProps {
     products: DataProduct[];
+    branches: Branch[];
     onAdd: (data: PurchaseFormData) => void;
     onCancel: () => void;
 }
 
-// This form is very similar to PurchaseOrderForm. In a real app, this could be a reusable component.
-const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, onAdd, onCancel }) => {
+const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, onCancel }) => {
     const [supplier, setSupplier] = useState('');
+    const [branchId, setBranchId] = useState(branches[0]?.id || '');
     const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([]);
 
@@ -46,6 +47,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, onAdd, onCancel }
         e.preventDefault();
         onAdd({
             supplier,
+            branchId,
             purchaseDate,
             items,
         });
@@ -59,11 +61,17 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, onAdd, onCancel }
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                 <div>
+                    <label htmlFor="branchId" className={labelClasses}>Branch</label>
+                    <select id="branchId" value={branchId} onChange={e => setBranchId(e.target.value)} className={inputClasses} required>
+                        {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                    </select>
+                </div>
                 <div>
                     <label htmlFor="supplier" className={labelClasses}>Supplier</label>
                     <input type="text" id="supplier" value={supplier} onChange={e => setSupplier(e.target.value)} className={inputClasses} required />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                     <label htmlFor="purchaseDate" className={labelClasses}>Purchase Date</label>
                     <input type="date" id="purchaseDate" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} className={inputClasses} required />
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Purchase as PurchaseType, DataProduct } from '../../types';
+import { Purchase as PurchaseType, DataProduct, Branch } from '../../types';
 import { mockPurchases } from '../../data';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
@@ -8,9 +8,10 @@ import PurchaseForm from './PurchaseForm';
 interface PurchaseProps {
     products: DataProduct[];
     setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    branches: Branch[];
 }
 
-const Purchase: React.FC<PurchaseProps> = ({ products, setProducts }) => {
+const Purchase: React.FC<PurchaseProps> = ({ products, setProducts, branches }) => {
     const [purchases, setPurchases] = useState<PurchaseType[]>(mockPurchases);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -22,27 +23,35 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts }) => {
             total,
         };
 
-        // Add to local list of purchases
         setPurchases(prev => [newPurchase, ...prev]);
         
-        // Update global product state
+        const branchName = branches.find(b => b.id === newPurchase.branchId)?.name || 'Unknown Branch';
+        
         const updatedProducts = products.map(p => {
             const itemPurchased = newPurchase.items.find(item => item.productId === p.id);
             if (itemPurchased) {
-                const newStock = p.stock + itemPurchased.quantity;
-                // FIX: Explicitly type `newStatus` to match the `DataProduct` status type and resolve the type error.
-                const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = newStock > 10 ? 'In Stock' : (newStock > 0 ? 'Low Stock' : 'Out of Stock');
+                const currentStock = p.stockByLocation[newPurchase.branchId] || 0;
+                const newStock = currentStock + itemPurchased.quantity;
+                const totalStock = Object.values(p.stockByLocation).reduce((s, c) => s + c, 0) + itemPurchased.quantity - currentStock;
+
+                const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = totalStock > 10 ? 'In Stock' : (totalStock > 0 ? 'Low Stock' : 'Out of Stock');
+                
                 return {
                     ...p,
-                    stock: newStock,
+                    stockByLocation: {
+                        ...p.stockByLocation,
+                        [newPurchase.branchId]: newStock,
+                    },
                     status: newStatus,
                     history: [
                         ...p.history,
                         {
                             date: newPurchase.purchaseDate,
-                            action: 'Purchase',
+                            // FIX: Added 'as const' to ensure the 'action' property is typed as a literal, not a generic string.
+                            action: 'Purchase' as const,
                             change: itemPurchased.quantity,
-                            newStock,
+                            newStock: newStock,
+                            branch: branchName,
                         }
                     ]
                 };
@@ -69,6 +78,7 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts }) => {
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Purchase ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Branch</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Supplier</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
@@ -78,6 +88,7 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts }) => {
                         {purchases.map(p => (
                              <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{branches.find(b => b.id === p.branchId)?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.supplier}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.purchaseDate}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">${p.total.toFixed(2)}</td>
@@ -90,6 +101,7 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts }) => {
                 <Modal title="Record New Purchase" onClose={() => setIsModalOpen(false)}>
                     <PurchaseForm
                         products={products}
+                        branches={branches}
                         onAdd={handleAddPurchase}
                         onCancel={() => setIsModalOpen(false)}
                     />

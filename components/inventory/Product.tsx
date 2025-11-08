@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DataProduct } from '../../types';
+import { DataProduct, Branch } from '../../types';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
 import AddProductForm from './AddProductForm';
@@ -7,7 +7,7 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import ProductDetail from './ProductDetail';
 import { StatusBadge } from '../ui/StatusBadge';
 
-type SortableKeys = keyof Pick<DataProduct, 'name' | 'sku' | 'stock' | 'price'>;
+type SortableKeys = 'name' | 'sku' | 'stock' | 'price';
 type SortDirection = 'ascending' | 'descending';
 
 interface SortConfig {
@@ -18,9 +18,10 @@ interface SortConfig {
 interface ProductProps {
     products: DataProduct[];
     setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    branches: Branch[];
 }
 
-const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
+const Product: React.FC<ProductProps> = ({ products, setProducts, branches }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -28,6 +29,13 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
     const [productToDelete, setProductToDelete] = useState<DataProduct | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<DataProduct | null>(null);
+
+    const productsWithTotalStock = useMemo(() => {
+        return products.map(p => ({
+            ...p,
+            totalStock: Object.values(p.stockByLocation).reduce((sum, count) => sum + count, 0)
+        }));
+    }, [products]);
     
     const categories = useMemo(() => {
         const allCategories = products.map(p => p.category);
@@ -35,7 +43,7 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
     }, [products]);
 
     const filteredProducts = useMemo(() => {
-        return products
+        return productsWithTotalStock
             .filter(product =>
                 product.name.toLowerCase().includes(searchTerm.toLowerCase())
             )
@@ -45,14 +53,14 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
             .filter(product =>
                 statusFilter === 'All' || product.status === statusFilter
             );
-    }, [products, searchTerm, categoryFilter, statusFilter]);
+    }, [productsWithTotalStock, searchTerm, categoryFilter, statusFilter]);
     
     const sortedProducts = useMemo(() => {
         const sortableItems = [...filteredProducts];
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
-                const aValue = a[sortConfig.key];
-                const bValue = b[sortConfig.key];
+                const aValue = sortConfig.key === 'stock' ? a.totalStock : a[sortConfig.key];
+                const bValue = sortConfig.key === 'stock' ? b.totalStock : b[sortConfig.key];
 
                 if (typeof aValue === 'number' && typeof bValue === 'number') {
                     if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -77,12 +85,23 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
         setSortConfig({ key, direction });
     };
 
-    const handleAddProduct = (newProductData: Omit<DataProduct, 'id' | 'status' | 'history'>) => {
+    const handleAddProduct = (newProductData: Omit<DataProduct, 'id' | 'status' | 'history'> & { initialStock: number; branchId: string }) => {
+        const { initialStock, branchId, ...restData } = newProductData;
+        const branchName = branches.find(b => b.id === branchId)?.name || 'Unknown Branch';
+
         const newProduct: DataProduct = {
-            ...newProductData,
+            ...restData,
             id: `p${String(products.length + 10).padStart(3, '0')}`,
-            status: newProductData.stock > 10 ? 'In Stock' : (newProductData.stock > 0 ? 'Low Stock' : 'Out of Stock'),
-            history: [{ date: new Date().toISOString().split('T')[0], action: 'Initial Stock', change: newProductData.stock, newStock: newProductData.stock }],
+            status: initialStock > 10 ? 'In Stock' : (initialStock > 0 ? 'Low Stock' : 'Out of Stock'),
+            stockByLocation: { [branchId]: initialStock },
+            history: [{ 
+                date: new Date().toISOString().split('T')[0], 
+                // FIX: Added 'as const' to ensure the 'action' property is typed as a literal, not a generic string.
+                action: 'Initial Stock' as const, 
+                change: initialStock, 
+                newStock: initialStock,
+                branch: branchName
+            }],
         };
         
         setProducts(prevProducts => [...prevProducts, newProduct]);
@@ -121,7 +140,9 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
     const inputClasses = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500";
 
     if (selectedProduct) {
-        return <ProductDetail product={selectedProduct} onBack={() => setSelectedProduct(null)} />;
+        const fullProduct = products.find(p => p.id === selectedProduct.id);
+        if (!fullProduct) return null; // Should not happen
+        return <ProductDetail product={fullProduct} branches={branches} onBack={() => setSelectedProduct(null)} />;
     }
 
     return (
@@ -171,7 +192,7 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
                         <tr>
                             {renderSortableHeader('Product Name', 'name')}
                             {renderSortableHeader('SKU', 'sku')}
-                            {renderSortableHeader('Stock', 'stock')}
+                            {renderSortableHeader('Total Stock', 'stock')}
                             {renderSortableHeader('Price', 'price')}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -183,7 +204,7 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
                                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onClick={() => setSelectedProduct(product)}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{product.name}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{product.sku}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{product.stock}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{product.totalStock}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${product.price.toFixed(2)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm"><StatusBadge status={product.status} /></td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -212,6 +233,7 @@ const Product: React.FC<ProductProps> = ({ products, setProducts }) => {
                         onAddProduct={handleAddProduct} 
                         onCancel={() => setIsModalOpen(false)} 
                         existingCategories={Array.from(new Set(products.map(p => p.category)))}
+                        branches={branches}
                     />
                 </Modal>
             )}

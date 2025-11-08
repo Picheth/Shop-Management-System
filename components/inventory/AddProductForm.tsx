@@ -1,28 +1,32 @@
 import React, { useState } from 'react';
-import { DataProduct } from '../../types';
+import { DataProduct, Branch } from '../../types';
 
-type AddProductFormData = Omit<DataProduct, 'id' | 'status' | 'history' | 'imageUrl'>;
+type AddProductFormData = Omit<DataProduct, 'id' | 'status' | 'history' | 'imageUrl' | 'stockByLocation'> & {
+    initialStock: number;
+    branchId: string;
+};
 
 interface AddProductFormProps {
     onAddProduct: (product: AddProductFormData) => void;
     onCancel: () => void;
     existingCategories: string[];
+    branches: Branch[];
 }
 
-const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel, existingCategories }) => {
-    const [formData, setFormData] = useState<AddProductFormData>({
+const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel, existingCategories, branches }) => {
+    const [formData, setFormData] = useState({
         name: '',
         sku: '',
         category: existingCategories[0] || '',
-        stock: 0,
         price: 0,
+        initialStock: 0,
+        branchId: branches[0]?.id || '',
     });
-    // FIX: Corrected the type of the errors state to hold string messages for validation, not the data type of the field itself.
-    const [errors, setErrors] = useState<Partial<Record<keyof AddProductFormData, string>>>({});
+    const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        const isNumber = ['stock', 'price'].includes(name);
+        const isNumber = ['price', 'initialStock'].includes(name);
         setFormData(prev => ({
             ...prev,
             [name]: isNumber ? Number(value) : value,
@@ -30,13 +34,13 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel,
     };
 
     const validate = (): boolean => {
-        // FIX: Matched the type of newErrors with the corrected errors state type.
-        const newErrors: Partial<Record<keyof AddProductFormData, string>> = {};
+        const newErrors: Partial<Record<keyof typeof formData, string>> = {};
         if (!formData.name.trim()) newErrors.name = 'Product name is required.';
         if (!formData.sku.trim()) newErrors.sku = 'SKU is required.';
         if (!formData.category.trim()) newErrors.category = 'Category is required.';
-        if (formData.stock < 0) newErrors.stock = 'Stock cannot be negative.';
+        if (formData.initialStock < 0) newErrors.initialStock = 'Stock cannot be negative.';
         if (formData.price <= 0) newErrors.price = 'Price must be greater than zero.';
+        if (!formData.branchId) newErrors.branchId = 'Please select a branch.';
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -45,7 +49,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel,
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            onAddProduct(formData);
+            const { initialStock, branchId, ...rest } = formData;
+            onAddProduct({
+                ...rest,
+                initialStock,
+                branchId
+            });
         }
     };
     
@@ -74,13 +83,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel,
                      </select>
                     {errors.category && <p className={errorClasses}>{errors.category}</p>}
                 </div>
-                 <div>
-                    <label htmlFor="stock" className={labelClasses}>Stock Quantity</label>
-                    <input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} className={inputClasses} required min="0" />
-                     {/* FIX: Removed .toString() as the error type is now correctly a string. */}
-                     {errors.stock && <p className={errorClasses}>{errors.stock}</p>}
-                </div>
-                 <div className="md:col-span-2">
+                <div>
                     <label htmlFor="price" className={labelClasses}>Price</label>
                     <div className="relative">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -88,8 +91,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ onAddProduct, onCancel,
                         </div>
                         <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} className={`${inputClasses} pl-7`} required min="0.01" step="0.01" />
                     </div>
-                     {/* FIX: Removed .toString() as the error type is now correctly a string. */}
                      {errors.price && <p className={errorClasses}>{errors.price}</p>}
+                </div>
+                <div>
+                    <label htmlFor="initialStock" className={labelClasses}>Initial Stock Quantity</label>
+                    <input type="number" id="initialStock" name="initialStock" value={formData.initialStock} onChange={handleChange} className={inputClasses} required min="0" />
+                     {errors.initialStock && <p className={errorClasses}>{errors.initialStock}</p>}
+                </div>
+                 <div>
+                    <label htmlFor="branchId" className={labelClasses}>Initial Stock Branch</label>
+                     <select id="branchId" name="branchId" value={formData.branchId} onChange={handleChange} className={inputClasses} required>
+                        <option value="" disabled>Select a branch</option>
+                        {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                     </select>
+                    {errors.branchId && <p className={errorClasses}>{errors.branchId}</p>}
                 </div>
             </div>
             <div className="flex justify-end gap-4 mt-6 pt-4 border-t dark:border-gray-700">

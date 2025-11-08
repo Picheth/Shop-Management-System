@@ -1,25 +1,30 @@
-import React, { useState } from 'react';
-import { DataProduct, LineItem, Sale } from '../../types';
+import React, { useState, useMemo } from 'react';
+import { DataProduct, LineItem, Sale, Branch } from '../../types';
 
 type SaleFormData = Omit<Sale, 'id' | 'total'>;
 
 interface SaleFormProps {
     products: DataProduct[];
+    branches: Branch[];
     onAdd: (data: SaleFormData) => void;
     onCancel: () => void;
 }
 
-const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
+const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel }) => {
     const [customer, setCustomer] = useState('Walk-in Customer');
+    const [branchId, setBranchId] = useState(branches[0]?.id || '');
     const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([]);
     const [error, setError] = useState('');
     
-    const availableProducts = products.filter(p => p.stock > 0);
+    const availableProducts = useMemo(() => {
+        if (!branchId) return [];
+        return products.filter(p => (p.stockByLocation[branchId] || 0) > 0);
+    }, [products, branchId]);
 
     const handleAddItem = () => {
         if (availableProducts.length === 0) {
-            setError('No products in stock to add.');
+            setError('No products in stock at this branch to add.');
             return;
         }
         setError('');
@@ -32,6 +37,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
         const newItems = [...items];
         const currentItem = newItems[index];
         const product = products.find(p => p.id === currentItem.productId);
+        const stockAtBranch = product?.stockByLocation[branchId] || 0;
         
         if (field === 'productId') {
             const selectedProduct = products.find(p => p.id === value);
@@ -39,16 +45,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
                 currentItem.productId = selectedProduct.id;
                 currentItem.productName = selectedProduct.name;
                 currentItem.price = selectedProduct.price;
-                if (currentItem.quantity > selectedProduct.stock) {
-                    currentItem.quantity = selectedProduct.stock;
+                const newStockAtBranch = selectedProduct.stockByLocation[branchId] || 0;
+                if (currentItem.quantity > newStockAtBranch) {
+                    currentItem.quantity = newStockAtBranch;
                     setError(`Quantity for ${selectedProduct.name} adjusted to max available stock.`);
                 }
             }
-        } else if (field === 'quantity' && product) {
+        } else if (field === 'quantity') {
             const newQuantity = Number(value);
-            if (newQuantity > product.stock) {
-                currentItem.quantity = product.stock;
-                 setError(`Cannot sell more than available stock for ${product.name} (${product.stock}).`);
+            if (newQuantity > stockAtBranch) {
+                currentItem.quantity = stockAtBranch;
+                 setError(`Cannot sell more than available stock for ${product?.name} (${stockAtBranch}).`);
             } else {
                 (currentItem[field] as any) = newQuantity;
             }
@@ -71,6 +78,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
         setError('');
         onAdd({
             customer,
+            branchId,
             saleDate,
             items,
         });
@@ -84,11 +92,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                 <div>
+                    <label htmlFor="branchId" className={labelClasses}>Branch</label>
+                    <select id="branchId" value={branchId} onChange={e => {setBranchId(e.target.value); setItems([])}} className={inputClasses} required>
+                         {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                    </select>
+                </div>
                 <div>
                     <label htmlFor="customer" className={labelClasses}>Customer</label>
                     <input type="text" id="customer" value={customer} onChange={e => setCustomer(e.target.value)} className={inputClasses} required />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                     <label htmlFor="saleDate" className={labelClasses}>Sale Date</label>
                     <input type="date" id="saleDate" value={saleDate} onChange={e => setSaleDate(e.target.value)} className={inputClasses} required />
                 </div>
@@ -98,6 +112,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                 {items.map((item, index) => {
                     const productInStock = products.find(p => p.id === item.productId);
+                    const stock = productInStock?.stockByLocation[branchId] || 0;
                     return (
                         <div key={index} className="grid grid-cols-12 gap-2 items-center">
                             <select 
@@ -105,14 +120,14 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, onAdd, onCancel }) => {
                                 onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
                                 className={`${inputClasses} col-span-5`}
                             >
-                                {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name} ({p.stock})</option>)}
+                                {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name} ({(p.stockByLocation[branchId] || 0)})</option>)}
                             </select>
                             <input 
                                 type="number" 
                                 placeholder="Qty" 
                                 value={item.quantity}
                                 onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                                className={`${inputClasses} col-span-2`} min="1" max={productInStock?.stock || 0}
+                                className={`${inputClasses} col-span-2`} min="1" max={stock}
                             />
                             <input 
                                 type="number" 

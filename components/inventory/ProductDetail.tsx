@@ -1,14 +1,16 @@
 import React from 'react';
-import { DataProduct } from '../../types';
-// FIX: Corrected the import path for StatusBadge to point to its actual location in the ui directory.
+import { DataProduct, Branch } from '../../types';
 import { StatusBadge } from '../ui/StatusBadge';
 
 interface ProductDetailProps {
     product: DataProduct;
+    branches: Branch[];
     onBack: () => void;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({ product, branches, onBack }) => {
+
+    const totalStock = Object.values(product.stockByLocation).reduce((sum, count) => sum + count, 0);
 
     const DetailItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
         <div>
@@ -46,12 +48,32 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack }) => {
                         <DetailItem label="SKU" value={product.sku} />
                         <DetailItem label="Category" value={product.category} />
                         <DetailItem label="Price" value={`$${product.price.toFixed(2)}`} />
-                        <DetailItem label="Current Stock" value={product.stock} />
+                        <DetailItem label="Total Stock" value={totalStock} />
                         <DetailItem label="Status" value={<StatusBadge status={product.status} />} />
                     </div>
                 </div>
             </div>
-
+             <div className="mt-10">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Stock by Branch</h3>
+                 <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Branch</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                            {branches.map(branch => (
+                                <tr key={branch.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{branch.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">{product.stockByLocation[branch.id] || 0}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                 </div>
+            </div>
             <div className="mt-10">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Stock History</h3>
                 <div className="overflow-x-auto">
@@ -59,15 +81,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack }) => {
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Branch</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Change</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">New Stock</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">New Stock at Branch</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                             {product.history.map((item, index) => (
                                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.date}</td>
+                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.branch}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{item.action}</td>
                                     <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${item.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                         {item.change > 0 ? `+${item.change}` : item.change}

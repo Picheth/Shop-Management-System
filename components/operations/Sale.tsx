@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sale as SaleType, DataProduct } from '../../types';
+import { Sale as SaleType, DataProduct, Branch } from '../../types';
 import { mockSales } from '../../data';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
@@ -8,9 +8,10 @@ import SaleForm from './SaleForm';
 interface SaleProps {
     products: DataProduct[];
     setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    branches: Branch[];
 }
 
-const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
+const Sale: React.FC<SaleProps> = ({ products, setProducts, branches }) => {
     const [sales, setSales] = useState<SaleType[]>(mockSales);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -24,23 +25,33 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
 
         setSales(prev => [newSale, ...prev]);
 
+        const branchName = branches.find(b => b.id === newSale.branchId)?.name || 'Unknown Branch';
+
         const updatedProducts = products.map(p => {
             const itemSold = newSale.items.find(item => item.productId === p.id);
             if (itemSold) {
-                const newStock = p.stock - itemSold.quantity;
-                // FIX: Explicitly type `newStatus` to match the `DataProduct` status type and resolve the type error.
-                const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = newStock > 10 ? 'In Stock' : (newStock > 0 ? 'Low Stock' : 'Out of Stock');
+                const currentStock = p.stockByLocation[newSale.branchId] || 0;
+                const newStock = currentStock - itemSold.quantity;
+                const totalStock = Object.values(p.stockByLocation).reduce((s, c) => s + c, 0) - itemSold.quantity;
+
+                const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = totalStock > 10 ? 'In Stock' : (totalStock > 0 ? 'Low Stock' : 'Out of Stock');
+                
                 return {
                     ...p,
-                    stock: newStock,
+                    stockByLocation: {
+                        ...p.stockByLocation,
+                        [newSale.branchId]: newStock,
+                    },
                     status: newStatus,
                     history: [
                         ...p.history,
                         {
                             date: newSale.saleDate,
-                            action: 'Sale',
+                            // FIX: Added 'as const' to ensure the 'action' property is typed as a literal, not a generic string.
+                            action: 'Sale' as const,
                             change: -itemSold.quantity,
-                            newStock,
+                            newStock: newStock,
+                            branch: branchName
                         }
                     ]
                 };
@@ -67,6 +78,7 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sale ID</th>
+                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Branch</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
@@ -76,6 +88,7 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
                         {sales.map(s => (
                              <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{s.id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{branches.find(b => b.id === s.branchId)?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{s.customer}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{s.saleDate}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">${s.total.toFixed(2)}</td>
@@ -88,6 +101,7 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts }) => {
                 <Modal title="Record New Sale" onClose={() => setIsModalOpen(false)}>
                     <SaleForm
                         products={products}
+                        branches={branches}
                         onAdd={handleAddSale}
                         onCancel={() => setIsModalOpen(false)}
                     />

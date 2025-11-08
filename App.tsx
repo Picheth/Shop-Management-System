@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
-import { Page, DataProduct } from './types';
+import { Page, DataProduct, Branch, StockTransfer as StockTransferType } from './types';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import { mockProducts } from './data';
+import { mockProducts, mockBranches, mockStockTransfers } from './data';
 
 import Dashboard from './components/core/Dashboard';
 import PurchaseOrder from './components/operations/PurchaseOrder';
@@ -33,8 +32,6 @@ import ExpenseCategory from './components/settings/ExpenseCategory';
 import Staff from './components/hr/Staff';
 import Payroll from './components/hr/Payroll';
 
-// The page components are now typed with `any` to allow passing down shared state
-// like `products` and `setProducts` without requiring every component to accept them.
 const pageComponents: Record<Page, React.ComponentType<any>> = {
     [Page.Dashboard]: Dashboard,
     [Page.PurchaseOrder]: PurchaseOrder,
@@ -69,18 +66,19 @@ const App: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<Page>(Page.Dashboard);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     
-    // The `products` state is "lifted" to the App component, making it the single source of truth.
     const [products, setProducts] = useState<DataProduct[]>(mockProducts);
+    const [branches] = useState<Branch[]>(mockBranches);
+    const [stockTransfers, setStockTransfers] = useState<StockTransferType[]>(mockStockTransfers);
 
     const CurrentPageComponent = useMemo(() => pageComponents[currentPage], [currentPage]);
 
-    // This object defines which props to pass to which page.
-    // This is a simple way to provide shared state to only the components that need it.
     const pageProps: { [key in Page]?: object } = {
-        [Page.Product]: { products, setProducts },
+        [Page.Product]: { products, setProducts, branches },
         [Page.PurchaseOrder]: { products },
-        [Page.Purchase]: { products, setProducts },
-        [Page.Sale]: { products, setProducts },
+        [Page.Purchase]: { products, setProducts, branches },
+        [Page.Sale]: { products, setProducts, branches },
+        [Page.StockTransfer]: { products, setProducts, branches, stockTransfers, setStockTransfers },
+        [Page.Inventory]: { products, setProducts, branches },
     };
 
     return (

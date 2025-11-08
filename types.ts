@@ -33,7 +33,6 @@ export enum Page {
 export interface NavItem {
   label: string;
   page: Page;
-  // FIX: Changed JSX.Element to React.ReactElement to resolve the 'Cannot find namespace JSX' error.
   icon: React.ReactElement;
 }
 
@@ -42,11 +41,18 @@ export interface NavSection {
   items: NavItem[];
 }
 
+export interface Branch {
+  id: string;
+  name: string;
+}
+
 export interface StockHistory {
   date: string;
   action: 'Initial Stock' | 'Sale' | 'Purchase' | 'Adjustment' | 'Transfer In' | 'Transfer Out';
   change: number;
-  newStock: number;
+  newStock: number; // New stock at the specific branch
+  branch: string;
+  reason?: string;
 }
 
 export interface DataProduct {
@@ -54,7 +60,7 @@ export interface DataProduct {
   name: string;
   sku: string;
   category: string;
-  stock: number;
+  stockByLocation: { [branchId: string]: number };
   price: number;
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
   imageUrl?: string;
@@ -80,6 +86,7 @@ export interface PurchaseOrder {
 
 export interface Purchase {
   id: string;
+  branchId: string;
   poId?: string;
   supplier: string;
   purchaseDate: string;
@@ -89,8 +96,18 @@ export interface Purchase {
 
 export interface Sale {
   id: string;
+  branchId: string;
   customer: string;
   saleDate: string;
   items: LineItem[];
   total: number;
+}
+
+export interface StockTransfer {
+    id: string;
+    fromBranchId: string;
+    toBranchId: string;
+    productId: string;
+    quantity: number;
+    date: string;
 }
