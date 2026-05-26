@@ -41,6 +41,24 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ products, onAdd, 
         setItems(items.filter((_, i) => i !== index));
     };
 
+    const getReorderSuggestion = (productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return null;
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const salesHistory = product.history.filter(h => 
+            h.action === 'Sale' && new Date(h.date) >= thirtyDaysAgo
+        );
+
+        const totalSold = Math.abs(salesHistory.reduce((sum, h) => sum + h.change, 0));
+        const currentStock = Object.values(product.stockByLocation).reduce((sum, count) => sum + count, 0);
+        
+        const suggested = Math.max(0, totalSold - currentStock);
+        return { sold: totalSold, suggested };
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onAdd({
@@ -72,32 +90,51 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ products, onAdd, 
 
             <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Items</h3>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                        <select 
-                            value={item.productId}
-                            onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                            className={`${inputClasses} col-span-5`}
-                        >
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                        <input 
-                            type="number" 
-                            placeholder="Qty" 
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                            className={`${inputClasses} col-span-2`} min="1"
-                        />
-                        <input 
-                            type="number" 
-                            placeholder="Price" 
-                            value={item.price}
-                            onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                            className={`${inputClasses} col-span-3`} min="0" step="0.01"
-                        />
-                        <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700">Remove</button>
-                    </div>
-                ))}
+                {items.map((item, index) => {
+                    const stats = getReorderSuggestion(item.productId);
+                    return (
+                        <div key={index} className="space-y-1">
+                            <div className="grid grid-cols-12 gap-2 items-center">
+                                <select 
+                                    value={item.productId}
+                                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                    className={`${inputClasses} col-span-5`}
+                                >
+                                    {products.map(p => {
+                                        const totalStock = Object.values(p.stockByLocation).reduce((sum, count) => sum + count, 0);
+                                        return <option key={p.id} value={p.id}>{p.name} (Total Stock: {totalStock})</option>;
+                                    })}
+                                </select>
+                                <input 
+                                    type="number" 
+                                    placeholder="Qty" 
+                                    value={item.quantity}
+                                    onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                    className={`${inputClasses} col-span-2`} min="1"
+                                />
+                                <input 
+                                    type="number" 
+                                    placeholder="Price" 
+                                    value={item.price}
+                                    onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
+                                    className={`${inputClasses} col-span-3`} min="0" step="0.01"
+                                />
+                                <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700">Remove</button>
+                            </div>
+                            {stats && stats.suggested > 0 && (
+                                <div className="pl-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleItemChange(index, 'quantity', stats.suggested)}
+                                        className="text-[10px] text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium transition-colors"
+                                    >
+                                        ✨ Sold {stats.sold} in last 30 days. Click to reorder {stats.suggested}.
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             <button type="button" onClick={handleAddItem} className="text-sm text-sky-600 hover:text-sky-800 mt-2">
                 + Add Item

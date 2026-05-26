@@ -1,9 +1,9 @@
 import { DataProduct, PurchaseOrder, Purchase, Sale, Branch, StockTransfer } from './types';
 
 export const mockBranches: Branch[] = [
-    { id: 'b001', name: 'Main Warehouse' },
-    { id: 'b002', name: 'Downtown Store' },
-    { id: 'b003', name: 'Uptown Kiosk' },
+    { id: 'b001', name: 'Main Warehouse', location: '123 Warehouse St.' },
+    { id: 'b002', name: 'Downtown Store', location: '456 Main St.' },
+    { id: 'b003', name: 'Uptown Store', location: '789 Broadway Ave.' },
 ];
 
 export const mockProducts: DataProduct[] = [

@@ -86,7 +86,9 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
                             onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
                             className={`${inputClasses} col-span-5`}
                         >
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            {products.map(p => (
+                                <option key={p.id} value={p.id}>{p.name} (Stock: {p.stockByLocation[branchId] || 0})</option>
+                            ))}
                         </select>
                         <input 
                             type="number" 

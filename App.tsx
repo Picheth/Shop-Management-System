@@ -79,6 +79,7 @@ const App: React.FC = () => {
         [Page.Sale]: { products, setProducts, branches },
         [Page.StockTransfer]: { products, setProducts, branches, stockTransfers, setStockTransfers },
         [Page.Inventory]: { products, setProducts, branches },
+        [Page.RepairCenter]: { products, setProducts, branches, onNavigate: setCurrentPage, stockTransfers, setStockTransfers },
     };
 
     return (
