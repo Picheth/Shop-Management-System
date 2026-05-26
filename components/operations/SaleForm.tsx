@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { DataProduct, LineItem, Sale, Branch } from '../../types';
 
 type SaleFormData = Omit<Sale, 'id' | 'total'>;
@@ -17,6 +17,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     const [items, setItems] = useState<LineItem[]>([]);
     const [error, setError] = useState('');
     const [scanValue, setScanValue] = useState('');
+    const [scanSuccess, setScanSuccess] = useState(false);
+
+    const scanInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        scanInputRef.current?.focus();
+    }, []);
 
     const handleScan = () => {
         const barcode = scanValue.trim();
@@ -63,6 +70,8 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
 
         setScanValue('');
         setError('');
+        setScanSuccess(true);
+        setTimeout(() => setScanSuccess(false), 1000);
     };
     
     const availableProducts = useMemo(() => {
@@ -159,13 +168,30 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div className="md:col-span-2 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
-                    <label htmlFor="barcode-scan" className={`${labelClasses} text-sky-700 dark:text-sky-300`}>
-                        Quick Scan (Serial Number)
-                    </label>
+                <div className={`md:col-span-2 p-4 border rounded-lg transition-all duration-300 ${
+                    scanSuccess 
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]' 
+                        : 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 shadow-none'
+                }`}>
+                    <div className="flex justify-between items-center mb-1">
+                        <label htmlFor="barcode-scan" className={`${labelClasses} mb-0 transition-colors ${scanSuccess ? 'text-green-700 dark:text-green-400' : 'text-sky-700 dark:text-sky-300'}`}>
+                            Quick Scan (Serial Number)
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => scanInputRef.current?.focus()}
+                            className="text-[10px] font-medium text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 flex items-center gap-1 focus:outline-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                            </svg>
+                            Focus Scanner
+                        </button>
+                    </div>
                     <div className="flex gap-2">
                         <input
                             id="barcode-scan"
+                            ref={scanInputRef}
                             type="text"
                             placeholder="Scan or type serial number..."
                             value={scanValue}

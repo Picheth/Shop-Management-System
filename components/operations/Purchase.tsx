@@ -34,6 +34,9 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts, branches }) 
                 const newStock = currentStock + itemPurchased.quantity;
                 const totalStock = Object.values(p.stockByLocation).reduce((s, c) => s + c, 0) + itemPurchased.quantity - currentStock;
 
+                const existingSerials = p.serialNumbersByLocation?.[newPurchase.branchId] || [];
+                const updatedSerials = [...existingSerials, ...(itemPurchased.serialNumbers || [])];
+
                 const newStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' = totalStock > 10 ? 'In Stock' : (totalStock > 0 ? 'Low Stock' : 'Out of Stock');
                 
                 return {
@@ -41,6 +44,10 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts, branches }) 
                     stockByLocation: {
                         ...p.stockByLocation,
                         [newPurchase.branchId]: newStock,
+                    },
+                    serialNumbersByLocation: {
+                        ...(p.serialNumbersByLocation || {}),
+                        [newPurchase.branchId]: updatedSerials,
                     },
                     status: newStatus,
                     history: [

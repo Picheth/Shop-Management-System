@@ -1,229 +1,700 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DataProduct, LineItem, Purchase, Branch } from '../../types';
+
+import {
+    DataProduct,
+    LineItem,
+    Purchase,
+    Branch,
+} from '../../types';
 
 type PurchaseFormData = Omit<Purchase, 'id' | 'total'>;
 
 interface PurchaseFormProps {
     products: DataProduct[];
+
     branches: Branch[];
+
     onAdd: (data: PurchaseFormData) => void;
+
     onCancel: () => void;
 }
 
-const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, onCancel }) => {
+const PurchaseForm: React.FC<PurchaseFormProps> = ({
+    products,
+    branches,
+    onAdd,
+    onCancel,
+}) => {
+
+    const [purchaseNumber] = useState(
+        `PUR-${Date.now()}`
+    );
+
     const [supplier, setSupplier] = useState('');
-    const [branchId, setBranchId] = useState(branches[0]?.id || '');
-    const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
+
+    const [branchId, setBranchId] = useState(
+        branches[0]?.id || ''
+    );
+
+    const [purchaseDate, setPurchaseDate] = useState(
+        new Date().toISOString().split('T')[0]
+    );
+
     const [items, setItems] = useState<LineItem[]>([]);
+
     const [error, setError] = useState('');
+
     const [scanValue, setScanValue] = useState('');
+    const [scanSuccess, setScanSuccess] = useState(false);
 
     const scanInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         scanInputRef.current?.focus();
-    }, []); // Empty dependency array means this runs once after initial render
+    }, []);
+
+    /* =========================================================
+       SCAN PRODUCT
+    ========================================================= */
 
     const handleScan = () => {
+
         const barcode = scanValue.trim();
+
         if (!barcode) return;
 
-        // Search for product by SKU or ID
-        const product = products.find(p => p.sku === barcode || p.id === barcode);
+        const product = products.find(
+            p =>
+                p.sku === barcode ||
+                p.productNumber === barcode
+        );
 
         if (!product) {
-            setError(`Product with SKU or ID "${barcode}" not found.`);
+
+            setError(
+                `Product "${barcode}" not found.`
+            );
+
             setScanValue('');
+
             return;
         }
 
-        const existingItemIndex = items.findIndex(item => item.productId === product.id);
+        const existingIndex = items.findIndex(
+            item => item.productId === product.id
+        );
 
-        if (existingItemIndex > -1) {
-            const updatedItems = [...items];
-            updatedItems[existingItemIndex].quantity += 1;
-            setItems(updatedItems);
+        if (existingIndex > -1) {
+
+            const updated = [...items];
+
+            updated[existingIndex].quantity += 1;
+
+            setItems(updated);
+
         } else {
-            setItems([...items, {
-                productId: product.id,
-                productName: product.name,
-                quantity: 1,
-                price: product.price,
-                sku: product.sku,
-                serialNumbers: []
-            }]);
+
+            setItems([
+                ...items,
+                {
+                    sku: product.sku,
+
+                    productId: product.id,
+
+                    productName: product.name,
+
+                    quantity: 1,
+
+                    price: product.costPrice,
+
+                    serialNumbers:
+                        product.hasSerialNumber
+                            ? []
+                            : undefined,
+
+                    imeis:
+                        product.hasIMEI
+                            ? []
+                            : undefined,
+                },
+            ]);
         }
 
         setScanValue('');
+
         setError('');
+        setScanSuccess(true);
+        setTimeout(() => setScanSuccess(false), 1000);
     };
+
+    /* =========================================================
+       ADD ITEM
+    ========================================================= */
 
     const handleAddItem = () => {
-        setError('');
+
         const firstProduct = products[0];
+
         if (!firstProduct) return;
-        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.price }]);
+
+        setItems([
+            ...items,
+            {
+                sku: firstProduct.sku,
+
+                productId: firstProduct.id,
+
+                productName: firstProduct.name,
+
+                quantity: 1,
+
+                price: firstProduct.costPrice,
+
+                serialNumbers:
+                    firstProduct.hasSerialNumber
+                        ? []
+                        : undefined,
+
+                imeis:
+                    firstProduct.hasIMEI
+                        ? []
+                        : undefined,
+            },
+        ]);
     };
 
-    const handleItemChange = (index: number, field: keyof LineItem, value: string | number) => {
-        setError('');
-        const newItems = [...items];
-        const currentItem = newItems[index];
-        
+    /* =========================================================
+       ITEM CHANGE
+    ========================================================= */
+
+    const handleItemChange = (
+        index: number,
+        field: keyof LineItem,
+        value: any
+    ) => {
+
+        const updated = [...items];
+
+        const current = updated[index];
+
         if (field === 'productId') {
-            const product = products.find(p => p.id === value);
-            if (product) {
-                currentItem.productId = product.id;
-                currentItem.productName = product.name;
-                currentItem.price = product.price;
-            }
+
+            const product = products.find(
+                p => p.id === value
+            );
+
+            if (!product) return;
+
+            current.productId = product.id;
+
+            current.productName = product.name;
+
+            current.price = product.costPrice;
+
+            current.sku = product.sku;
+
+            current.serialNumbers =
+                product.hasSerialNumber
+                    ? []
+                    : undefined;
+
+            current.imeis =
+                product.hasIMEI
+                    ? []
+                    : undefined;
+
         } else if (field === 'serialNumbers') {
-            currentItem.serialNumbers = (value as string).split(',').map(s => s.trim()).filter(Boolean);
+
+            current.serialNumbers =
+                value
+                    .split('\n')
+                    .map((v: string) => v.trim())
+                    .filter(Boolean);
+
+        } else if (field === 'imeis') {
+
+            current.imeis =
+                value
+                    .split('\n')
+                    .map((v: string) => v.trim())
+                    .filter(Boolean);
+
         } else {
-            (currentItem[field] as any) = value;
+
+            (current as any)[field] = value;
         }
-        setItems(newItems);
+
+        setItems(updated);
     };
 
-    const handleRemoveItem = (index: number) => {
-        setError('');
-        setItems(items.filter((_, i) => i !== index));
+    /* =========================================================
+       REMOVE ITEM
+    ========================================================= */
+
+    const handleRemoveItem = (
+        index: number
+    ) => {
+
+        setItems(
+            items.filter((_, i) => i !== index)
+        );
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    /* =========================================================
+       SUBMIT
+    ========================================================= */
+
+    const handleSubmit = (
+        e: React.FormEvent
+    ) => {
+
         e.preventDefault();
 
         if (items.length === 0) {
-            setError('Please add at least one item to the purchase.');
+
+            setError(
+                'Please add at least one item.'
+            );
+
             return;
         }
 
         for (const item of items) {
-            const serialCount = item.serialNumbers?.length || 0;
-            if (serialCount !== item.quantity) {
-                setError(`Product "${item.productName}" expects ${item.quantity} serial number(s), but ${serialCount} were provided.`);
-                return;
+
+            const product = products.find(
+                p => p.id === item.productId
+            );
+
+            if (!product) continue;
+
+            /* SERIAL VALIDATION */
+
+            if (product.hasSerialNumber) {
+
+                const serialCount =
+                    item.serialNumbers?.length || 0;
+
+                if (
+                    serialCount !== item.quantity
+                ) {
+
+                    setError(
+                        `"${item.productName}" requires ${item.quantity} serial number(s).`
+                    );
+
+                    return;
+                }
+            }
+
+            /* IMEI VALIDATION */
+
+            if (product.hasIMEI) {
+
+                const imeiCount =
+                    item.imeis?.length || 0;
+
+                if (
+                    imeiCount !== item.quantity
+                ) {
+
+                    setError(
+                        `"${item.productName}" requires ${item.quantity} IMEI number(s).`
+                    );
+
+                    return;
+                }
             }
         }
 
         setError('');
+
         onAdd({
+            purchaseNumber,
+
             supplier,
+
             branchId,
+
             purchaseDate,
+
             items,
-            status: 'Received',
+
+            subtotal: total,
+            status: 'Paid',
         });
     };
 
-    const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    /* =========================================================
+       TOTAL
+    ========================================================= */
 
-    const inputClasses = "w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500";
-    const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
-    
+    const total = items.reduce(
+        (sum, item) =>
+            sum + item.quantity * item.price,
+        0
+    );
+
+    /* =========================================================
+       STYLE
+    ========================================================= */
+
+    const inputClasses =
+        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500';
+
+    const labelClasses =
+        'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+
+    /* =========================================================
+       RENDER
+    ========================================================= */
+
     return (
+
         <form onSubmit={handleSubmit}>
+
+            {/* HEADER */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div className="md:col-span-2 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
-                    <label htmlFor="barcode-scan" className={`${labelClasses} text-sky-700 dark:text-sky-300`}>
-                        Quick Scan (Product SKU/ID)
-                    </label>
+
+                {/* QUICK SCAN */}
+
+                <div className={`md:col-span-2 p-4 border rounded-lg transition-all duration-300 ${
+                    scanSuccess 
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]' 
+                        : 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 shadow-none'
+                }`}>
+
+                    <div className="flex justify-between items-center mb-1">
+                        <label
+                            htmlFor="barcode-scan"
+                            className={`${labelClasses} mb-0 transition-colors ${scanSuccess ? 'text-green-700 dark:text-green-400' : 'text-sky-700 dark:text-sky-300'}`}
+                        >
+                            Quick Scan (SKU / Product Number)
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => scanInputRef.current?.focus()}
+                            className="text-[10px] font-medium text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 flex items-center gap-1 focus:outline-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                            </svg>
+                            Focus Scanner
+                        </button>
+                    </div>
+
                     <div className="flex gap-2">
+
                         <input
                             id="barcode-scan"
                             ref={scanInputRef}
                             type="text"
-                            placeholder="Scan product barcode or SKU..."
+                            placeholder="Scan barcode..."
                             value={scanValue}
-                            onChange={(e) => setScanValue(e.target.value)}
+                            onChange={(e) =>
+                                setScanValue(
+                                    e.target.value
+                                )
+                            }
                             onKeyDown={(e) => {
+
                                 if (e.key === 'Enter') {
+
                                     e.preventDefault();
+
                                     handleScan();
                                 }
                             }}
                             className={inputClasses}
                         />
+
                         <button
                             type="button"
                             onClick={handleScan}
-                            className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors"
+                            className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700"
                         >
                             Add
                         </button>
                     </div>
-                    <p className="text-[10px] text-sky-600 dark:text-sky-400 mt-1 italic">
-                        Tip: Focus this field and scan a SKU to automatically add products to the receiving list.
-                    </p>
                 </div>
-                 <div>
-                    <label htmlFor="branchId" className={labelClasses}>Branch</label>
-                    <select id="branchId" value={branchId} onChange={e => { setBranchId(e.target.value); setError(''); }} className={inputClasses} required>
-                        {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+
+                {/* BRANCH */}
+
+                <div>
+
+                    <label
+                        htmlFor="branchId"
+                        className={labelClasses}
+                    >
+                        Branch
+                    </label>
+
+                    <select
+                        id="branchId"
+                        value={branchId}
+                        onChange={(e) =>
+                            setBranchId(
+                                e.target.value
+                            )
+                        }
+                        className={inputClasses}
+                    >
+                        {branches.map(branch => (
+                            <option
+                                key={branch.id}
+                                value={branch.id}
+                            >
+                                {branch.name}
+                            </option>
+                        ))}
                     </select>
                 </div>
+
+                {/* SUPPLIER */}
+
                 <div>
-                    <label htmlFor="supplier" className={labelClasses}>Supplier</label>
-                    <input type="text" id="supplier" value={supplier} onChange={e => { setSupplier(e.target.value); setError(''); }} className={inputClasses} required />
+
+                    <label
+                        htmlFor="supplierId"
+                        className={labelClasses}
+                    >
+                        Supplier
+                    </label>
+
+                    <input
+                        id="supplierId"
+                        type="text"
+                        value={supplier}
+                        onChange={(e) => setSupplier(e.target.value)}
+                        className={inputClasses}
+                        required
+                    />
                 </div>
+
+                {/* PURCHASE DATE */}
+
                 <div className="md:col-span-2">
-                    <label htmlFor="purchaseDate" className={labelClasses}>Purchase Date</label>
-                    <input type="date" id="purchaseDate" value={purchaseDate} onChange={e => { setPurchaseDate(e.target.value); setError(''); }} className={inputClasses} required />
+
+                    <label
+                        htmlFor="purchaseDate"
+                        className={labelClasses}
+                    >
+                        Purchase Date
+                    </label>
+
+                    <input
+                        id="purchaseDate"
+                        type="date"
+                        value={purchaseDate}
+                        onChange={(e) =>
+                            setPurchaseDate(
+                                e.target.value
+                            )
+                        }
+                        className={inputClasses}
+                    />
                 </div>
             </div>
 
-            <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Items Received</h3>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {items.map((item, index) => (
-                    <div key={index} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-100 dark:border-gray-700">
-                        <div className="grid grid-cols-12 gap-2 items-center">
-                            <select 
-                                value={item.productId}
-                                onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                                className={`${inputClasses} col-span-5`}
-                            >
-                                {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (Stock: {p.stockByLocation[branchId] || 0})</option>
-                                ))}
-                            </select>
-                            <input 
-                                type="number" 
-                                placeholder="Qty" 
-                                value={item.quantity}
-                                onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                                className={`${inputClasses} col-span-2`} min="1"
-                            />
-                            <input 
-                                type="number" 
-                                placeholder="Price" 
-                                value={item.price}
-                                onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                                className={`${inputClasses} col-span-3`} min="0" step="0.01"
-                            />
-                            <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700 text-center">✕</button>
+            {/* ITEMS */}
+
+            <h3 className="text-md font-semibold mb-2 text-gray-800 dark:text-white">
+                Purchase Items
+            </h3>
+
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+
+                {items.map((item, index) => {
+
+                    const selectedProduct =
+                        products.find(
+                            p => p.id === item.productId
+                        );
+
+                    return (
+
+                        <div
+                            key={index}
+                            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3 bg-gray-50 dark:bg-gray-800/40"
+                        >
+
+                            {/* ROW */}
+
+                            <div className="grid grid-cols-12 gap-2">
+
+                                {/* PRODUCT */}
+
+                                <select
+                                    value={item.productId}
+                                    onChange={(e) =>
+                                        handleItemChange(
+                                            index,
+                                            'productId',
+                                            e.target.value
+                                        )
+                                    }
+                                    className={`${inputClasses} col-span-5`}
+                                >
+
+                                    {products.map(p => (
+
+                                        <option
+                                            key={p.id}
+                                            value={p.id}
+                                        >
+                                            {p.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {/* QTY */}
+
+                                <input
+                                    type="number"
+                                    value={item.quantity}
+                                    min="1"
+                                    onChange={(e) =>
+                                        handleItemChange(
+                                            index,
+                                            'quantity',
+                                            Number(
+                                                e.target.value
+                                            )
+                                        )
+                                    }
+                                    className={`${inputClasses} col-span-2`}
+                                />
+
+                                {/* PRICE */}
+
+                                <input
+                                    type="number"
+                                    value={item.price}
+                                    min="0"
+                                    step="0.01"
+                                    onChange={(e) =>
+                                        handleItemChange(
+                                            index,
+                                            'price',
+                                            Number(
+                                                e.target.value
+                                            )
+                                        )
+                                    }
+                                    className={`${inputClasses} col-span-3`}
+                                />
+
+                                {/* REMOVE */}
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handleRemoveItem(
+                                            index
+                                        )
+                                    }
+                                    className="col-span-2 text-red-500 hover:text-red-700"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* SERIAL */}
+
+                            {selectedProduct?.hasSerialNumber && (
+
+                                <textarea
+                                    placeholder="Serial Numbers (one per line)"
+                                    value={
+                                        item.serialNumbers?.join(
+                                            '\n'
+                                        ) || ''
+                                    }
+                                    onChange={(e) =>
+                                        handleItemChange(
+                                            index,
+                                            'serialNumbers',
+                                            e.target.value
+                                        )
+                                    }
+                                    className={inputClasses}
+                                    rows={3}
+                                />
+                            )}
+
+                            {/* IMEI */}
+
+                            {selectedProduct?.hasIMEI && (
+
+                                <textarea
+                                    placeholder="IMEI Numbers (one per line)"
+                                    value={
+                                        item.imeis?.join(
+                                            '\n'
+                                        ) || ''
+                                    }
+                                    onChange={(e) =>
+                                        handleItemChange(
+                                            index,
+                                            'imeis',
+                                            e.target.value
+                                        )
+                                    }
+                                    className={inputClasses}
+                                    rows={3}
+                                />
+                            )}
                         </div>
-                        <input 
-                            type="text" 
-                            placeholder="Serial Numbers (e.g. SN1, SN2...)" 
-                            value={item.serialNumbers?.join(', ') || ''}
-                            onChange={(e) => handleItemChange(index, 'serialNumbers', e.target.value)}
-                            className={inputClasses}
-                        />
-                    </div>
-                ))}
+                    );
+                })}
             </div>
-            {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
-            <button type="button" onClick={handleAddItem} className="text-sm text-sky-600 hover:text-sky-800 mt-2">
+
+            {/* ERROR */}
+
+            {error && (
+
+                <p className="mt-3 text-sm text-red-500 font-medium">
+                    {error}
+                </p>
+            )}
+
+            {/* ADD ITEM */}
+
+            <button
+                type="button"
+                onClick={handleAddItem}
+                className="mt-3 text-sm text-sky-600 hover:text-sky-800"
+            >
                 + Add Item
             </button>
 
-            <div className="text-right font-bold text-lg mt-4">
-                Total: ${total.toFixed(2)}
+            {/* TOTAL */}
+
+            <div className="mt-6 text-right">
+
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    Total: ${total.toFixed(2)}
+                </p>
             </div>
 
+            {/* FOOTER */}
+
             <div className="flex justify-end gap-4 mt-6 pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={onCancel} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                <button type="submit" className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700">Save Purchase</button>
+
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    className="px-4 py-2 rounded-md bg-sky-600 text-white hover:bg-sky-700"
+                >
+                    Save Purchase
+                </button>
             </div>
         </form>
     );

@@ -1,298 +1,770 @@
 import React from 'react';
 
-/* =======================
-   PAGE ENUM
-======================= */
+/* =========================================================
+   ENUMS
+========================================================= */
+
 export enum Page {
-  Dashboard = 'Dashboard',
-  PurchaseOrder = 'PurchaseOrder',
-  Purchase = 'Purchase',
-  Sale = 'Sale',
-  RepairCenter = 'RepairCenter',
-  Settlement = 'Settlement',
-  Inventory = 'Inventory',
-  Product = 'Product',
-  Variation = 'Variation',
-  BranchLocation = 'BranchLocation',
-  StockTransfer = 'StockTransfer',
-  AccountsPayable = 'AccountsPayable',
-  AccountsReceivable = 'AccountsReceivable',
-  CashFlow = 'CashFlow',
-  Expense = 'Expense',
-  TaxPayment = 'TaxPayment',
-  SummaryReport = 'SummaryReport',
-  BalanceSheet = 'BalanceSheet',
-  IncomeStatement = 'IncomeStatement',
-  ProfitAndLoss = 'ProfitAndLoss',
-  Report = 'Report',
-  ChartOfAccount = 'ChartOfAccount',
-  Supplier = 'Supplier',
-  Contact = 'Contact',
-  ExpenseCategory = 'ExpenseCategory',
-  Staff = 'Staff',
-  Payroll = 'Payroll',
+    Dashboard = 'Dashboard',
+    Product = 'Product',
+    ProductType = 'ProductType',
+    Category = 'Category',
+    SubCategory = 'SubCategory',
+    Brand = 'Brand',
+    Variation = 'Variation',
+    PurchaseOrder = 'PurchaseOrder',
+    Purchase = 'Purchase',
+    Sale = 'Sale',
+    Settlement = 'Settlement',
+    RepairCenter = 'RepairCenter',
+    Inventory = 'Inventory',
+    StockTransfer = 'StockTransfer',
+    BranchLocation = 'BranchLocation',
+    Supplier = 'Supplier',
+    Contact = 'Contact',
+    Expense = 'Expense',
+    ExpenseCategory = 'ExpenseCategory',
+    AccountsPayable = 'AccountsPayable',
+    AccountsReceivable = 'AccountsReceivable',
+    CashFlow = 'CashFlow',
+    TaxPayment = 'TaxPayment',
+    Staff = 'Staff',
+    Payroll = 'Payroll',
+    Report = 'Report',
+    SummaryReport = 'SummaryReport',
+    BalanceSheet = 'BalanceSheet',
+    IncomeStatement = 'IncomeStatement',
+    ProfitAndLoss = 'ProfitAndLoss',
+    ChartOfAccount = 'ChartOfAccount',
 }
 
-/* =======================
-   NAV TYPES
-======================= */
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
 export interface NavItem {
-  label: string;
-  page: Page;
-  icon: React.ReactElement;
+    label: string;
+    page: Page;
+    icon: React.ReactElement;
 }
 
 export interface NavSection {
-  title: string;
-  items: NavItem[];
+    title: string;
+    items: NavItem[];
 }
 
-/* =======================
-   CORE TYPES
-======================= */
-export interface Branch {
-  id: string;
-  name: string;
-  location: string;
-}
+/* =========================================================
+   COMMON
+========================================================= */
 
-export interface StockHistory {
-  date: string;
-  action: 'Initial Stock' | 'Sale' | 'Purchase' | 'Adjustment' | 'Transfer In' | 'Transfer Out';
-  change: number;
-  newStock: number;
-  branch: string;
-  reason?: string;
-}
-
-export interface DataProduct {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  stockByLocation: Record<string, number>;
-  serialNumbersByLocation?: Record<string, string[]>;
-  price: number;
-  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
-  imageUrl?: string;
-  history: StockHistory[];
-}
-
-export interface Variation {
-  id: string;
-  name: string;
-  type: string;
-  attributes: Record<string, string>;
-}
-export interface LineItem {
-    sku?: string;
-    productId: string;
-    productName: string;
-    quantity: number;
-    price: number;
-    serialNumbers?: string[];
-    imeis?: string[];
-}
-export interface ProductUnit {
+export interface BaseEntity {
     id: string;
-    productId: string;
-    serialNumber?: string;
-    imei?: string;
+
+    createdAt?: string;
+
+    updatedAt?: string;
+
+    active?: boolean;
+}
+
+/* =========================================================
+   BRANCH
+========================================================= */
+
+export interface Branch extends BaseEntity {
+    code: string;
+
+    name: string;
+
+    location?: string;
+
+    address?: string;
+
+    phone?: string;
+
+    email?: string;
+}
+
+/* =========================================================
+   PRODUCT TYPE
+========================================================= */
+
+export interface ProductType extends BaseEntity {
+    code: string;
+
+    name: string;
+
+    description?: string;
+}
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+export interface Category extends BaseEntity {
+    code: string;
+
+    typeId: string;
+
+    name: string;
+
+    description?: string;
+}
+
+/* =========================================================
+   SUB CATEGORY
+========================================================= */
+
+export interface SubCategory extends BaseEntity {
+    code: string;
+
+    categoryId: string;
+
+    name: string;
+
+    description?: string;
+}
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+export interface Brand extends BaseEntity {
+    code: string;
+
+    name: string;
+
+    shortName?: string;
+
+    country?: string;
+}
+
+/* =========================================================
+   VARIATION
+========================================================= */
+
+export interface Variation extends BaseEntity {
+    name: string;
+    type: string;
+    value: string;
+}
+
+/* =========================================================
+   PRODUCT
+========================================================= */
+
+export interface Product extends BaseEntity {
+    productNumber: string;
+    sku: string;
     barcode?: string;
-    purchaseId?: string;
-    saleId?: string;
-    branchId: string;
+    shortName?: string;
+    name: string;
+    description?: string;
+    typeId: string;
+    categoryId: string;
+    subCategoryId?: string;
+    brandId?: string;
+    model?: string;
+    variation?: string;
+    color?: string;
+    size?: string;
+    storage?: string;
+    ram?: string;
+    costPrice: number;
+    salePrice: number;
+    wholesalePrice?: number;
+    reorderLevel?: number;
+    hasSerialNumber: boolean;
+    hasIMEI: boolean;
+    warrantyDays?: number;
+    imageUrl?: string;
+    tags?: string[];
     status:
-        | 'In Stock'
-        | 'Sold'
-        | 'Repair'
-        | 'Returned'
-        | 'Reserved';
+        | 'Active'
+        | 'Inactive'
+        | 'Discontinued';
+}
+
+/* =========================================================
+   PRODUCT UNIT (IMEI / SERIAL TRACKING)
+========================================================= */
+export type productData = {
+    id: string;
+    sku?: string;
+    productNumber?: string;
+    barcode?: string;
+    shortName?: string;
+    model?: string;
+    name: string;
+    category: string;
+    brand: string;
+    variation: string;
+    costPrice: number;
+    hasSerialNumber: boolean;
+    hasIMEI: boolean;
+    price: number;
+    stockByLocation: Record<string, number>;
+    serialNumbersByLocation?: Record<string, string[]>;
+    status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+    history: {
+        date: string;
+        action: StockAction;
+        change: number;
+        newStock: number;
+        branch: string;
+        reason?: string;
+    }[];
+};
+
+export type DataProduct = productData;
+
+export type ProductUnitStatus =
+    | 'In Stock'
+    | 'Sold'
+    | 'Repair'
+    | 'Returned'
+    | 'Reserved'
+    | 'Damaged';
+
+export interface ProductUnit extends BaseEntity {
+    productId: string;
+
+    branchId: string;
+
+    serialNumber?: string;
+
+    imei?: string;
+
+    barcode?: string;
+
+    qrCode?: string;
+
+    condition?:
+        | 'New'
+        | 'Used'
+        | 'Refurbished';
+
+    batteryHealth?: number;
+
+    color?: string;
+
+    storage?: string;
+
+    ram?: string;
 
     costPrice: number;
+
     salePrice?: number;
-    createdAt: string;
+
+    purchaseId?: string;
+
+    saleId?: string;
+
+    supplierId?: string;
+
+    customerId?: string;
+
+    repairId?: string;
+
+    status: ProductUnitStatus;
 }
 
-/* =======================
-   BUSINESS TYPES
-======================= */
-export interface PurchaseOrder {
-  id: string;
-  supplier: string;
-  orderDate: string;
-  expectedDate: string;
-  items: LineItem[];
-  total: number;
-  status: 'Pending' | 'Approved' | 'Completed' | 'Cancelled';
+/* =========================================================
+   STOCK HISTORY
+========================================================= */
+
+export type StockAction =
+    | 'Initial Stock'
+    | 'Purchase'
+    | 'Sale'
+    | 'Adjustment'
+    | 'Stock Adjustment'
+    | 'Transfer In'
+    | 'Transfer Out'
+    | 'Repair'
+    | 'Repair Used'
+    | 'Repair Returned'
+    | 'Return';
+
+export interface StockHistory extends BaseEntity {
+    date: string;
+    productId: string;
+    branchId: string;
+    action: StockAction;
+    change: number;
+    previousStock?: number;
+    newStock: number;
+    branch: string;
+    referenceId?: string;
+    reason?: string;
+    note?: string;
+    createdBy?: string;
 }
 
-export interface Purchase {
-  id: string;
-  branchId: string;
-  poId?: string;
-  supplier: string;
-  purchaseDate: string;
-  items: LineItem[];
-  total: number;
-  status: string;
+/* =========================================================
+   INVENTORY SUMMARY
+========================================================= */
+
+export interface InventoryStock {
+    productId: string;
+
+    branchId: string;
+
+    quantity: number;
 }
-export interface PurchaseItem extends LineItem {
+
+/* =========================================================
+   LINE ITEM
+========================================================= */
+
+export interface LineItem {
+    sku?: string;
+
+    productId: string;
+
+    productName: string;
+
+    quantity: number;
+
+    price: number;
+
+    discount?: number;
+
+    total?: number;
+
     serialNumbers?: string[];
+
     imeis?: string[];
+}
+
+/* =========================================================
+   PURCHASE ORDER
+========================================================= */
+export interface PurchaseOrder {
+    id: string;
+    poNumber: string;
+    branchId: string;
+    supplier: string;
+    orderDate: string;
+    expectedDate?: string;
     items: LineItem[];
+    subtotal: number;
     total: number;
+    status:
+    | 'Draft'
+    | 'Pending'
+    | 'Approved'
+    | 'Completed'
+    | 'Cancelled'
+    | 'Paid'
+    | 'Partial'
+    | 'Unpaid';
 }
 
-/* =======================
-   SALES (FIXED CONSISTENT)
-======================= */
-export interface Sale {
-  id: string;
-  branchId: string;
-  customer: string;
-  saleDate: string;
-  items: LineItem[];
-  total: number;
-  status: string;
+/* =========================================================
+   PURCHASE
+========================================================= */
+
+export interface Purchase extends BaseEntity {
+    purchaseNumber?: string;
+    poId?: string;
+    supplier: string;
+    branchId: string;
+    purchaseDate: string;
+    invoiceNumber?: string;
+    items: LineItem[];
+    subtotal: number;
+    discount?: number;
+    tax?: number;
+    total: number;
+    status:
+        | 'Unpaid'
+        | 'Partial'
+        | 'Paid'
+        | 'Received'
+        | 'Completed';
+    note?: string;
 }
 
-/* =======================
-   REPAIR (FIXED CONSISTENT)
-======================= */
-export interface Repair {
-  id: string;
-  branchId: string;
-  customer: string;
-  phone: string;
-  device: string;
-  serialNumber: string;
-  repairIssue: string;
-  items: LineItem[];
-  total: number;
-  repairCost: number;
-  estimatedCost: number;
-  technician: string;
-  entryDate: string;
-  status: RepairStatus;
+/* =========================================================
+   SALE
+========================================================= */
+
+export interface Sale extends BaseEntity {
+    saleNumber?: string;
+
+    branchId: string;
+
+    customerId?: string;
+
+    customer: string;
+
+    saleDate: string;
+
+    items: LineItem[];
+
+    subtotal?: number;
+
+    discount?: number;
+
+    tax?: number;
+
+    total: number;
+
+    paymentMethod?: // This was already optional, keeping it as is
+        | 'Cash'
+        | 'Card'
+        | 'Bank Transfer'
+        | 'ABA'
+        | 'Credit';
+
+    status:
+        | 'Pending'
+        | 'Paid'
+        | 'Completed';
+
+    note?: string;
 }
+
+/* =========================================================
+   REPAIR
+========================================================= */
 
 export type RepairStatus =
-  | 'Pending'
-  | 'In Progress'
-  | 'Completed'
-  | 'Cancelled';
+    | 'Pending'
+    | 'In Progress'
+    | 'Completed'
+    | 'Cancelled';
 
-export const repairStatuses: RepairStatus[] = [
-  'Pending',
-  'In Progress',
-  'Completed',
-  'Cancelled',
-];
+export interface Repair extends BaseEntity {
+    repairNumber?: string;
 
-export const repairStatusColors: Record<RepairStatus, string> = {
-  'Pending': 'bg-yellow-100 text-yellow-800',
-  'In Progress': 'bg-blue-100 text-blue-800',
-  'Completed': 'bg-green-100 text-green-800',
-  'Cancelled': 'bg-red-100 text-red-800',
-};
-/* =======================
-   FINANCE TYPES
-======================= */
-export interface Settlement {
-  id: string;
-  branchId: string;
-  customer: string;
-  settlementDate: string;
-  items: LineItem[];
-  total: number;
+    branchId: string;
+
+    customerId?: string;
+
+    customer: string;
+
+    phone?: string;
+
+    productId?: string;
+
+    productName?: string;
+
+    serialNumber?: string;
+
+    imei?: string;
+
+    device?: string;
+
+    issue: string;
+
+    diagnosis?: string;
+
+    solution?: string;
+
+    technician?: string;
+
+    estimatedCost?: number;
+
+    repairCost?: number;
+
+    entryDate: string;
+
+    completedDate?: string;
+
+    items?: LineItem[];
+    
+    total: number; // Added total to Repair interface
+
+    note?: string;
+
+    status: RepairStatus;
 }
 
-export interface StockTransfer {
-  id: string;
-  fromBranchId: string;
-  toBranchId: string;
-  productId: string;
-  quantity: number;
-  date: string;
+/* =========================================================
+   SETTLEMENT
+========================================================= */
+
+export interface Settlement extends BaseEntity {
+    settlementNumber: string;
+
+    saleId?: string;
+
+    repairId?: string;
+
+    amount: number;
+
+    paymentMethod: string;
+
+    settlementDate: string;
+
+    note?: string;
 }
 
-export interface AccountsPayable {
-  id: string;
-  supplier: string;
-  paymentDate: string;
-  items: LineItem[];
-  total: number;
-  status: 'Pending' | 'Paid';
+/* =========================================================
+   STOCK TRANSFER
+========================================================= */
+
+export interface StockTransfer extends BaseEntity {
+    transferNumber: string;
+    fromBranchId: string;
+    toBranchId: string;
+    transferDate: string;
+    items: LineItem[];
+    note?: string;
+    status:
+        | 'Pending'
+        | 'Completed'
+        | 'Cancelled';
 }
 
-export interface AccountsReceivable {
-  id: string;
-  customer: string;
-  paymentDate: string;
-  items: LineItem[];
-  total: number;
-  status: 'Pending' | 'Received';
+/* =========================================================
+   SUPPLIER
+========================================================= */
+
+export interface Supplier extends BaseEntity {
+    supplierCode: string;
+
+    name: string;
+
+    shortName?: string;
+
+    contactPerson?: string;
+
+    phone?: string;
+
+    email?: string;
+
+    address?: string;
+
+    taxNumber?: string;
+
+    note?: string;
 }
 
-export interface Expense {
-  id: string;
-  category: string;
-  amount: number;
-  expenseDate: string;
-  description?: string;
+/* =========================================================
+   CONTACT
+========================================================= */
+
+export interface Contact extends BaseEntity {
+    name: string;
+
+    company?: string;
+
+    phone?: string;
+
+    email?: string;
+
+    address?: string;
+
+    type:
+        | 'Customer'
+        | 'Supplier'
+        | 'Other';
 }
 
-export interface TaxPayment {
-  id: string;
-  taxType: string;
-  amount: number;
-  paymentDate: string;
+/* =========================================================
+   EXPENSE CATEGORY
+========================================================= */
+
+export interface ExpenseCategory extends BaseEntity {
+    code: string;
+
+    name: string;
+
+    description?: string;
 }
 
-export interface Report {
-  id: string;
-  title: string;
-  generatedDate: string;
-  data: any;
+/* =========================================================
+   EXPENSE
+========================================================= */
+
+export interface Expense extends BaseEntity {
+    expenseNumber: string;
+
+    branchId?: string;
+
+    categoryId: string;
+
+    amount: number;
+
+    expenseDate: string;
+
+    description?: string;
+
+    paymentMethod?: string;
 }
 
-export interface ChartOfAccount {
-  id: string;
-  name: string;
-  type: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
+/* =========================================================
+   ACCOUNTS PAYABLE
+========================================================= */
+
+export interface AccountsPayable extends BaseEntity {
+    supplierId: string;
+
+    purchaseId?: string;
+
+    dueDate: string;
+
+    amount: number;
+
+    paidAmount?: number;
+
+    balanceAmount?: number;
+
+    status:
+        | 'Pending'
+        | 'Partial'
+        | 'Paid';
 }
 
-export interface Supplier {
-  id: string;
-  name: string;
-  contactInfo: string;
+/* =========================================================
+   ACCOUNTS RECEIVABLE
+========================================================= */
+
+export interface AccountsReceivable extends BaseEntity {
+    customerId?: string;
+
+    saleId?: string;
+
+    dueDate: string;
+
+    amount: number;
+
+    receivedAmount?: number;
+
+    balanceAmount?: number;
+
+    status:
+        | 'Pending'
+        | 'Partial'
+        | 'Received';
 }
 
-export interface Contact {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
+/* =========================================================
+   CASH FLOW
+========================================================= */
+
+export interface CashFlow extends BaseEntity {
+    branchId?: string;
+
+    type:
+        | 'Income'
+        | 'Expense';
+
+    category: string;
+
+    amount: number;
+
+    date: string;
+
+    referenceId?: string;
+
+    note?: string;
 }
 
-export interface ExpenseCategory {
-  id: string;
-  name: string;
+/* =========================================================
+   TAX PAYMENT
+========================================================= */
+
+export interface TaxPayment extends BaseEntity {
+    taxType: string;
+
+    amount: number;
+
+    paymentDate: string;
+
+    note?: string;
 }
 
-export interface Staff {
-  id: string;
-  name: string;
-  role: string;
-  contactInfo: string;
+/* =========================================================
+   CHART OF ACCOUNT
+========================================================= */
+
+export interface ChartOfAccount extends BaseEntity {
+    code: string;
+
+    name: string;
+
+    type:
+        | 'Asset'
+        | 'Liability'
+        | 'Equity'
+        | 'Revenue'
+        | 'Expense';
+
+    parentId?: string;
 }
 
-export interface Payroll {
-  id: string;
-  staffId: string;
-  month: string;
-  salary: number;
-  deductions: number;
-  netPay: number;
+/* =========================================================
+   STAFF
+========================================================= */
+
+export interface Staff extends BaseEntity {
+    staffCode: string;
+
+    firstName: string;
+
+    lastName: string;
+
+    gender?: string;
+
+    phone?: string;
+
+    email?: string;
+
+    address?: string;
+
+    role?: string;
+
+    salary?: number;
+
+    joinDate?: string;
+
+    branchId?: string;
+}
+
+/* =========================================================
+   PAYROLL
+========================================================= */
+
+export interface Payroll extends BaseEntity {
+    payrollNumber: string;
+
+    staffId: string;
+
+    month: string;
+
+    baseSalary: number;
+
+    allowance?: number;
+
+    deduction?: number;
+
+    overtime?: number;
+
+    netSalary: number;
+
+    paymentDate?: string;
+
+    status:
+        | 'Pending'
+        | 'Paid';
+}
+
+/* =========================================================
+   REPORT
+========================================================= */
+
+export interface Report extends BaseEntity {
+    title: string;
+
+    type: string;
+
+    generatedDate: string;
+
+    generatedBy?: string;
+
+    data?: any;
 }
