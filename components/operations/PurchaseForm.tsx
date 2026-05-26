@@ -15,14 +15,17 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
     const [branchId, setBranchId] = useState(branches[0]?.id || '');
     const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([]);
+    const [error, setError] = useState('');
 
     const handleAddItem = () => {
+        setError('');
         const firstProduct = products[0];
         if (!firstProduct) return;
         setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.price }]);
     };
 
     const handleItemChange = (index: number, field: keyof LineItem, value: string | number) => {
+        setError('');
         const newItems = [...items];
         const currentItem = newItems[index];
         
@@ -33,6 +36,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
                 currentItem.productName = product.name;
                 currentItem.price = product.price;
             }
+        } else if (field === 'serialNumbers') {
+            currentItem.serialNumbers = (value as string).split(',').map(s => s.trim()).filter(Boolean);
         } else {
             (currentItem[field] as any) = value;
         }
@@ -40,12 +45,27 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
     };
 
     const handleRemoveItem = (index: number) => {
+        setError('');
         setItems(items.filter((_, i) => i !== index));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (items.length === 0) {
+            setError('Please add at least one item to the purchase.');
+            return;
+        }
+
+        for (const item of items) {
+            const serialCount = item.serialNumbers?.length || 0;
+            if (serialCount !== item.quantity) {
+                setError(`Product "${item.productName}" expects ${item.quantity} serial number(s), but ${serialCount} were provided.`);
+                return;
+            }
+        }
+
+        setError('');
         onAdd({
             supplier,
             branchId,
@@ -65,51 +85,61 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                  <div>
                     <label htmlFor="branchId" className={labelClasses}>Branch</label>
-                    <select id="branchId" value={branchId} onChange={e => setBranchId(e.target.value)} className={inputClasses} required>
+                    <select id="branchId" value={branchId} onChange={e => { setBranchId(e.target.value); setError(''); }} className={inputClasses} required>
                         {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
                     </select>
                 </div>
                 <div>
                     <label htmlFor="supplier" className={labelClasses}>Supplier</label>
-                    <input type="text" id="supplier" value={supplier} onChange={e => setSupplier(e.target.value)} className={inputClasses} required />
+                    <input type="text" id="supplier" value={supplier} onChange={e => { setSupplier(e.target.value); setError(''); }} className={inputClasses} required />
                 </div>
                 <div className="md:col-span-2">
                     <label htmlFor="purchaseDate" className={labelClasses}>Purchase Date</label>
-                    <input type="date" id="purchaseDate" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} className={inputClasses} required />
+                    <input type="date" id="purchaseDate" value={purchaseDate} onChange={e => { setPurchaseDate(e.target.value); setError(''); }} className={inputClasses} required />
                 </div>
             </div>
 
             <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Items Received</h3>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                 {items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                        <select 
-                            value={item.productId}
-                            onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                            className={`${inputClasses} col-span-5`}
-                        >
-                            {products.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} (Stock: {p.stockByLocation[branchId] || 0})</option>
-                            ))}
-                        </select>
+                    <div key={index} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-100 dark:border-gray-700">
+                        <div className="grid grid-cols-12 gap-2 items-center">
+                            <select 
+                                value={item.productId}
+                                onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                className={`${inputClasses} col-span-5`}
+                            >
+                                {products.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name} (Stock: {p.stockByLocation[branchId] || 0})</option>
+                                ))}
+                            </select>
+                            <input 
+                                type="number" 
+                                placeholder="Qty" 
+                                value={item.quantity}
+                                onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                className={`${inputClasses} col-span-2`} min="1"
+                            />
+                            <input 
+                                type="number" 
+                                placeholder="Price" 
+                                value={item.price}
+                                onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
+                                className={`${inputClasses} col-span-3`} min="0" step="0.01"
+                            />
+                            <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700 text-center">✕</button>
+                        </div>
                         <input 
-                            type="number" 
-                            placeholder="Qty" 
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                            className={`${inputClasses} col-span-2`} min="1"
+                            type="text" 
+                            placeholder="Serial Numbers (e.g. SN1, SN2...)" 
+                            value={item.serialNumbers?.join(', ') || ''}
+                            onChange={(e) => handleItemChange(index, 'serialNumbers', e.target.value)}
+                            className={inputClasses}
                         />
-                        <input 
-                            type="number" 
-                            placeholder="Price" 
-                            value={item.price}
-                            onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                            className={`${inputClasses} col-span-3`} min="0" step="0.01"
-                        />
-                        <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700">Remove</button>
                     </div>
                 ))}
             </div>
+            {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
             <button type="button" onClick={handleAddItem} className="text-sm text-sky-600 hover:text-sky-800 mt-2">
                 + Add Item
             </button>

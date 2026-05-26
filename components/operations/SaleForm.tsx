@@ -29,10 +29,10 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
         }
         setError('');
         const firstProduct = availableProducts[0];
-        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.price }]);
+        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.price, serialNumbers: [] }]);
     };
 
-    const handleItemChange = (index: number, field: keyof LineItem, value: string | number) => {
+    const handleItemChange = (index: number, field: keyof LineItem, value: string | number | string[]) => {
         setError('');
         const newItems = [...items];
         const currentItem = newItems[index];
@@ -45,12 +45,15 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
                 currentItem.productId = selectedProduct.id;
                 currentItem.productName = selectedProduct.name;
                 currentItem.price = selectedProduct.price;
+                currentItem.serialNumbers = []; // Reset serial numbers when product changes
                 const newStockAtBranch = selectedProduct.stockByLocation[branchId] || 0;
                 if (currentItem.quantity > newStockAtBranch) {
                     currentItem.quantity = newStockAtBranch;
                     setError(`Quantity for ${selectedProduct.name} adjusted to max available stock.`);
                 }
             }
+        } else if (field === 'serialNumbers') {
+            currentItem.serialNumbers = value as string[]; // Value is already an array from checkbox handler
         } else if (field === 'quantity') {
             const newQuantity = Number(value);
             if (newQuantity > stockAtBranch) {
@@ -58,6 +61,11 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
                  setError(`Cannot sell more than available stock for ${product?.name} (${stockAtBranch}).`);
             } else {
                 (currentItem[field] as any) = newQuantity;
+                // If quantity is reduced, truncate selected serial numbers
+                if (currentItem.serialNumbers && currentItem.serialNumbers.length > newQuantity) {
+                    currentItem.serialNumbers = currentItem.serialNumbers.slice(0, newQuantity);
+                    setError(`Selected serial numbers for ${currentItem.productName} adjusted to match new quantity.`);
+                }
             }
         } else {
              (currentItem[field] as any) = value;
@@ -66,6 +74,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     };
 
     const handleRemoveItem = (index: number) => {
+        setError('');
         setItems(items.filter((_, i) => i !== index));
     };
 
@@ -75,12 +84,22 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
             setError('Please add at least one item to the sale.');
             return;
         }
+
+        for (const item of items) {
+            const serialCount = item.serialNumbers?.length || 0;
+            if (serialCount !== item.quantity) {
+                setError(`Product "${item.productName}" expects ${item.quantity} serial number(s), but ${serialCount} were provided.`);
+                return;
+            }
+        }
+
         setError('');
         onAdd({
             customer,
             branchId,
             saleDate,
             items,
+            status: 'Completed',
         });
     };
 
@@ -94,17 +113,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                  <div>
                     <label htmlFor="branchId" className={labelClasses}>Branch</label>
-                    <select id="branchId" value={branchId} onChange={e => {setBranchId(e.target.value); setItems([])}} className={inputClasses} required>
+                    <select id="branchId" value={branchId} onChange={e => {setBranchId(e.target.value); setItems([]); setError('');}} className={inputClasses} required>
                          {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
                     </select>
                 </div>
                 <div>
                     <label htmlFor="customer" className={labelClasses}>Customer</label>
-                    <input type="text" id="customer" value={customer} onChange={e => setCustomer(e.target.value)} className={inputClasses} required />
+                    <input type="text" id="customer" value={customer} onChange={e => {setCustomer(e.target.value); setError('');}} className={inputClasses} required />
                 </div>
                 <div className="md:col-span-2">
                     <label htmlFor="saleDate" className={labelClasses}>Sale Date</label>
-                    <input type="date" id="saleDate" value={saleDate} onChange={e => setSaleDate(e.target.value)} className={inputClasses} required />
+                    <input type="date" id="saleDate" value={saleDate} onChange={e => {setSaleDate(e.target.value); setError('');}} className={inputClasses} required />
                 </div>
             </div>
 
@@ -113,30 +132,81 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
                 {items.map((item, index) => {
                     const productInStock = products.find(p => p.id === item.productId);
                     const stock = productInStock?.stockByLocation[branchId] || 0;
+                    const availableSerials = productInStock?.serialNumbersByLocation?.[branchId] || [];
                     return (
-                        <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                            <select 
-                                value={item.productId}
-                                onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                                className={`${inputClasses} col-span-5`}
-                            >
-                                {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name} ({(p.stockByLocation[branchId] || 0)})</option>)}
-                            </select>
-                            <input 
-                                type="number" 
-                                placeholder="Qty" 
-                                value={item.quantity}
-                                onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                                className={`${inputClasses} col-span-2`} min="1" max={stock}
-                            />
-                            <input 
-                                type="number" 
-                                placeholder="Price" 
-                                value={item.price}
-                                onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                                className={`${inputClasses} col-span-3`} min="0" step="0.01"
-                            />
-                            <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700">Remove</button>
+                        <div key={index} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-12 gap-2 items-center">
+                                <select 
+                                    value={item.productId}
+                                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                    className={`${inputClasses} col-span-5`}
+                                >
+                                    {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name} ({(p.stockByLocation[branchId] || 0)})</option>)}
+                                </select>
+                                <input 
+                                    type="number" 
+                                    placeholder="Qty" 
+                                    value={item.quantity}
+                                    onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                    className={`${inputClasses} col-span-2`} min="1" max={stock}
+                                />
+                                <input 
+                                    type="number" 
+                                    placeholder="Price" 
+                                    value={item.price}
+                                    onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
+                                    className={`${inputClasses} col-span-3`} min="0" step="0.01"
+                                />
+                                <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700 text-center">✕</button>
+                            </div>
+                            {availableSerials.length > 0 && (
+                                <div className="mt-2">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Serial Numbers ({item.serialNumbers?.length || 0}/{item.quantity})</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-24 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-md">
+                                        {availableSerials.map(serial => (
+                                            <label key={serial} className="flex items-center text-sm text-gray-900 dark:text-gray-200">
+                                                <input
+                                                    type="checkbox"
+                                                    value={serial}
+                                                    checked={item.serialNumbers?.includes(serial) || false}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        const currentSerials = item.serialNumbers ? [...item.serialNumbers] : [];
+                                                        let updatedSerials: string[];
+
+                                                        if (isChecked) {
+                                                            updatedSerials = [...currentSerials, serial];
+                                                        } else {
+                                                            updatedSerials = currentSerials.filter(s => s !== serial);
+                                                        }
+
+                                                        // Enforce quantity limit
+                                                        if (updatedSerials.length > item.quantity) {
+                                                            setError(`You can only select ${item.quantity} serial number(s) for ${item.productName}.`);
+                                                            // Do not update items state if quantity exceeded
+                                                            return;
+                                                        }
+                                                        handleItemChange(index, 'serialNumbers', updatedSerials);
+                                                    }}
+                                                    className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                                                    disabled={!item.serialNumbers?.includes(serial) && (item.serialNumbers?.length || 0) >= item.quantity}
+                                                />
+                                                <span className="ml-2">{serial}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {item.serialNumbers?.length !== item.quantity && item.quantity > 0 && (
+                                        <p className="text-red-500 text-xs mt-1">
+                                            Please select {item.quantity} serial number(s). Currently selected: {item.serialNumbers?.length || 0}.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            {availableSerials.length === 0 && item.quantity > 0 && (
+                                <p className="text-amber-500 text-xs mt-1">
+                                    No serial numbers available for this product at this branch.
+                                </p>
+                            )}
                         </div>
                     );
                 })}

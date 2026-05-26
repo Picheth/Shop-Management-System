@@ -82,7 +82,7 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts, branches }) 
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Branch</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Supplier</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Products</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Serial</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Serials</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         </tr>
@@ -95,7 +95,12 @@ const Purchase: React.FC<PurchaseProps> = ({ products, setProducts, branches }) 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{branches.find(b => b.id === p.branchId)?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.supplier}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.items.map(item => item.productName).join(', ')}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.items[0]?.serialNumbers?.[0] || 'N/A'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
+                                    {p.items.flatMap(i => i.serialNumbers || []).length > 0 
+                                        ? p.items.flatMap(i => i.serialNumbers || []).join(', ') 
+                                        : 'N/A'
+                                    }
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">${p.total.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">{p.status}</td>
                             </tr>

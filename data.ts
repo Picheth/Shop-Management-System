@@ -7,7 +7,9 @@ export const mockBranches: Branch[] = [
 ];
 
 export const mockProducts: DataProduct[] = [
-    { id: 'p001', name: 'Quantum Laptop Pro', sku: 'QLP-2024-BLK', category: 'Electronics', stockByLocation: { 'b001': 30, 'b002': 15 }, price: 1499.99, status: 'In Stock', history: [
+    { id: 'p001', name: 'Quantum Laptop Pro', sku: 'QLP-2024-BLK', category: 'Electronics', stockByLocation: { 'b001': 30, 'b002': 15 }, 
+      serialNumbersByLocation: { 'b002': ['SN-QLP-002'] },
+      price: 1499.99, status: 'In Stock', history: [
         { date: '2023-10-01', action: 'Initial Stock', change: 50, newStock: 50, branch: 'Main Warehouse' },
         { date: '2023-10-15', action: 'Sale', change: -5, newStock: 45, branch: 'Downtown Store' },
         { date: '2023-11-20', action: 'Transfer Out', change: -10, newStock: 40, branch: 'Main Warehouse' },
@@ -44,14 +46,14 @@ export const mockStockTransfers: StockTransfer[] = [
 export const mockPurchaseOrders: PurchaseOrder[] = [
     { 
         id: 'PO-001', 
-        supplier: 'TechGlobal Inc.', 
+        supplier: 'LH Main Supplier', 
         orderDate: '2023-11-01', 
         expectedDate: '2023-11-15',
         items: [
-            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 10, price: 1200.00 },
-            { productId: 'p005', productName: '4K UltraWide Monitor', quantity: 15, price: 600.00 },
+            { productId: 'p001', productName: 'iPhone 11 64GB Black USA USED', quantity: 10, price: 189.00 },
+            { productId: 'p005', productName: 'iPhone 12 Pro Max 128GB Gold USA USED', quantity: 15, price: 349.00 },
         ],
-        total: 21000.00,
+        total: 7125.00,
         status: 'Completed'
     },
     { 
@@ -71,12 +73,12 @@ export const mockPurchases: Purchase[] = [
     {
         id: 'PUR-001',
         branchId: 'b001',
-        supplier: 'TechGlobal Inc.',
+        supplier: 'LH Main Supplier',
         purchaseDate: '2023-11-15',
         items: [
-            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 10, price: 1200.00 },
+            { productId: 'p001', productName: 'iPhone 11 64GB Black USA USED', quantity: 2, price: 189.00, serialNumbers: ['SN-I11-001', 'SN-I11-002'] },
         ],
-        total: 12000.00,
+        total: 378.00,
         poId: 'PO-001',
         status: 'Received'
     },
@@ -89,7 +91,7 @@ export const mockSales: Sale[] = [
         customer: 'Alice Johnson',
         saleDate: '2023-11-16',
         items: [
-            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 2, price: 1499.99 },
+            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 1, price: 1499.99, serialNumbers: ['SN-QLP-001'] },
         ],
         total: 2999.98,
         status: 'Completed'
@@ -120,9 +122,9 @@ export const mockRepairs: Repair[] = [
         serialNumber: 'SN12345678',
         repairIssue: 'Screen flickering',
         items: [
-            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 1, price: 1499.99 },
+            { productId: 'p001', productName: 'iPhone 11 64GB Black USA USED', quantity: 1, price: 189.00 },
         ],
-        total: 1499.99,
+        total: 189.00,
         repairCost: 200.00,
         estimatedCost: 250.00,
         technician: 'Tech Mike',

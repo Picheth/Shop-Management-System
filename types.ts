@@ -71,6 +71,7 @@ export interface DataProduct {
   sku: string;
   category: string;
   stockByLocation: Record<string, number>;
+  serialNumbersByLocation?: Record<string, string[]>;
   price: number;
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
   imageUrl?: string;
