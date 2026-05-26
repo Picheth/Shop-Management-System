@@ -16,6 +16,54 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([]);
     const [error, setError] = useState('');
+    const [scanValue, setScanValue] = useState('');
+
+    const handleScan = () => {
+        const barcode = scanValue.trim();
+        if (!barcode) return;
+
+        // 1. Search for a product that has this serial in the selected branch
+        const productWithSerial = products.find(p => 
+            p.serialNumbersByLocation?.[branchId]?.includes(barcode)
+        );
+
+        if (!productWithSerial) {
+            setError(`Serial number "${barcode}" not found in stock at this branch.`);
+            setScanValue('');
+            return;
+        }
+
+        // 2. Check if this specific serial is already in our items list
+        const isDuplicate = items.some(item => item.serialNumbers?.includes(barcode));
+        if (isDuplicate) {
+            setError(`Serial "${barcode}" has already been added to this sale.`);
+            setScanValue('');
+            return;
+        }
+
+        // 3. Find if the product is already in the items list to update quantity, or add new
+        const existingItemIndex = items.findIndex(item => item.productId === productWithSerial.id);
+
+        if (existingItemIndex > -1) {
+            const updatedItems = [...items];
+            const item = updatedItems[existingItemIndex];
+            
+            item.quantity += 1;
+            item.serialNumbers = [...(item.serialNumbers || []), barcode];
+            setItems(updatedItems);
+        } else {
+            setItems([...items, {
+                productId: productWithSerial.id,
+                productName: productWithSerial.name,
+                quantity: 1,
+                price: productWithSerial.price,
+                serialNumbers: [barcode]
+            }]);
+        }
+
+        setScanValue('');
+        setError('');
+    };
     
     const availableProducts = useMemo(() => {
         if (!branchId) return [];
@@ -111,6 +159,37 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div className="md:col-span-2 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
+                    <label htmlFor="barcode-scan" className={`${labelClasses} text-sky-700 dark:text-sky-300`}>
+                        Quick Scan (Serial Number)
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            id="barcode-scan"
+                            type="text"
+                            placeholder="Scan or type serial number..."
+                            value={scanValue}
+                            onChange={(e) => setScanValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleScan();
+                                }
+                            }}
+                            className={inputClasses}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleScan}
+                            className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors"
+                        >
+                            Add
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-sky-600 dark:text-sky-400 mt-1 italic">
+                        Tip: Focus this field and scan a serial number to automatically add products.
+                    </p>
+                </div>
                  <div>
                     <label htmlFor="branchId" className={labelClasses}>Branch</label>
                     <select id="branchId" value={branchId} onChange={e => {setBranchId(e.target.value); setItems([]); setError('');}} className={inputClasses} required>

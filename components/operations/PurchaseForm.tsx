@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DataProduct, LineItem, Purchase, Branch } from '../../types';
 
 type PurchaseFormData = Omit<Purchase, 'id' | 'total'>;
@@ -16,6 +16,47 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
     const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
     const [items, setItems] = useState<LineItem[]>([]);
     const [error, setError] = useState('');
+    const [scanValue, setScanValue] = useState('');
+
+    const scanInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        scanInputRef.current?.focus();
+    }, []); // Empty dependency array means this runs once after initial render
+
+    const handleScan = () => {
+        const barcode = scanValue.trim();
+        if (!barcode) return;
+
+        // Search for product by SKU or ID
+        const product = products.find(p => p.sku === barcode || p.id === barcode);
+
+        if (!product) {
+            setError(`Product with SKU or ID "${barcode}" not found.`);
+            setScanValue('');
+            return;
+        }
+
+        const existingItemIndex = items.findIndex(item => item.productId === product.id);
+
+        if (existingItemIndex > -1) {
+            const updatedItems = [...items];
+            updatedItems[existingItemIndex].quantity += 1;
+            setItems(updatedItems);
+        } else {
+            setItems([...items, {
+                productId: product.id,
+                productName: product.name,
+                quantity: 1,
+                price: product.price,
+                sku: product.sku,
+                serialNumbers: []
+            }]);
+        }
+
+        setScanValue('');
+        setError('');
+    };
 
     const handleAddItem = () => {
         setError('');
@@ -83,6 +124,38 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div className="md:col-span-2 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
+                    <label htmlFor="barcode-scan" className={`${labelClasses} text-sky-700 dark:text-sky-300`}>
+                        Quick Scan (Product SKU/ID)
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            id="barcode-scan"
+                            ref={scanInputRef}
+                            type="text"
+                            placeholder="Scan product barcode or SKU..."
+                            value={scanValue}
+                            onChange={(e) => setScanValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleScan();
+                                }
+                            }}
+                            className={inputClasses}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleScan}
+                            className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors"
+                        >
+                            Add
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-sky-600 dark:text-sky-400 mt-1 italic">
+                        Tip: Focus this field and scan a SKU to automatically add products to the receiving list.
+                    </p>
+                </div>
                  <div>
                     <label htmlFor="branchId" className={labelClasses}>Branch</label>
                     <select id="branchId" value={branchId} onChange={e => { setBranchId(e.target.value); setError(''); }} className={inputClasses} required>
