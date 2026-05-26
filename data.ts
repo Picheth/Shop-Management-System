@@ -1,4 +1,4 @@
-import { DataProduct, PurchaseOrder, Purchase, Sale, Branch, StockTransfer } from './types';
+import { DataProduct, PurchaseOrder, Purchase, Sale, Branch, StockTransfer, Repair } from './types';
 
 export const mockBranches: Branch[] = [
     { id: 'b001', name: 'Main Warehouse', location: '123 Warehouse St.' },
@@ -68,40 +68,65 @@ export const mockPurchaseOrders: PurchaseOrder[] = [
 ];
 
 export const mockPurchases: Purchase[] = [
-    { 
+    {
         id: 'PUR-001',
         branchId: 'b001',
-        poId: 'PO-001',
-        supplier: 'TechGlobal Inc.', 
-        purchaseDate: '2023-11-14',
+        supplier: 'TechGlobal Inc.',
+        purchaseDate: '2023-11-15',
         items: [
             { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 10, price: 1200.00 },
-            { productId: 'p005', productName: '4K UltraWide Monitor', quantity: 15, price: 600.00 },
         ],
-        total: 21000.00
+        total: 12000.00,
+        poId: 'PO-001',
+        status: 'Received'
     },
 ];
 
 export const mockSales: Sale[] = [
     {
-        id: 'SALE-001',
+        id: 'S-001',
         branchId: 'b002',
-        customer: 'John Doe',
-        saleDate: '2023-11-10',
+        customer: 'Alice Johnson',
+        saleDate: '2023-11-16',
         items: [
-            { productId: 'p002', productName: 'Nova Smartphone X', quantity: 1, price: 899.00 }
+            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 2, price: 1499.99 },
         ],
-        total: 899.00
+        total: 2999.98,
+        status: 'Completed'
     },
     {
-        id: 'SALE-002',
-        branchId: 'b002',
-        customer: 'Walk-in Customer',
-        saleDate: '2023-11-12',
+        id: 'S-002',
+        branchId: 'b001',
+        customer: 'Bob Smith',
+        saleDate: '2023-11-18',
         items: [
-            { productId: 'p003', productName: 'Ergo-Mechanical Keyboard', quantity: 2, price: 179.50 },
-            { productId: 'p006', productName: 'Gaming Mouse G-Pro', quantity: 2, price: 89.99 }
+            { productId: 'p005', productName: '4K UltraWide Monitor', quantity: 1, price: 750.00 },
         ],
-        total: 538.98
-    }
+        total: 750.00,
+        status: 'Completed'
+    },
+    { id: 'S-003', branchId: 'b002', customer: 'Charlie Davis', saleDate: '2023-11-19', items: [
+        { productId: 'p003', productName: 'Ergo-Mechanical Keyboard', quantity: 2, price: 179.50 },
+    ], total: 359.00, status: 'Completed' },
+];
+
+export const mockRepairs: Repair[] = [
+    {
+        id: 'R-001',
+        branchId: 'b002',
+        customer: 'Alice Johnson',
+        phone: '555-1234',
+        device: 'Quantum Laptop Pro',
+        serialNumber: 'SN12345678',
+        repairIssue: 'Screen flickering',
+        items: [
+            { productId: 'p001', productName: 'Quantum Laptop Pro', quantity: 1, price: 1499.99 },
+        ],
+        total: 1499.99,
+        repairCost: 200.00,
+        estimatedCost: 250.00,
+        technician: 'Tech Mike',
+        entryDate: '2023-11-17',
+        status: 'In Progress',
+    },
 ];

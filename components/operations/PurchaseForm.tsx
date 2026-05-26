@@ -45,11 +45,13 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ products, branches, onAdd, 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         onAdd({
             supplier,
             branchId,
             purchaseDate,
             items,
+            status: 'Received',
         });
     };
 

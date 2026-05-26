@@ -83,12 +83,34 @@ export interface Variation {
   type: string;
   attributes: Record<string, string>;
 }
-
 export interface LineItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
+    sku?: string;
+    productId: string;
+    productName: string;
+    quantity: number;
+    price: number;
+    serialNumbers?: string[];
+    imeis?: string[];
+}
+export interface ProductUnit {
+    id: string;
+    productId: string;
+    serialNumber?: string;
+    imei?: string;
+    barcode?: string;
+    purchaseId?: string;
+    saleId?: string;
+    branchId: string;
+    status:
+        | 'In Stock'
+        | 'Sold'
+        | 'Repair'
+        | 'Returned'
+        | 'Reserved';
+
+    costPrice: number;
+    salePrice?: number;
+    createdAt: string;
 }
 
 /* =======================
@@ -112,8 +134,18 @@ export interface Purchase {
   purchaseDate: string;
   items: LineItem[];
   total: number;
+  status: string;
+}
+export interface PurchaseItem extends LineItem {
+    serialNumbers?: string[];
+    imeis?: string[];
+    items: LineItem[];
+    total: number;
 }
 
+/* =======================
+   SALES (FIXED CONSISTENT)
+======================= */
 export interface Sale {
   id: string;
   branchId: string;
@@ -121,6 +153,7 @@ export interface Sale {
   saleDate: string;
   items: LineItem[];
   total: number;
+  status: string;
 }
 
 /* =======================
@@ -128,25 +161,18 @@ export interface Sale {
 ======================= */
 export interface Repair {
   id: string;
-  productId: string;
   branchId: string;
   customer: string;
   phone: string;
   device: string;
   serialNumber: string;
-
   repairIssue: string;
-
   items: LineItem[];
-
   total: number;
   repairCost: number;
   estimatedCost: number;
-
   technician: string;
-
   entryDate: string;
-
   status: RepairStatus;
 }
 
@@ -169,7 +195,6 @@ export const repairStatusColors: Record<RepairStatus, string> = {
   'Completed': 'bg-green-100 text-green-800',
   'Cancelled': 'bg-red-100 text-red-800',
 };
-
 /* =======================
    FINANCE TYPES
 ======================= */
