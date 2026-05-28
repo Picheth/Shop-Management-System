@@ -71,8 +71,8 @@
 }
 
 @utility scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: 100%; /* IE and Edge */
+  scrollbar-width: 100vw; /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {

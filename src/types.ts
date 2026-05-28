@@ -298,12 +298,32 @@ export type AddProductFormData = Omit<
     | 'active'
     | 'stockByLocation'
     | 'history'
-    | 'status'
 > & {
+    tags: string[];
     initialStock: number;
     branchId: string;
+    imageUrl?: string;
+    stockByLocation: Record<string, number>;
+    status:
+        | 'In Stock'
+        | 'Low Stock'
+        | 'Out of Stock';
+
+    history: ProductHistory[];
 };
 
+export type ProductHistory = {
+    date: string;
+    action: StockAction;
+    change: number;
+    newStock: number;
+    branch: string;
+    reason?: string;
+};
+
+/* =========================================================
+   PRODUCT UNIT (IMEI / SERIAL TRACKING)
+========================================================= */
 export type ProductUnitStatus =
     | 'In Stock'
     | 'Sold'

@@ -194,7 +194,7 @@ const Product: React.FC<ProductProps> = ({
     };
 
     const handleAddProduct = (
-    newProductData: AddProductFormData
+    newProductData: any
 ) => {
     const {
         initialStock,
@@ -520,22 +520,11 @@ const Product: React.FC<ProductProps> = ({
                     }
                 >
                     <AddProductForm
-                        onAddProduct={
-                            handleAddProduct
-                        }
-                        onCancel={() =>
-                            setIsModalOpen(false)
-                        }
-                        existingCategories={Array.from(
-                            new Set(
-                                products.map(
-                                    p =>
-                                        p.categoryId
-                                )
-                            )
-                        )}
-                        branches={branches}
-                    />
+    open={isModalOpen}
+    branches={branches}
+    onClose={() => setIsModalOpen(false)}
+    onSubmitProduct={handleAddProduct}
+/>
                 </Modal>
             )}
 

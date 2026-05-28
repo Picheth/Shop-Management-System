@@ -1,338 +1,224 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { DataProduct, Branch } from '../../types';
-import { supabase } from '../../utils/supabase';
+import { Branch } from '../../types';
+import Modal from '../ui/Modal';
+import ConfirmationModal from '../ui/ConfirmationModal';
+import Placeholder from '../ui/Placeholder';
+import { StatusBadge } from '../ui/StatusBadge';
+import { DataProduct } from '../../types';
+import ProductDetail from './ProductDetail';
 
-type AddProductFormData = Omit<
-    DataProduct,
-    'id'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'active'
-    | 'stockByLocation'
-    | 'history'
-    | 'status'
-> & {
-    initialStock: number;
-    branchId: string;
-};
+interface ProductFormInputs {
+    name: string;
+    sku: string;
+    category: string;
+    price: number;
+    status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+    imageUrl: string;
+    stockByLocation: Record<string, number>;
+}
 
 interface AddProductFormProps {
-    onAddProduct: (
-        product: AddProductFormData & {
-            stockByLocation: Record<string, number>;
-        }
-    ) => void;
-    onCancel: () => void;
-    existingCategories: string[];
+    open: boolean;
     branches: Branch[];
+    onClose: () => void;
+    onSubmitProduct: (data: ProductFormInputs) => void;
 }
 
 const AddProductForm: React.FC<AddProductFormProps> = ({
-    onAddProduct,
-    onCancel,
-    existingCategories,
+    open,
     branches,
+    onClose,
+    onSubmitProduct,
 }) => {
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isValidating: isSubmitting },
-        setError,
-        clearErrors,
-        watch,
-        setValue,
-    } = useForm<AddProductFormData>({
+
+    const defaultStock: Record<string, number> = {};
+
+    branches.forEach(branch => {
+        defaultStock[branch.id] = 0;
+    });
+
+    const form = useForm<ProductFormInputs>({
         defaultValues: {
             name: '',
             sku: '',
-            categoryId: '',
-            salePrice: 0,
-            initialStock: 0,
-            branchId: branches[0]?.id || '',
-            hasSerialNumber: false,
-            hasIMEI: false,
+            category: '',
+            price: 0,
+            status: 'In Stock',
+            imageUrl: '',
+            stockByLocation: defaultStock,
         },
     });
 
-    const [isCheckingSku, setIsCheckingSku] = React.useState(false);
+    if (!open) return null;
 
-    const currentSku = watch('sku');
-    const lastCheckedSkuRef = useRef<string | null>(null);
+    const onSubmit: SubmitHandler<ProductFormInputs> = (data) => {
 
-    const skuCheckPromiseRef = useRef<Promise<boolean> | null>(null);
+        console.log('Product Data:', data);
 
-    const performSkuUniquenessCheck = useCallback(
-        async (sku: string): Promise<boolean> => {
-            if (skuCheckPromiseRef.current) {
-                return skuCheckPromiseRef.current;
-            }
+        onSubmitProduct(data);
 
-            setIsCheckingSku(true);
+        form.reset();
 
-            const promise = (async () => {
-                try {
-                    const { data, error } = await supabase
-                        .from('products')
-                        .select('id')
-                        .eq('sku', sku)
-                        .maybeSingle();
-
-                    if (error) throw error;
-
-                    if (data) {
-                        setError('sku', { type: 'manual', message: 'This SKU already exists in the database.' });
-                        return false;
-                    }
-
-                    clearErrors('sku');
-                    lastCheckedSkuRef.current = sku;
-
-                    return true;
-                } catch (err) {
-                    console.error(err);
-                    setError('sku', { type: 'manual', message: 'Failed to check SKU uniqueness.' });
-                    return false;
-                } finally {
-                    setIsCheckingSku(false);
-                    skuCheckPromiseRef.current = null;
-                }
-            })();
-
-            skuCheckPromiseRef.current = promise;
-
-            return promise;
-        },
-        []
-    );
-
-    useEffect(() => {
-        const sku = currentSku?.trim();
-        const skuRegex = /^[A-Z0-9-_]+$/i;
-
-        if (!sku || !skuRegex.test(sku) || sku === lastCheckedSkuRef.current) return;
-
-        const timeoutId = setTimeout(() => performSkuUniquenessCheck(sku), 500);
-        return () => clearTimeout(timeoutId);
-    }, [currentSku, performSkuUniquenessCheck, setError, clearErrors]);
-
-    const onFormSubmit: SubmitHandler<AddProductFormData> = async (data) => {
-        if (isCheckingSku) return;
-        
-        // Re-verify uniqueness if SKU changed but hasn't been validated yet
-        if (data.sku !== lastCheckedSkuRef.current) {
-            const isUnique = await performSkuUniquenessCheck(data.sku);
-            if (!isUnique) return;
-        }
-
-        onAddProduct({
-            ...data,
-            stockByLocation: {
-                [data.branchId]: data.initialStock,
-            },
-        });
+        onClose();
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500';
-
-    const labelClasses =
-        'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
-
-    const errorClasses = 'text-red-500 text-xs mt-1';
-
     return (
-        <form onSubmit={handleSubmit(onFormSubmit)} noValidate>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label
-                        htmlFor="name"
-                        className={labelClasses}
-                    >
-                        Product Name
-                    </label>
+        <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+        >
 
-                    <input
-                        type="text"
-                        id="name"
-                        className={inputClasses}
-                        {...register('name', { 
-                            required: 'Product name is required.',
-                            minLength: { value: 3, message: 'Name must be at least 3 characters.' }
-                        })}
-                    />
+            {/* Product Name */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Product Name
+                </label>
 
-                    {errors.name && (
-                        <p className={errorClasses}>
-                            {errors.name.message}
-                        </p>
-                    )}
-                </div>
+                <input
+                    type="text"
+                    {...form.register('name', {
+                        required: 'Product name is required',
+                    })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
 
-                <div>
-                    <label
-                        htmlFor="sku"
-                        className={labelClasses}
-                    >
-                        SKU
-                    </label>
+                {form.formState.errors.name && (
+                    <p className="mt-1 text-sm text-red-500">
+                        {form.formState.errors.name.message}
+                    </p>
+                )}
+            </div>
 
-                    <input
-                        type="text"
-                        id="sku"
-                        className={inputClasses}
-                        {...register('sku', { 
-                            required: 'SKU is required.',
-                            pattern: { 
-                                value: /^[A-Z0-9-_]+$/i, 
-                                message: 'SKU can only contain letters, numbers, hyphens, and underscores.' 
-                            }
-                        })}
-                    />
-                    {errors.sku && (
-                        <p className={errorClasses}>{errors.sku.message}</p>
-                    )}
-                </div>
+            {/* SKU */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    SKU
+                </label>
 
-                <div>
-                    <label
-                        htmlFor="categoryId"
-                        className={labelClasses}
-                    >
-                        Category
-                    </label>
+                <input
+                    type="text"
+                    {...form.register('sku', {
+                        required: 'SKU is required',
+                    })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+            </div>
 
-                    <select
-                        id="categoryId"
-                        className={inputClasses}
-                        {...register('categoryId', { required: 'Please select a category.' })}
-                    >
-                        <option value="">
-                            Select Category
-                        </option>
+            {/* Category */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Category
+                </label>
 
-                        {existingCategories.map(category => (
-                            <option
-                                key={category}
-                                value={category}
-                            >
-                                {category}
-                            </option>
-                        ))}
-                    </select>
+                <input
+                    type="text"
+                    {...form.register('category')}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+            </div>
 
-                    {errors.categoryId && (
-                        <p className={errorClasses}>
-                            {errors.categoryId.message}
-                        </p>
-                    )}
-                </div>
+            {/* Price */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Price
+                </label>
 
-                <div>
-                    <label
-                        htmlFor="salePrice"
-                        className={labelClasses}
-                    >
-                        Sale Price
-                    </label>
+                <input
+                    type="number"
+                    step="0.01"
+                    {...form.register('price', {
+                        required: 'Price is required',
+                        valueAsNumber: true,
+                        min: {
+                            value: 0,
+                            message: 'Price cannot be negative',
+                        },
+                    })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
 
-                    <input
-                        type="number"
-                        id="salePrice"
-                        className={inputClasses}
-                        min="0"
-                        step="0.01"
-                        {...register('salePrice', { 
-                            valueAsNumber: true, 
-                            min: { value: 0.01, message: 'Sale price must be at least $0.01.' } 
-                        })}
-                    />
+                {form.formState.errors.price && (
+                    <p className="mt-1 text-sm text-red-500">
+                        {form.formState.errors.price.message}
+                    </p>
+                )}
+            </div>
 
-                    {errors.salePrice && (
-                        <p className={errorClasses}>
-                            {errors.salePrice.message}
-                        </p>
-                    )}
-                </div>
+            {/* Status */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Status
+                </label>
 
-                <div>
-                    <label
-                        htmlFor="initialStock"
-                        className={labelClasses}
-                    >
-                        Initial Stock
-                    </label>
+                <select
+                    {...form.register('status')}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                    <option value="In Stock">In Stock</option>
+                    <option value="Low Stock">Low Stock</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                </select>
+            </div>
 
-                    <input
-                        type="number"
-                        id="initialStock"
-                        className={inputClasses}
-                        min="0"
-                        {...register('initialStock', { 
-                            valueAsNumber: true,
-                            min: { value: 0, message: 'Initial stock cannot be negative.' }
-                        })}
-                    />
+            {/* Image URL */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Image URL
+                </label>
 
-                    {errors.initialStock && (
-                        <p className={errorClasses}>
-                            {errors.initialStock.message}
-                        </p>
-                    )}
-                </div>
+                <input
+                    type="text"
+                    {...form.register('imageUrl')}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+            </div>
 
-                <div>
-                    <label
-                        htmlFor="branchId"
-                        className={labelClasses}
-                    >
-                        Branch
-                    </label>
+            {/* Stock By Branch */}
+            <div>
+                <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+                    Stock By Branch
+                </h3>
 
-                    <select
-                        id="branchId"
-                        className={inputClasses}
-                        {...register('branchId', { required: 'Please select a branch.' })}
-                    >
-                        <option value="">
-                            Select Branch
-                        </option>
-
-                        {branches.map(branch => (
-                            <option
-                                key={branch.id}
-                                value={branch.id}
-                            >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {branches.map(branch => (
+                        <div key={branch.id}>
+                            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
                                 {branch.name}
-                            </option>
-                        ))}
-                    </select>
+                            </label>
 
-                    {errors.branchId && (
-                        <p className={errorClasses}>
-                            {errors.branchId.message}
-                        </p>
-                    )}
+                            <input
+                                type="number"
+                                min="0"
+                                {...form.register(
+                                    `stockByLocation.${branch.id}` as const,
+                                    {
+                                        valueAsNumber: true,
+                                        min: 0,
+                                    }
+                                )}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6 pt-4 border-t dark:border-gray-700">
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 pt-4">
                 <button
                     type="button"
-                    onClick={onCancel}
-                    className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md w-full sm:w-auto"
+                    onClick={onClose}
+                    className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                     Cancel
                 </button>
 
                 <button
                     type="submit"
-                    disabled={isCheckingSku}
-                    className="bg-sky-600 text-white px-4 py-2 rounded-md w-full sm:w-auto"
+                    className="rounded-md bg-sky-600 px-4 py-2 text-sm text-white hover:bg-sky-700"
                 >
-                    {isCheckingSku
-                        ? 'Checking...'
-                        : 'Save Product'}
+                    Save Product
                 </button>
             </div>
         </form>

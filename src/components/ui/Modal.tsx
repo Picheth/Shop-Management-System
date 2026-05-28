@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface ModalProps {
     title: string;
@@ -6,31 +6,88 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ title, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({
+    title,
+    onClose,
+    children,
+}) => {
+
+    // Prevent body scroll without layout shift
+    useEffect(() => {
+        const scrollbarWidth =
+            window.innerWidth - document.documentElement.clientWidth;
+
+        document.body.style.overflow = 'hidden';
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+        return () => {
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        };
+    }, []);
+
     return (
-        <div 
-            className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center" 
-            aria-labelledby="modal-title" 
-            role="dialog" 
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            aria-labelledby="modal-title"
+            role="dialog"
             aria-modal="true"
             onClick={onClose}
         >
-            <div 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4"
-                onClick={e => e.stopPropagation()} // Prevent closing when clicking inside the modal
+            <div
+                className="
+                    w-full
+                    max-w-2xl
+                    rounded-xl
+                    bg-white
+                    shadow-2xl
+                    dark:bg-gray-800
+                    max-h-[90vh]
+                    overflow-y-auto
+                "
+                onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-                    <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
-                    <button 
-                        onClick={onClose} 
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                {/* Header */}
+                <div className="flex items-center justify-between border-b p-4 dark:border-gray-700">
+                    <h2
+                        id="modal-title"
+                        className="text-lg font-semibold text-gray-900 dark:text-white"
+                    >
+                        {title}
+                    </h2>
+
+                    <button
+                        onClick={onClose}
+                        className="
+                            rounded-md
+                            p-1
+                            text-gray-400
+                            transition
+                            hover:bg-gray-100
+                            hover:text-gray-600
+                            dark:hover:bg-gray-700
+                            dark:hover:text-gray-200
+                        "
                         aria-label="Close modal"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
                 </div>
+
+                {/* Content */}
                 <div className="p-6">
                     {children}
                 </div>
