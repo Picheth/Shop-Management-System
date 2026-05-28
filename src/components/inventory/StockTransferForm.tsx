@@ -51,8 +51,11 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             const existingIndex = items.findIndex(item => item.productId === productWithSerial.id);
             if (existingIndex > -1) {
                 const updated = [...items];
-                updated[existingIndex].quantity += 1;
-                updated[existingIndex].serialNumbers = [...(updated[existingIndex].serialNumbers || []), barcode];
+                updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    quantity: updated[existingIndex].quantity + 1,
+                    serialNumbers: [...(updated[existingIndex].serialNumbers || []), barcode]
+                };
                 setItems(updated);
             } else {
                 setItems([...items, {
@@ -84,7 +87,10 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
         if (existingIndex > -1) {
             const updated = [...items];
-            updated[existingIndex].quantity += 1;
+            updated[existingIndex] = {
+                ...updated[existingIndex],
+                quantity: updated[existingIndex].quantity + 1
+            };
             setItems(updated);
         } else {
             setItems([...items, {

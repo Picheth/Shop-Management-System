@@ -3,6 +3,7 @@ import React, {
     useState,
 } from 'react';
 import Placeholder from '../ui/Placeholder';
+import { DataProduct, Branch, StockTransfer, Page } from '../../types';
 
 type RepairStatus =
     | 'Pending'
@@ -53,12 +54,18 @@ const initialRepairs: RepairItem[] = [
     },
 ];
 
-const RepairCenter: React.FC =
-    () => {
-        const [repairs, setRepairs] =
-            useState<RepairItem[]>(
-                initialRepairs
-            );
+interface RepairCenterProps {
+    products: DataProduct[];
+    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    branches: Branch[];
+    onNavigate: (page: Page) => void;
+    stockTransfers: StockTransfer[];
+    setStockTransfers: React.Dispatch<React.SetStateAction<StockTransfer[]>>;
+}
+
+const RepairCenter: React.FC<RepairCenterProps> =
+    ({ products, setProducts, branches, onNavigate, stockTransfers, setStockTransfers }) => {
+        const [repairs, setRepairs] = useState<RepairItem[]>(initialRepairs);
 
         const [
             search,
@@ -372,10 +379,10 @@ const RepairCenter: React.FC =
             <Placeholder title="Repair Center">
 
                 {/* Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="@container grid grid-cols-1 @[400px]:grid-cols-2 @[700px]:grid-cols-3 gap-4 mb-6">
 
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="card">
+                        <p className="text-sm text-brand-secondary dark:text-gray-400">
                             Total Repairs
                         </p>
 
@@ -386,8 +393,8 @@ const RepairCenter: React.FC =
                         </h2>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="card">
+                        <p className="text-sm text-brand-secondary dark:text-gray-400">
                             Pending Repairs
                         </p>
 
@@ -398,8 +405,8 @@ const RepairCenter: React.FC =
                         </h2>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="card">
+                        <p className="text-sm text-brand-secondary dark:text-gray-400">
                             Completed Repairs
                         </p>
 
@@ -426,9 +433,7 @@ const RepairCenter: React.FC =
                                     .value
                             )
                         }
-                        className={
-                            inputClasses
-                        }
+                        className="input-field"
                     />
 
                     <select
@@ -443,9 +448,7 @@ const RepairCenter: React.FC =
                                     | RepairStatus
                             )
                         }
-                        className={
-                            inputClasses
-                        }
+                        className="input-field"
                     >
                         <option value="All">
                             All Status
@@ -474,7 +477,7 @@ const RepairCenter: React.FC =
                     onSubmit={
                         handleSubmit
                     }
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                    className="card mb-6"
                 >
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -508,9 +511,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             required
                         />
 
@@ -524,9 +525,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             required
                         />
 
@@ -540,9 +539,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             required
                         />
 
@@ -556,9 +553,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                         />
 
                         <input
@@ -571,9 +566,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                         />
 
                         <input
@@ -586,9 +579,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             required
                         />
 
@@ -601,9 +592,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             required
                         />
 
@@ -617,9 +606,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                             min="0"
                             required
                         />
@@ -632,9 +619,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                            className="input-field"
                         >
                             <option value="Pending">
                                 Pending
@@ -664,7 +649,7 @@ const RepairCenter: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={`${inputClasses} h-24`}
+                            className="input-field h-24"
                             required
                         />
                     </div>
@@ -672,7 +657,7 @@ const RepairCenter: React.FC =
                     <div className="flex justify-end mt-4">
                         <button
                             type="submit"
-                            className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
+                            className="btn-primary"
                         >
                             {editingId
                                 ? 'Update Repair'
@@ -819,7 +804,7 @@ const RepairCenter: React.FC =
                                                                 item
                                                             )
                                                         }
-                                                        className="px-3 py-1 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded"
+                                                        className="px-3 py-1 text-sm bg-brand-accent hover:bg-amber-600 text-white rounded"
                                                     >
                                                         Edit
                                                     </button>
@@ -912,7 +897,7 @@ const RepairCenter: React.FC =
                                                     .value as RepairStatus
                                             )
                                         }
-                                        className={inputClasses}
+                                        className="input-field"
                                     >
                                         <option value="Pending">
                                             Pending

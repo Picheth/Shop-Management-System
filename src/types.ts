@@ -86,15 +86,89 @@ export interface Branch extends BaseEntity {
 }
 
 /* =========================================================
-   PRODUCT TYPE
+   PRODUCT
 ========================================================= */
 
-export interface ProductType extends BaseEntity {
-    code: string;
+export type ProductStatus =
+    | 'In Stock'
+    | 'Low Stock'
+    | 'Out of Stock';
+
+export interface StockHistoryItem {
+    date: string;
+
+    action: StockAction;
+
+    change: number;
+
+    newStock: number;
+
+    branch: string;
+
+    reason?: string;
+}
+
+export interface DataProduct extends BaseEntity {
+    productNumber: string;
+
+    sku: string;
+
+    barcode?: string;
+
+    shortName?: string;
 
     name: string;
 
     description?: string;
+
+    typeId: string;
+
+    categoryId: string;
+
+    subCategoryId?: string;
+
+    brandId?: string;
+
+    model?: string;
+
+    variation?: string;
+
+    color?: string;
+
+    size?: string;
+
+    storage?: string;
+
+    ram?: string;
+
+    costPrice: number;
+
+    salePrice: number;
+
+    wholesalePrice?: number;
+
+    reorderLevel?: number;
+
+    hasSerialNumber: boolean;
+
+    hasIMEI: boolean;
+
+    warrantyDays?: number;
+
+    imageUrl?: string;
+
+    tags?: string[];
+
+    stockByLocation: Record<string, number>;
+
+    serialNumbersByLocation?: Record<
+        string,
+        string[]
+    >;
+
+    status: ProductStatus;
+
+    history: StockHistoryItem[];
 }
 
 /* =========================================================
@@ -216,7 +290,19 @@ export type productData = {
     }[];
 };
 
-export type DataProduct = productData;
+export type AddProductFormData = Omit<
+    DataProduct,
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'active'
+    | 'stockByLocation'
+    | 'history'
+    | 'status'
+> & {
+    initialStock: number;
+    branchId: string;
+};
 
 export type ProductUnitStatus =
     | 'In Stock'
@@ -767,4 +853,13 @@ export interface Report extends BaseEntity {
     generatedBy?: string;
 
     data?: any;
+}
+
+/* =========================================================
+    Styles
+========================================================= */
+
+export interface cssModule {
+    name: string;
+    css: string;
 }

@@ -15,7 +15,11 @@ const StatCard: React.FC<{
     color?: string;
 }> = ({ title, value, icon, color = 'sky' }) => (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex items-center">
-        <div className={`p-3 rounded-full text-white mr-4 bg-${color}-500`}>
+        <div className={`p-3 rounded-full text-white mr-4 ${
+            color === 'amber' ? 'bg-amber-500' : 
+            color === 'green' ? 'bg-green-500' : 
+            'bg-sky-500'
+        }`}>
             {icon}
         </div>
         <div>
@@ -199,13 +203,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             <Placeholder title="Repair Analytics">
                 <p className="text-sm text-gray-500">
                     📈 Repair trend chart coming soon!
-                </p>
-            </Placeholder>
-            
-            {/* FUTURE: Add Product Trend Chart here */}
-            <Placeholder title="Product Analytics">
-                <p className="text-sm text-gray-500">
-                    📈 Product trend chart coming soon!
                 </p>
             </Placeholder>
 

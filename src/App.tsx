@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { Page, DataProduct, Branch, StockTransfer as StockTransferType } from './types';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Page, DataProduct, Branch, StockTransfer as StockTransferType, Sale as SaleType } from './types';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { mockProducts, mockBranches, mockStockTransfers } from './data';
+import { supabase } from './utils/supabase';
 
 import Dashboard from './components/core/Dashboard';
 import PurchaseOrder from './components/operations/PurchaseOrder';
@@ -60,15 +61,68 @@ const pageComponents: Record<Page, React.ComponentType<any>> = {
     [Page.ExpenseCategory]: ExpenseCategory,
     [Page.Staff]: Staff,
     [Page.Payroll]: Payroll,
+    [Page.ProductType]: () => null,
+    [Page.Category]: () => null,
+    [Page.SubCategory]: () => null,
+    [Page.Brand]: () => null
 };
 
 const App: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<Page>(Page.Dashboard);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     
-    const [products, setProducts] = useState<DataProduct[]>(mockProducts);
+    const [products, setProducts] = useState<DataProduct[]>([]);
     const [branches] = useState<Branch[]>(mockBranches);
     const [stockTransfers, setStockTransfers] = useState<StockTransferType[]>(mockStockTransfers);
+
+    const handleSale = useCallback(async (sale: SaleType) => {
+        try {
+            // 1. Execute atomic stock decrement in Supabase via RPC
+            // This handles all items in the sale within a single database transaction
+            const { error } = await supabase.rpc('process_sale_stock', {
+                p_branch_id: sale.branchId,
+                p_items: sale.items.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity
+                }))
+            });
+
+            if (error) throw error;
+
+            // 2. Update local state for immediate UI feedback
+            setProducts(prev => prev.map(p => {
+                const soldItem = sale.items.find(item => item.productId === p.id);
+                if (soldItem) {
+                    return {
+                        ...p,
+                        stockByLocation: {
+                            ...p.stockByLocation,
+                            [sale.branchId]: (p.stockByLocation[sale.branchId] || 0) - soldItem.quantity
+                        }
+                    };
+                }
+                return p;
+            }));
+        } catch (error) {
+            console.error('Failed to update stock after sale:', error);
+        }
+    }, []); // products dependency removed as math is now handled by Postgres
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*');
+
+            if (error) {
+                console.error('Error fetching products:', error.message);
+            } else if (data) {
+                setProducts(data as DataProduct[]);
+            }
+        };
+
+        fetchInitialData();
+    }, []);
 
     const CurrentPageComponent = useMemo(() => pageComponents[currentPage], [currentPage]);
 
@@ -76,7 +130,7 @@ const App: React.FC = () => {
         [Page.Product]: { products, setProducts, branches },
         [Page.PurchaseOrder]: { products },
         [Page.Purchase]: { products, setProducts, branches },
-        [Page.Sale]: { products, setProducts, branches },
+        [Page.Sale]: { products, setProducts, branches, onSaleComplete: handleSale },
         [Page.StockTransfer]: { products, setProducts, branches, stockTransfers, setStockTransfers },
         [Page.Inventory]: { products, setProducts, branches },
         [Page.RepairCenter]: { products, setProducts, branches, onNavigate: setCurrentPage, stockTransfers, setStockTransfers },

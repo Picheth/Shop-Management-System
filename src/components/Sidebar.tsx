@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Page, NavItem } from '../types';
-import { NAV_SECTIONS } from '../constants';
+import { NAV_SECTIONS } from '../../constants';
 
 interface SidebarProps {
     currentPage: Page;
