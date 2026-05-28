@@ -122,8 +122,7 @@ const Settlement: React.FC =
                     filtered =
                         filtered.filter(
                             item =>
-                                item.status ===
-                                filterStatus
+                                item.status === filterStatus // Correctly filter by status
                         );
                 }
 

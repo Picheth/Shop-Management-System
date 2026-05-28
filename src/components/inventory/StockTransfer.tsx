@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { StockTransfer as StockTransferType, DataProduct, Branch } from '../../types';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
@@ -15,6 +15,38 @@ interface StockTransferProps {
 const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, branches, stockTransfers, setStockTransfers }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState<StockTransferType | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [fromBranchFilter, setFromBranchFilter] = useState('All');
+    const [toBranchFilter, setToBranchFilter] = useState('All');
+    
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10); // State for items per page
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter, fromBranchFilter, toBranchFilter, itemsPerPage]); // Add itemsPerPage to dependencies
+
+    const filteredTransfers = useMemo(() => {
+        return stockTransfers.filter(t => {
+            const matchesSearch = 
+                t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+            const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+            const matchesFromBranch = fromBranchFilter === 'All' || t.fromBranchId === fromBranchFilter;
+            const matchesToBranch = toBranchFilter === 'All' || t.toBranchId === toBranchFilter;
+
+            return matchesSearch && matchesStatus && matchesFromBranch && matchesToBranch;
+        });
+    }, [stockTransfers, searchTerm, statusFilter, fromBranchFilter, toBranchFilter]);
+
+    const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
+
+    const inputClasses = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500";
 
     const handleAddTransfer = (transferData: Omit<StockTransferType, 'id' | 'transferDate'>) => {
         const newTransfer: StockTransferType = {
@@ -46,7 +78,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
                 const updatedToSerials = [...destSerials, ...transferSerials];
 
                 const newHistory = [
-                    ...p.history,
+                    ...(p.history || []),
                     {
                         date: newTransfer.transferDate,
                         action: 'Transfer Out' as const,
@@ -114,7 +146,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
                 const updatedFromSerials = [...fromSerials, ...transferSerials];
 
                 const newHistory = [
-                    ...p.history,
+                    ...(p.history || []),
                     {
                         date: new Date().toISOString().split('T')[0],
                         action: 'Transfer In' as const,
@@ -166,10 +198,45 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
 
     return (
         <Placeholder title="Stock Transfers">
-            <div className="flex justify-end mb-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search transfers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={`${inputClasses} w-full sm:w-64`}
+                    />
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className={`${inputClasses} w-full sm:w-auto`}
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <select
+                        value={fromBranchFilter}
+                        onChange={(e) => setFromBranchFilter(e.target.value)}
+                        className={`${inputClasses} w-full sm:w-auto`}
+                    >
+                        <option value="All">From: All Branches</option>
+                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                    <select
+                        value={toBranchFilter}
+                        onChange={(e) => setToBranchFilter(e.target.value)}
+                        className={`${inputClasses} w-full sm:w-auto`}
+                    >
+                        <option value="All">To: All Branches</option>
+                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                </div>
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors"
+                    className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors w-full md:w-auto flex-shrink-0"
                 >
                     New Stock Transfer
                 </button>
@@ -189,7 +256,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                        {stockTransfers.map(t => (
+                        {paginatedTransfers.length > 0 ? paginatedTransfers.map(t => (
                              <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{t.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{t.transferDate}</td>
@@ -217,10 +284,54 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
                                     </button>
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan={8} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">No transfers found matching your criteria.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls & Row Selection */}
+            {filteredTransfers.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 px-2">
+                    <div className="flex items-center gap-4 order-2 sm:order-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Showing <span className="font-medium text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="font-medium text-gray-900 dark:text-white">{Math.min(startIndex + itemsPerPage, filteredTransfers.length)}</span> of <span className="font-medium text-gray-900 dark:text-white">{filteredTransfers.length}</span> results
+                        </p>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                            className="bg-transparent text-sm text-gray-500 dark:text-gray-400 border-none focus:ring-0 cursor-pointer hover:text-sky-600 transition-colors"
+                        >
+                            <option value={5}>5 / page</option>
+                            <option value={10}>10 / page</option>
+                            <option value={20}>20 / page</option>
+                            <option value={50}>50 / page</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-2 order-1 sm:order-2">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <div className="flex items-center">
+                            <span className="text-sm text-gray-600 dark:text-gray-400 mx-2">Page {currentPage} of {totalPages}</span>
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Details Modal */}
             {selectedTransfer && (

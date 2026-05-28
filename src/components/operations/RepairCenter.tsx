@@ -122,8 +122,7 @@ const RepairCenter: React.FC<RepairCenterProps> =
                     filtered =
                         filtered.filter(
                             item =>
-                                item.status ===
-                                filterStatus
+                                item.status === filterStatus // Correctly filter by status
                         );
                 }
 

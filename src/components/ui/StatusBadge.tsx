@@ -5,6 +5,7 @@ export type BadgeStatus =
     | 'Low Stock'
     | 'Out of Stock'
     | 'Pending'
+    | 'Ordered'
     | 'Approved'
     | 'Completed'
     | 'Cancelled'
@@ -43,6 +44,7 @@ const statusColorMap: Record<
     'Active': 'green',
     'Inactive': 'gray',
     'Approved': 'blue',
+    'Ordered': 'blue',
     'In Progress': 'blue',
     'Completed': 'green',
     'Paid': 'green',

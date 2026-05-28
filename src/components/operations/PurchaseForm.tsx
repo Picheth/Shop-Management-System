@@ -319,8 +319,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
             items,
 
-            subtotal: total,
-            status: 'Paid',
+            status: 'Received',
         });
     };
 

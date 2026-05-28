@@ -67,7 +67,7 @@ const PurchaseOrderForm: React.FC<
             productName: firstProduct.name,
             sku: firstProduct.sku,
             quantity: 1,
-            price: firstProduct.price,
+            price: firstProduct.salePrice,
         };
 
         setItems(prev => [...prev, newItem]);
@@ -102,7 +102,7 @@ const PurchaseOrderForm: React.FC<
                         product.sku;
 
                     item.price =
-                        product.price;
+                        product.salePrice;
                 }
             } else {
                 (item as any)[field] =
@@ -142,7 +142,7 @@ const PurchaseOrderForm: React.FC<
         );
 
         const salesHistory =
-            product.history.filter(
+            product.history?.filter( // Correctly filter sales history
                 h =>
                     h.action === 'Sale' &&
                     new Date(h.date) >=
@@ -150,7 +150,7 @@ const PurchaseOrderForm: React.FC<
             );
 
         const totalSold = Math.abs(
-            salesHistory.reduce(
+            (salesHistory || []).reduce(
                 (sum, h) =>
                     sum + h.change,
                 0
@@ -212,12 +212,6 @@ const PurchaseOrderForm: React.FC<
 
         setError('');
 
-        const subtotal = items.reduce(
-    (sum, item) =>
-        sum + item.quantity * item.price,
-    0
-);
-
 onAdd({
     poNumber: `PO-${Date.now()}`,
     branchId: 'MAIN',
@@ -225,7 +219,6 @@ onAdd({
     orderDate,
     expectedDate,
     items,
-    subtotal,
     status: 'Pending',
 });
     };

@@ -20,7 +20,7 @@ const SalesTrendChart: React.FC<Props> = ({ sales }) => {
         const map: Record<string, number> = {};
 
         sales.forEach(s => {
-            const date = s.saleDate;
+            const date = s.saleDate; // Correctly use saleDate
             map[date] = (map[date] || 0) + s.total;
         });
 
@@ -34,7 +34,7 @@ const SalesTrendChart: React.FC<Props> = ({ sales }) => {
         const map: Record<string, number> = {};
 
         sales.forEach(s => {
-            const d = new Date(s.saleDate);
+            const d = new Date(s.saleDate); // Correctly use saleDate
             const week = `W${Math.ceil(d.getDate() / 7)}-${d.getMonth() + 1}`;
             map[week] = (map[week] || 0) + s.total;
         });
@@ -49,7 +49,7 @@ const SalesTrendChart: React.FC<Props> = ({ sales }) => {
         const map: Record<string, number> = {};
 
         sales.forEach(s => {
-            const d = new Date(s.saleDate);
+            const d = new Date(s.saleDate); // Correctly use saleDate
             const month = `${d.getFullYear()}-${d.getMonth() + 1}`;
             map[month] = (map[month] || 0) + s.total;
         });

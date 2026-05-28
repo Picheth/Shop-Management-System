@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DataProduct, Branch, StockTransfer, LineItem } from '../../types';
 
-type StockTransferFormData = Omit<StockTransfer, 'id' | 'transferDate'>;
+type StockTransferFormData = Omit<StockTransfer, 'id' | 'total'>;
 
 interface StockTransferFormProps {
     products: DataProduct[];
@@ -147,12 +147,12 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
         }
 
         onAdd({
-            transferNumber: `ST-${Date.now()}`,
             fromBranchId,
             toBranchId,
             items,
             note,
-            status: 'Completed'
+            transferDate: new Date().toISOString().split('T')[0],
+            status: 'Pending'
         });
     };
 

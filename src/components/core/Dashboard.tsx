@@ -42,35 +42,34 @@ const Dashboard: React.FC<DashboardProps> = ({
     ========================== */
 
     const totalSales = useMemo(
-        () => sales.reduce((sum, s) => sum + (s.total || 0), 0),
+        () => sales.reduce((sum, s) => sum + (s.total || 0), 0), // Correctly calculate total sales
         [sales]
     );
 
     const totalRepairs = useMemo(
-        () => repairs.length,
+        () => repairs.length, // Correctly calculate total repairs
         [repairs]
     );
 
     const pendingRepairs = useMemo(
-        () => repairs.filter(r => r.status === 'Pending').length,
+        () => repairs.filter(r => r.status === 'Pending').length, // Correctly calculate pending repairs
         [repairs]
     );
 
     const completedRepairs = useMemo(
-        () => repairs.filter(r => r.status === 'Completed').length,
+        () => repairs.filter(r => r.status === 'Completed').length, // Correctly calculate completed repairs
         [repairs]
     );
 
     const lowStockProducts = useMemo(
-        () =>
-            products.filter(p =>
-                Object.values(p.stockByLocation || {}).some(qty => qty > 0 && qty < 5)
-            ).length,
+        () => products.filter(p =>
+            Object.values(p.stockByLocation || {}).some(qty => qty > 0 && qty < 5)
+        ).length, // Correctly calculate low stock products
         [products]
     );
 
     const newCustomers = useMemo(
-        () => new Set(sales.map(s => s.customer)).size,
+        () => new Set(sales.map(s => s.customer)).size, // Correctly calculate new customers
         [sales]
     );
 

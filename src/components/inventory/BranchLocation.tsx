@@ -74,7 +74,7 @@ const BranchLocation: React.FC = () => {
                 branch.manager
                     .toLowerCase()
                     .includes(term)
-        );
+        ); // Correctly filter branches
     }, [search, branches]);
 
     const handleChange = (

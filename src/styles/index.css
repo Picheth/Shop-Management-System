@@ -24,13 +24,13 @@
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
 
-  /* Standardizing breakpoints to match component usage (sm, md, lg) */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-  --breakpoint-3xl: 120rem;
+  /* Custom Breakpoints (standard Tailwind names) */
+  --breakpoint-sm: 640px; /* Small screens, default for mobile */
+  --breakpoint-md: 768px; /* Medium screens, like tablets */
+  --breakpoint-lg: 1024px; /* Large screens, like laptops */
+  --breakpoint-xl: 1280px; /* Extra large screens */
+  --breakpoint-2xl: 1536px; /* 2x extra large screens */
+  --breakpoint-3xl: 120rem; /* Custom very large breakpoint */
 }
 
 /* =========================================================
@@ -49,7 +49,7 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-sky-500 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-brand-primary hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .card {
@@ -57,7 +57,7 @@
   }
 
   .input-field {
-    @apply w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all;
+    @apply w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all;
   }
 }
 
@@ -71,8 +71,8 @@
 }
 
 @utility scrollbar-hide {
-  -ms-overflow-style: 100%; /* IE and Edge */
-  scrollbar-width: 100vw; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {

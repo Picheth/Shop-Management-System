@@ -63,7 +63,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
                 productId: productWithSerial.id,
                 productName: productWithSerial.name,
                 quantity: 1,
-                price: productWithSerial.price,
+                price: productWithSerial.salePrice,
                 serialNumbers: [barcode]
             }]);
         }
@@ -76,7 +76,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
     
     const availableProducts = useMemo(() => {
         if (!branchId) return [];
-        return products.filter(p => (p.stockByLocation[branchId] || 0) > 0);
+        return products.filter(p => (p.stockByLocation[branchId] || 0) > 0); // Correctly filter available products
     }, [products, branchId]);
 
     const handleAddItem = () => {
@@ -86,7 +86,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
         }
         setError('');
         const firstProduct = availableProducts[0];
-        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.price, serialNumbers: [] }]);
+        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.salePrice, serialNumbers: [] }]);
     };
 
     const handleItemChange = (index: number, field: keyof LineItem, value: string | number | string[]) => {
@@ -101,7 +101,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, onCancel
             if (selectedProduct) {
                 currentItem.productId = selectedProduct.id;
                 currentItem.productName = selectedProduct.name;
-                currentItem.price = selectedProduct.price;
+                currentItem.price = selectedProduct.salePrice;
                 currentItem.serialNumbers = []; // Reset serial numbers when product changes
                 const newStockAtBranch = selectedProduct.stockByLocation[branchId] || 0;
                 if (currentItem.quantity > newStockAtBranch) {

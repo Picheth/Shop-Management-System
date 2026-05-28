@@ -66,16 +66,13 @@ const Variation: React.FC = () => {
         const term = search.toLowerCase();
 
         return variations.filter(
-            item =>
-                item.name
-                    .toLowerCase()
-                    .includes(term) ||
-                item.sku
-                    .toLowerCase()
-                    .includes(term) ||
-                item.color
-                    .toLowerCase()
-                    .includes(term)
+            item => item.name.toLowerCase().includes(term) ||
+                item.sku.toLowerCase().includes(term) ||
+                item.color.toLowerCase().includes(term) ||
+                item.storage.toLowerCase().includes(term) ||
+                item.price.toString().includes(term) ||
+                item.stock.toString().includes(term) ||
+                item.status.toLowerCase().includes(term)
         );
     }, [search, variations]);
 

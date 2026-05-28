@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
     title: string;
@@ -11,14 +11,23 @@ const Modal: React.FC<ModalProps> = ({
     onClose,
     children,
 }) => {
+    const modalRef = useRef<HTMLDivElement>(null);
 
     // Prevent body scroll without layout shift
     useEffect(() => {
         const scrollbarWidth =
             window.innerWidth - document.documentElement.clientWidth;
 
+        // Apply styles to body
         document.body.style.overflow = 'hidden';
         document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             document.body.style.overflow = '';
@@ -26,13 +35,19 @@ const Modal: React.FC<ModalProps> = ({
         };
     }, []);
 
+    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+            onClose();
+        }
+    };
+
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
             aria-labelledby="modal-title"
             role="dialog"
             aria-modal="true"
-            onClick={onClose}
+            onClick={handleOverlayClick}
         >
             <div
                 className="
@@ -45,7 +60,7 @@ const Modal: React.FC<ModalProps> = ({
                     max-h-[90vh]
                     overflow-y-auto
                 "
-                onClick={(e) => e.stopPropagation()}
+                ref={modalRef}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b p-4 dark:border-gray-700">

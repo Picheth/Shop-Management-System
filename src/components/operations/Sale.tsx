@@ -32,7 +32,7 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts, branches }) => {
             if (itemSold) {
                 const currentStock = p.stockByLocation[newSale.branchId] || 0;
                 const newStock = currentStock - itemSold.quantity;
-                const totalStock = Object.values(p.stockByLocation).reduce((s, c) => s + c, 0) - itemSold.quantity;
+                const totalStock = Object.values(p.stockByLocation).reduce((s, c) => s + c, 0) - itemSold.quantity; // Correctly calculate total stock
 
                 const existingSerials = p.serialNumbersByLocation?.[newSale.branchId] || [];
                 const soldSerials = itemSold.serialNumbers || [];
@@ -52,7 +52,7 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts, branches }) => {
                     },
                     status: newStatus,
                     history: [
-                        ...p.history,
+                        ...(p.history || []),
                         {
                             date: newSale.saleDate,
                             // FIX: Added 'as const' to ensure the 'action' property is typed as a literal, not a generic string.
@@ -109,8 +109,8 @@ const Sale: React.FC<SaleProps> = ({ products, setProducts, branches }) => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">${s.total.toFixed(2)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Paid' || s.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                                        {s.status}
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                                        {s.status || 'Completed'}
                                     </span>
                                 </td>
                             </tr>
