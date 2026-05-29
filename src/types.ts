@@ -315,23 +315,15 @@ export type PurchaseStatus =
 
 export interface Purchase extends BaseEntity {
     purchaseNumber?: string;
-
+    id: string;
     supplier: string;
-
     branchId: string;
-
     purchaseDate: string;
-
     expectedDate?: string;
-
     items: LineItem[];
-
     total: number;
-
     status?: PurchaseStatus;
-
     history?: StockHistoryItem[];
-
     note?: string;
 }
 
@@ -347,19 +339,13 @@ export type PurchaseOrderStatus =
 
 export interface PurchaseOrder {
     poNumber?: string;
-
+    id: string;
     supplier: string;
-
     branchId: string;
-
     orderDate: string;
-
     expectedDate: string;
-
     items: LineItem[];
-
     total: number;
-
     status: PurchaseOrderStatus;
 }
 
@@ -371,17 +357,12 @@ export type SaleStatus = 'Pending' | 'Completed' | 'Cancelled';
 
 export interface Sale {
     saleNumber?: string;
-
+    id: string;
     customer: string;
-
     branchId: string;
-
     saleDate: string;
-
     items: LineItem[];
-
     total: number;
-
     status?: SaleStatus;
 }
 
