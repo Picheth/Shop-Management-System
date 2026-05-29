@@ -274,37 +274,78 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                                 />
                             )}
 
-                            {product.color && (
+                            {(product.color ||
+    product.storage ||
+    product.ram ||
+    product.size ||
+    product.model) && (
 
-                                <DetailItem
-                                    label="Color"
-                                    value={product.color}
-                                />
-                            )}
+    <div className="mt-6">
 
-                            {product.storage && (
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+            Specifications
+        </h3>
 
-                                <DetailItem
-                                    label="Storage"
-                                    value={product.storage}
-                                />
-                            )}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
 
-                            {product.ram && (
+            {product.model && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Model
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {product.model}
+                    </p>
+                </div>
+            )}
 
-                                <DetailItem
-                                    label="RAM"
-                                    value={product.ram}
-                                />
-                            )}
+            {product.color && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Color
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {product.color}
+                    </p>
+                </div>
+            )}
 
-                            {product.size && (
+            {product.storage && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Storage
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {product.storage}
+                    </p>
+                </div>
+            )}
 
-                                <DetailItem
-                                    label="Size"
-                                    value={product.size}
-                                />
-                            )}
+            {product.ram && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        RAM
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {product.ram}
+                    </p>
+                </div>
+            )}
+
+            {product.size && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Size
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {product.size}
+                    </p>
+                </div>
+            )}
+
+        </div>
+    </div>
+)}
 
                             <DetailItem
                                 label="Sale Price"

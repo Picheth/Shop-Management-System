@@ -81,7 +81,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({ products }) => {
                     onClick={() => setIsModalOpen(true)}
                     className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors w-full sm:w-auto"
                 >
-                    Create Purchase Order
+                        Create Purchase Order
                 </button>
             </div>
 

@@ -694,9 +694,7 @@ const Settlement: React.FC =
                             type="submit"
                             className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
                         >
-                            {editingId
-                                ? 'Update Settlement'
-                                : 'Add Settlement'}
+                            {editingId ? 'Update Settlement' : 'Add Settlement'}
                         </button>
                     </div>
                 </form>

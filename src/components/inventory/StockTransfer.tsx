@@ -3,6 +3,7 @@ import { StockTransfer as StockTransferType, DataProduct, Branch } from '../../t
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
 import StockTransferForm from './StockTransferForm';
+import { supabase } from '../../utils/supabase';
 
 interface StockTransferProps {
     products: DataProduct[];
@@ -48,17 +49,39 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
 
     const inputClasses = "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500";
 
-    const handleAddTransfer = (transferData: Omit<StockTransferType, 'id' | 'transferDate'>) => {
+    const handleAddTransfer = (transferData: Omit<StockTransferType, 'id' | 'total'>) => {
+    const handleAddTransfer = async (transferData: Omit<StockTransferType, 'id' | 'total'>) => {
+        const total = transferData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        const branchNameFrom = branches.find(b => b.id === transferData.fromBranchId)?.name || 'Unknown';
+        const branchNameTo = branches.find(b => b.id === transferData.toBranchId)?.name || 'Unknown';
+
         const newTransfer: StockTransferType = {
             ...transferData,
             id: `ST-${String(stockTransfers.length + 1).padStart(3, '0')}`,
-            transferDate: new Date().toISOString().split('T')[0],
+            total,
         };
 
         setStockTransfers(prev => [newTransfer, ...prev]);
+        const { error } = await supabase.rpc('process_stock_transfer', {
+            p_transfer_id: newTransfer.id,
+            p_from_branch_id: newTransfer.fromBranchId,
+            p_to_branch_id: newTransfer.toBranchId,
+            p_from_branch_name: branchNameFrom,
+            p_to_branch_name: branchNameTo,
+            p_transfer_date: newTransfer.transferDate,
+            p_status: newTransfer.status,
+            p_total: newTransfer.total,
+            p_items: newTransfer.items,
+            p_note: newTransfer.note || ''
+        });
 
         const fromBranchName = branches.find(b => b.id === newTransfer.fromBranchId)?.name || 'Unknown';
         const toBranchName = branches.find(b => b.id === newTransfer.toBranchId)?.name || 'Unknown';
+        if (error) {
+            console.error('Transfer failed:', error);
+            alert('Failed to process stock transfer.');
+            return;
+        }
 
         const updatedProducts = products.map(p => {
             const transferItem = newTransfer.items.find(item => item.productId === p.id);
@@ -116,6 +139,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
         });
 
         setProducts(updatedProducts);
+        setStockTransfers(prev => [newTransfer, ...prev]);
         setIsModalOpen(false);
     };
 

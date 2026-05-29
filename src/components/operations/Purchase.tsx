@@ -247,7 +247,7 @@ const Purchase: React.FC<PurchaseProps> = ({
     return (
         <Placeholder title="Purchases">
             {/* FILTERS & BUTTONS */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <input
                     type="text"
                     placeholder="Search by ID or Supplier..."

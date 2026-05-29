@@ -382,8 +382,8 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             {error && <p className="text-red-500 text-sm mt-4 font-medium">{error}</p>}
 
             <div className="flex justify-end gap-4 mt-6 pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={onCancel} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                <button type="submit" className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700">Transfer</button>
+                <button type="button" onClick={onCancel} className="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Cancel</button>
+                <button type="submit" className="bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700 transition-colors">Transfer</button>
             </div>
         </form>
     );

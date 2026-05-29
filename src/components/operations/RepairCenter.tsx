@@ -658,9 +658,7 @@ const RepairCenter: React.FC<RepairCenterProps> =
                             type="submit"
                             className="btn-primary"
                         >
-                            {editingId
-                                ? 'Update Repair'
-                                : 'Add Repair'}
+                            {editingId ? 'Update Repair' : 'Add Repair'}
                         </button>
                     </div>
                 </form>

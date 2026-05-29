@@ -1,5 +1,6 @@
 import React from 'react';
-
+export * from './utils/ProductType'; // Corrected import path
+ 
 /* =========================================================
    ENUMS
 ========================================================= */
@@ -64,23 +65,6 @@ export interface BaseEntity {
     active?: boolean;
 }
 
-/* =========================================================
-   BRANCH
-========================================================= */
-
-export interface Branch extends BaseEntity {
-    code: string;
-    name: string;
-    location?: string;
-    address?: string;
-    phone?: string;
-    email?: string;
-}
-
-/* =========================================================
-   PRODUCT
-========================================================= */
-
 export type ProductStatus =
     | 'In Stock'
     | 'Low Stock'
@@ -107,6 +91,28 @@ export interface StockHistoryItem {
     branch: string;
     reason?: string;
 }
+
+/* =========================================================
+   BRANCH
+========================================================= */
+
+export interface Branch extends BaseEntity {
+    code: string;
+    name: string;
+    location?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+}
+
+/* =========================================================
+   PRODUCT
+========================================================= */
+
+// Product and DataProduct interfaces remain here as they are core entities
+// that might aggregate attributes from ProductType.ts
+// If Product and DataProduct also move to ProductType.ts, they would need to be re-exported from there.
+// For now, they stay here as they are not just "attributes".
 
 export interface Product extends BaseEntity {
     productNumber: string;
@@ -189,67 +195,6 @@ export interface DataProduct extends Product {
 }
 
 /* =========================================================
-   PRODUCT TYPE
-========================================================= */
-
-export interface ProductType
-    extends BaseEntity {
-    code: string;
-    name: string;
-    description?: string;
-    active: boolean;
-}
-
-/* =========================================================
-   CATEGORY
-========================================================= */
-
-export interface Category
-    extends BaseEntity {
-    code: string;
-    typeId: string;
-    name: string;
-    description?: string;
-    active: boolean;
-}
-
-/* =========================================================
-   SUB CATEGORY
-========================================================= */
-
-export interface SubCategory
-    extends BaseEntity {
-    code: string;
-    categoryId: string;
-    name: string;
-    description?: string;
-    active: boolean;
-}
-
-/* =========================================================
-   BRAND
-========================================================= */
-
-export interface Brand
-    extends BaseEntity {
-    code: string;
-    name: string;
-    shortName?: string;
-    country?: string;
-}
-
-/* =========================================================
-   VARIATION
-========================================================= */
-
-export interface Variation
-    extends BaseEntity {
-    name: string;
-    type: string;
-    value: string;
-}
-
-/* =========================================================
    PRODUCT UNIT
 ========================================================= */
 
@@ -261,8 +206,7 @@ export type ProductUnitStatus =
     | 'Reserved'
     | 'Damaged';
 
-export interface ProductUnit
-    extends BaseEntity {
+export interface ProductUnit {
     productId: string;
     branchId: string;
 
@@ -301,8 +245,7 @@ export interface ProductUnit
    STOCK HISTORY
 ========================================================= */
 
-export interface StockHistory
-    extends BaseEntity {
+export interface StockHistory {
     date: string;
 
     productId: string;
@@ -370,8 +313,7 @@ export type PurchaseStatus =
     | 'Received'
     | 'Cancelled';
 
-export interface Purchase
-    extends BaseEntity {
+export interface Purchase extends BaseEntity {
     purchaseNumber?: string;
 
     supplier: string;
@@ -403,8 +345,7 @@ export type PurchaseOrderStatus =
     | 'Received'
     | 'Cancelled';
 
-export interface PurchaseOrder
-    extends BaseEntity {
+export interface PurchaseOrder {
     poNumber?: string;
 
     supplier: string;
@@ -428,8 +369,7 @@ export interface PurchaseOrder
 
 export type SaleStatus = 'Pending' | 'Completed' | 'Cancelled';
 
-export interface Sale
-    extends BaseEntity {
+export interface Sale {
     saleNumber?: string;
 
     customer: string;
@@ -449,8 +389,7 @@ export interface Sale
    SETTLEMENT
 ========================================================= */
 
-export interface Settlement
-    extends BaseEntity {
+export interface Settlement extends BaseEntity {
     settlementNumber?: string;
 
     branchId: string;
@@ -474,8 +413,7 @@ export type StockTransferStatus =
     | 'Completed'
     | 'Cancelled';
 
-export interface StockTransfer
-    extends BaseEntity {
+export interface StockTransfer {
     transferNumber?: string;
 
     fromBranchId: string;
@@ -497,8 +435,7 @@ export interface StockTransfer
    BRANCH LOCATION
 ========================================================= */
 
-export interface BranchLocation
-    extends BaseEntity {
+export interface BranchLocation {
     branchId: string;
 
     name: string;
@@ -512,8 +449,7 @@ export interface BranchLocation
    SUPPLIER
 ========================================================= */
 
-export interface Supplier
-    extends BaseEntity {
+export interface Supplier extends BaseEntity {
     code: string;
 
     name: string;
@@ -531,8 +467,7 @@ export interface Supplier
    CONTACT
 ========================================================= */
 
-export interface Contact
-    extends BaseEntity {
+export interface Contact {
     name: string;
 
     phone?: string;
@@ -546,8 +481,7 @@ export interface Contact
    EXPENSE CATEGORY
 ========================================================= */
 
-export interface ExpenseCategory
-    extends BaseEntity {
+export interface ExpenseCategory extends BaseEntity {
     code: string;
 
     name: string;
@@ -559,8 +493,7 @@ export interface ExpenseCategory
    EXPENSE
 ========================================================= */
 
-export interface Expense
-    extends BaseEntity {
+export interface Expense extends BaseEntity {
     expenseNumber?: string;
 
     categoryId: string;
@@ -576,8 +509,7 @@ export interface Expense
    STAFF
 ========================================================= */
 
-export interface Staff
-    extends BaseEntity {
+export interface Staff extends BaseEntity {
     code: string;
 
     name: string;
@@ -595,8 +527,7 @@ export interface Staff
    PAYROLL
 ========================================================= */
 
-export interface Payroll
-    extends BaseEntity {
+export interface Payroll extends BaseEntity {
     payrollNumber?: string;
 
     staffId: string;
@@ -620,8 +551,7 @@ export interface Payroll
    REPORT
 ========================================================= */
 
-export interface Report
-    extends BaseEntity {
+export interface Report {
     title: string;
 
     description?: string;
@@ -687,8 +617,7 @@ export interface ProfitAndLoss
    CHART OF ACCOUNT
 ========================================================= */
 
-export interface ChartOfAccount
-    extends BaseEntity {
+export interface ChartOfAccount {
     code: string;
 
     name: string;
@@ -705,8 +634,7 @@ export interface ChartOfAccount
    REPAIR CENTER
 ========================================================= */
 
-export interface RepairCenter
-    extends BaseEntity {
+export interface RepairCenter extends BaseEntity {
     code: string;
 
     name: string;
@@ -730,8 +658,7 @@ export type RepairStatus =
     | 'Completed'
     | 'Cancelled';
 
-export interface Repair
-    extends BaseEntity {
+export interface Repair {
     repairNumber?: string;
 
     branchId: string;

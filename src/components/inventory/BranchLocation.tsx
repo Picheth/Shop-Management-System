@@ -285,9 +285,7 @@ const BranchLocation: React.FC = () => {
                         type="submit"
                         className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
                     >
-                        {editingId
-                            ? 'Update Branch'
-                            : 'Add Branch'}
+                        {editingId ? 'Update Branch' : 'Add Branch'}
                     </button>
                 </div>
             </form>
