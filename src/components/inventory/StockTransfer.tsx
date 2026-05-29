@@ -83,75 +83,30 @@ const StockTransfer: React.FC<StockTransferProps> = ({ products, setProducts, br
         setIsModalOpen(false);
     };
 
-    const handleCancelTransfer = (transferId: string) => {
+    const handleCancelTransfer = async (transferId: string) => {
         const transfer = stockTransfers.find(t => t.id === transferId);
         if (!transfer || transfer.status !== 'Completed') return;
 
         if (!window.confirm('Are you sure you want to cancel this transfer? This will revert stock levels at both locations.')) return;
 
-        const fromBranchName = branches.find(b => b.id === transfer.fromBranchId)?.name || 'Unknown';
-        const toBranchName = branches.find(b => b.id === transfer.toBranchId)?.name || 'Unknown';
+        const branchNameFrom = branches.find(b => b.id === transfer.fromBranchId)?.name || 'Unknown';
+        const branchNameTo = branches.find(b => b.id === transfer.toBranchId)?.name || 'Unknown';
 
-        const updatedProducts = products.map(p => {
-            const transferItem = transfer.items.find(item => item.productId === p.id);
-            if (transferItem) {
-                const currentFromStock = p.stockByLocation[transfer.fromBranchId] || 0;
-                const currentToStock = p.stockByLocation[transfer.toBranchId] || 0;
-
-                // REVERSE: Return stock to source, remove from destination
-                const newFromStock = currentFromStock + transferItem.quantity;
-                const newToStock = currentToStock - transferItem.quantity;
-
-                const existingToSerials = p.serialNumbersByLocation?.[transfer.toBranchId] || [];
-                const transferSerials = transferItem.serialNumbers || [];
-                const updatedToSerials = existingToSerials.filter(sn => !transferSerials.includes(sn));
-
-                const fromSerials = p.serialNumbersByLocation?.[transfer.fromBranchId] || [];
-                const updatedFromSerials = [...fromSerials, ...transferSerials];
-
-                const newHistory = [
-                    ...(p.history || []),
-                    {
-                        date: new Date().toISOString().split('T')[0],
-                        action: 'Transfer In' as const,
-                        change: transferItem.quantity,
-                        newStock: newFromStock,
-                        branch: fromBranchName,
-                        reason: `Cancellation of Transfer #${transfer.id}${transferSerials.length > 0 ? ` Serials: ${transferSerials.join(', ')}` : ''}`
-                    },
-                    {
-                        date: new Date().toISOString().split('T')[0],
-                        action: 'Transfer Out' as const,
-                        change: -transferItem.quantity,
-                        newStock: newToStock,
-                        branch: toBranchName,
-                        reason: `Cancellation of Transfer #${transfer.id}${transferSerials.length > 0 ? ` Serials: ${transferSerials.join(', ')}` : ''}`
-                    }
-                ];
-
-                return {
-                    ...p,
-                    stockByLocation: {
-                        ...p.stockByLocation,
-                        [transfer.fromBranchId]: newFromStock,
-                        [transfer.toBranchId]: newToStock
-                    },
-                    serialNumbersByLocation: {
-                        ...(p.serialNumbersByLocation || {}),
-                        [transfer.fromBranchId]: updatedFromSerials,
-                        [transfer.toBranchId]: updatedToSerials
-                    },
-                    history: newHistory
-                };
-            }
-            return p;
+        const { error } = await supabase.rpc('cancel_stock_transfer', {
+            p_transfer_id: transferId,
+            p_from_branch_name: branchNameFrom,
+            p_to_branch_name: branchNameTo
         });
 
-        setProducts(updatedProducts);
-        setStockTransfers(prev => prev.map(t => t.id === transferId ? { ...t, status: 'Cancelled' } : t));
-        if (selectedTransfer?.id === transferId) {
-            setSelectedTransfer(prev => prev ? { ...prev, status: 'Cancelled' } : null);
+        if (error) {
+            console.error('Cancellation failed:', error);
+            alert('Failed to cancel stock transfer.');
+            return;
         }
+
+        setStockTransfers(prev => prev.map(t => t.id === transferId ? { ...t, status: 'Cancelled' } : t));
+        setSelectedTransfer(null);
+        // Note: You should ideally trigger a data refetch in App.tsx here to sync product stock
     };
 
     const handlePrint = () => {

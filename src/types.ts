@@ -409,26 +409,20 @@ export interface Settlement extends BaseEntity {
 
 export type StockTransferStatus =
     | 'Pending'
-    | 'In Transit'
     | 'Completed'
     | 'Cancelled';
 
 export interface StockTransfer {
     transferNumber?: string;
-
     fromBranchId: string;
-
     toBranchId: string;
-
     transferDate: string;
-
+    id: string;
     items: LineItem[];
-
     total: number;
-
+    note?: string;
     status: StockTransferStatus;
 
-    note?: string;
 }
 
 /* =========================================================
