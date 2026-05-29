@@ -51,19 +51,23 @@ interface ProductProps {
     allSubCategories: SubCategoryInterface[];
     allBrands: BrandInterface[];
     allProductTypes: ProductTypeInterface[];
+
+    onAdd: (product: any) => Promise<void>;
+    onUpdate: (product: DataProduct) => Promise<void>;
+    onDelete: (id: string) => Promise<void>;
 }
 
 const Product: React.FC<ProductProps> = ({
-    products: initialProducts,
+    products,
     branches,
     allCategories,
     allSubCategories,
     allBrands,
     allProductTypes,
+    onAdd,
+    onUpdate,
+    onDelete,
 }) => {
-    const [products, setProducts] =
-        useState<DataProduct[]>(initialProducts);
-
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] =
         useState('All');
@@ -266,77 +270,19 @@ const Product: React.FC<ProductProps> = ({
     const getBrandName = (
         brandId?: string
     ) => {
-        return (
-            allBrands.find(
-                b => b.id === brandId
-            )?.name || '-'
-        );
+        return allBrands.find(b => b.id === brandId)?.name || '-';
     };
 
-    const handleAddProduct = (
-        newProductData: AddProductFormData
-    ) => {
-        const branchName =
-            branches.find(
-                b => b.id === newProductData.branchId
-            )?.name || 'Unknown Branch';
-
-        const newProduct: DataProduct = {
+    const handleAddProduct = async (newProductData: AddProductFormData) => {
+        await onAdd({
             ...newProductData,
-
-            id: crypto.randomUUID(),
-
-            productNumber:
-                newProductData.productNumber ||
-                `PRD-${Date.now()}`,
-
-            status:
-                newProductData.initialStock > 0
-                    ? 'In Stock'
-                    : 'Out of Stock',
-
-            stockByLocation: {
-                [newProductData.branchId]:
-                    newProductData.initialStock,
-            },
-
-            history: [
-                {
-                    date: new Date()
-                        .toISOString()
-                        .split('T')[0],
-
-                    action: 'Initial Stock',
-
-                    change:
-                        newProductData.initialStock,
-
-                    newStock:
-                        newProductData.initialStock,
-
-                    branch: branchName,
-
-                    reason:
-                        'New product added',
-                },
-            ],
-        };
-
-        setProducts(prev => [
-            newProduct,
-            ...prev,
-        ]);
-
+            stockByLocation: { [newProductData.branchId]: newProductData.initialStock }
+        });
         setIsModalOpen(false);
     };
 
-    const handleDeleteProduct = (
-        id: string
-    ) => {
-        setProducts(prev =>
-            prev.filter(p => p.id !== id)
-        );
-
+    const handleDeleteProduct = async (id: string) => {
+        await onDelete(id);
         setProductToDelete(null);
     };
 

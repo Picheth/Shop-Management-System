@@ -17,9 +17,11 @@ import {
     ProductType as ProductTypeInterface,
     Category as CategoryInterface,
     SubCategory as SubCategoryInterface,
+    Repair as RepairType,
+    Brand as BrandInterface,
 } from './types';
 
-import { mockBranches, mockStockTransfers } from './data';
+import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
 import { supabase } from './utils/supabase';
 
 /* =========================
@@ -163,8 +165,14 @@ const App: React.FC = () => {
     const [subCategories, setSubCategories] =
         useState<SubCategoryInterface[]>([]);
 
+    const [sales, setSales] =
+        useState<SaleType[]>(mockSales);
+
+    const [repairs, setRepairs] =
+        useState<RepairType[]>(mockRepairs);
+
     const [brands, setBrands] =
-        useState<Brand[]>([]);
+        useState<BrandInterface[]>([]);
 
     const [branches] =
         useState<Branch[]>(mockBranches);
@@ -260,6 +268,57 @@ const App: React.FC = () => {
         },
         []
     );
+
+    /* =========================
+       PRODUCT PERSISTENCE
+    ========================= */
+
+    const handleAddProduct = useCallback(
+        async (newProduct: any) => {
+            const { data, error } = await supabase
+                .from('products')
+                .insert([{ ...newProduct, createdAt: new Date().toISOString() }])
+                .select();
+
+            if (error) {
+                console.error('Add product error:', error.message);
+                return;
+            }
+
+            if (data?.[0]) {
+                setProducts(prev => [data[0], ...prev]);
+            }
+        },
+        []
+    );
+
+    const handleUpdateProduct = useCallback(
+        async (updatedProduct: DataProduct) => {
+            const { error } = await supabase
+                .from('products')
+                .update({ ...updatedProduct, updatedAt: new Date().toISOString() })
+                .eq('id', updatedProduct.id);
+
+            if (error) {
+                console.error('Update product error:', error.message);
+                return;
+            }
+
+            setProducts(prev =>
+                prev.map(item => (item.id === updatedProduct.id ? updatedProduct : item))
+            );
+        },
+        []
+    );
+
+    const handleDeleteProduct = useCallback(async (id: string) => {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) {
+            console.error('Delete product error:', error.message);
+            return;
+        }
+        setProducts(prev => prev.filter(item => item.id !== id));
+    }, []);
 
     /* =========================
        PRODUCT TYPES
@@ -626,12 +685,16 @@ const App: React.FC = () => {
                 productTypesRes,
                 categoriesRes,
                 subCategoriesRes,
+                salesRes,
+                repairsRes,
             ] = await Promise.all([
                 supabase.from('brands').select('*'),
                 supabase.from('products').select('*'),
                 supabase.from('product_types').select('*'),
                 supabase.from('categories').select('*'),
                 supabase.from('sub_categories').select('*'),
+                supabase.from('sales').select('*'),
+                supabase.from('repairs').select('*'),
             ]);
 
             if (brandsRes.data) {
@@ -658,6 +721,14 @@ const App: React.FC = () => {
                 setSubCategories(
                     subCategoriesRes.data as SubCategoryInterface[]
                 );
+            }
+
+            if (salesRes.data) {
+                setSales(salesRes.data as SaleType[]);
+            }
+
+            if (repairsRes.data) {
+                setRepairs(repairsRes.data as RepairType[]);
             }
         } catch (error) {
             console.error('Failed to fetch initial data:', error);
