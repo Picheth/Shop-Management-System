@@ -761,7 +761,7 @@ const App: React.FC = () => {
                 supabase.from('sub_categories').select('*'),
                 supabase.from('sales').select('*'),
                 supabase.from('repairs').select('*'),
-                supabase.from('product_variants').select('*'),
+                supabase.from('product_variants').select('*').order('createdAt', { ascending: false }),
                 supabase.from('processors').select('*'),
                 supabase.from('rams').select('*'),
                 supabase.from('storages').select('*'),
@@ -850,9 +850,15 @@ const App: React.FC = () => {
     }, []);
 
     const handleDeleteVariantGlobal = useCallback(async (id: string) => {
-        const { error } = await supabase.from('product_variants').delete().eq('id', id);
-        if (error) console.error(error);
-        else setVariants(prev => prev.filter(v => v.id !== id));
+        try {
+            const { error } = await supabase.rpc('delete_specific_variant', {
+                p_variant_id: id
+            });
+            if (error) throw error;
+            setVariants(prev => prev.filter(v => v.id !== id));
+        } catch (error: any) {
+            console.error('Delete variant error:', error.message);
+        }
     }, []);
 
     /* =========================

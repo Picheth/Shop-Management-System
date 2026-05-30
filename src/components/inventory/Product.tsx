@@ -640,9 +640,9 @@ const Product: React.FC<ProductProps> = ({
                     title="Delete Product"
                     message={`Delete "${productToDelete.name}" ?`}
                     onConfirm={() =>
-                        handleDeleteProduct(
-                            productToDelete.id
-                        )
+                        productToDelete.productSpecId ? 
+                            handleDeleteProduct(productToDelete.productSpecId) :
+                            alert('Error: This product is missing a Specification ID. Please delete manually.')
                     }
                     onCancel={() =>
                         setProductToDelete(null)
