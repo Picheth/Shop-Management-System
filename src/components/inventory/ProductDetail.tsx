@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
     DataProduct,
@@ -25,6 +25,8 @@ interface ProductDetailProps {
     allBrands: BrandInterface[];
 
     onBack: () => void;
+
+    onEdit: () => void;
 }
 
 const LOW_STOCK_THRESHOLD = 10;
@@ -37,7 +39,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     allSubCategories,
     allBrands,
     onBack,
+    onEdit,
 }) => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'history'>('overview');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const tabButtonClasses = (tab: typeof activeTab) => 
+        `px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === tab 
+                ? 'border-sky-600 text-sky-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        }`;
 
     const totalStock = useMemo(() => {
 
@@ -117,6 +130,43 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
         allBrands,
     ]);
 
+    const filteredHistory = useMemo(() => {
+        if (!product.history) return [];
+        return product.history.filter(item => {
+            const itemDate = item.date;
+            if (startDate && itemDate < startDate) return false;
+            if (endDate && itemDate > endDate) return false;
+            return true;
+        });
+    }, [product.history, startDate, endDate]);
+
+    const handleExportCSV = () => {
+        if (!filteredHistory.length) return;
+
+        const productRow = `"Product Name: ${product.name}","Product SKU: ${product.sku}"`;
+        const headers = ['Date', 'Branch', 'Action', 'Change', 'New Stock'];
+        const csvContent = [
+            productRow,
+            headers.join(','),
+            ...filteredHistory.map(item => [
+                item.date,
+                `"${item.branch}"`,
+                `"${item.action}"`,
+                item.change,
+                item.newStock
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `stock_history_${product.sku}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const DetailItem: React.FC<{
         label: string;
         value: React.ReactNode;
@@ -149,7 +199,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                 <button
                     onClick={onBack}
-                    className="inline-flex items-center text-sky-600 dark:text-sky-400 hover:underline"
+                    className="inline-flex items-center text-sky-600 dark:text-sky-400 hover:underline no-print"
                 >
 
                     <svg
@@ -170,10 +220,77 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                     Back to Products
                 </button>
+
+                <div className="flex gap-2 no-print">
+                    <button
+                        onClick={() => window.print()}
+                        className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 01-2-2H5a2 2 0 01-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                            />
+                        </svg>
+                        Print
+                    </button>
+
+                    <button
+                        onClick={onEdit}
+                        className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
+                        Edit Product
+                    </button>
+                </div>
+            </div>
+
+            {/* Tabs Navigation */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700 no-print">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={tabButtonClasses('overview')}
+                >
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab('inventory')}
+                    className={tabButtonClasses('inventory')}
+                >
+                    Inventory
+                </button>
+                <button
+                    onClick={() => setActiveTab('history')}
+                    className={tabButtonClasses('history')}
+                >
+                    History
+                </button>
             </div>
 
             {/* Product Info */}
-            <div className={`${cardClass}`}>
+            {activeTab === 'overview' && (
+                <div className={`${cardClass}`}>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -347,6 +464,35 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     </div>
 )}
 
+{product.attributes && product.attributes.length > 0 && (
+    <div className="mt-6">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+            Additional Attributes
+        </h3>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {product.attributes.map((attr, index) => (
+                <div 
+                    key={index} 
+                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-100 dark:border-gray-600"
+                >
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {attr.name}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {attr.value}
+                    </p>
+                    {attr.description && (
+                        <p className="text-[10px] text-gray-400 mt-1 italic">
+                            {attr.description}
+                        </p>
+                    )}
+                </div>
+            ))}
+        </div>
+    </div>
+)}
+
                             <DetailItem
                                 label="Sale Price"
                                 value={`$${product.salePrice.toFixed(2)}`}
@@ -437,10 +583,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                         )}
                     </div>
                 </div>
-            </div>
+                </div>
+            )}
 
             {/* Stock by Branch */}
-            <div className={cardClass}>
+            {activeTab === 'inventory' && (
+                <div className={cardClass}>
 
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Stock by Branch
@@ -486,13 +634,58 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     </table>
                 </div>
             </div>
+            )}
 
             {/* History */}
-            <div className={cardClass}>
+            {activeTab === 'history' && (
+                <div className={cardClass}>
 
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Stock History
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Stock Movement & Sales Logs
+                    </h3>
+
+                    {/* Date Filters */}
+                    <div className="flex flex-wrap gap-3 no-print">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">From</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-sky-500"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">To</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-sky-500"
+                            />
+                        </div>
+                        {filteredHistory.length > 0 && (
+                            <button
+                                onClick={handleExportCSV}
+                                className="inline-flex items-center px-2 py-1 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-800 rounded text-xs font-medium hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export CSV
+                            </button>
+                        )}
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="text-xs text-sky-600 hover:text-sky-800 font-medium"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 <div className="overflow-x-auto">
 
@@ -526,9 +719,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
 
-                            {product.history?.length ? (
+                            {filteredHistory.length ? (
 
-                                product.history.map(
+                                filteredHistory.map(
                                     (item, index) => (
 
                                         <tr
@@ -583,6 +776,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     </table>
                 </div>
             </div>
+            )}
         </div>
     );
 };

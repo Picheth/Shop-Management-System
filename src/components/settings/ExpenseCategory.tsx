@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface ExpenseCategoryItem {
     id: string;
@@ -55,6 +56,8 @@ const ExpenseCategory: React.FC = () => {
         budget: '',
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('expense_categories', 'code', form.code, editingId);
+
     const filteredCategories = useMemo(() => {
         if (!search) return categories;
 
@@ -96,10 +99,15 @@ const ExpenseCategory: React.FC = () => {
         });
     };
 
-    const handleSubmit = (
+    const handleSubmit = async (
         e: React.FormEvent
     ) => {
         e.preventDefault();
+
+        if (isDuplicate) {
+            alert(`Expense category code "${form.code}" already exists.`);
+            return;
+        }
 
         if (editingId) {
             setCategories(prev =>

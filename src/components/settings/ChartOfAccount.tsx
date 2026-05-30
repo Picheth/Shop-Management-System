@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface AccountItem {
     id: string;
@@ -68,6 +69,8 @@ const ChartOfAccount: React.FC = () => {
         description: '',
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('chart_of_accounts', 'accountCode', form.accountCode, editingId);
+
     const filteredAccounts = useMemo(() => {
         if (!search) return accounts;
 
@@ -112,10 +115,15 @@ const ChartOfAccount: React.FC = () => {
         });
     };
 
-    const handleSubmit = (
+    const handleSubmit = async (
         e: React.FormEvent
     ) => {
         e.preventDefault();
+
+        if (isDuplicate) {
+            alert(`Account code "${form.accountCode}" already exists.`);
+            return;
+        }
 
         if (editingId) {
             setAccounts(prev =>

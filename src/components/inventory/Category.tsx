@@ -40,6 +40,8 @@ const Category: React.FC<CategoryProps> = ({
     const [editingId, setEditingId] =
         useState<string | null>(null);
 
+    const [typeFilter, setTypeFilter] = useState('all');
+
     const [form, setForm] = useState({
         code: '',
         name: '',
@@ -48,21 +50,45 @@ const Category: React.FC<CategoryProps> = ({
         active: true,
     });
 
+    // Optimized lookup map to avoid O(N) searching during render
+    const typeMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        productTypes.forEach(t => {
+            map[t.id] = t.name;
+        });
+        return map;
+    }, [productTypes]);
+
+    const getTypeName = (typeId: string) => typeMap[typeId] || 'N/A';
+
     const filteredCategories = useMemo(() => {
 
-        if (!search) return categories;
+        let filtered = categories;
+
+        if (typeFilter !== 'all') {
+            filtered = filtered.filter(
+                cat => cat.typeId === typeFilter
+            );
+        }
+
+        if (!search) return filtered;
 
         const term = search.toLowerCase();
 
-        return categories.filter(cat =>
-            cat.code.toLowerCase().includes(term) ||
-            cat.name.toLowerCase().includes(term) ||
-            (cat.description || '')
-                .toLowerCase()
-                .includes(term)
+        return filtered.filter(cat => {
+            const typeName = getTypeName(cat.typeId).toLowerCase();
+            return (
+                cat.code.toLowerCase().includes(term) ||
+                cat.name.toLowerCase().includes(term) ||
+                typeName.includes(term) ||
+                (cat.description || '')
+                    .toLowerCase()
+                    .includes(term)
+            );
+        }
         );
-
-    }, [search, categories]);
+    // Updated dependency to use the memoized map
+    }, [search, categories, typeFilter, typeMap]);
 
     const handleChange = (
         e: React.ChangeEvent<
@@ -187,17 +213,6 @@ const Category: React.FC<CategoryProps> = ({
         }
     };
 
-    const getTypeName = (
-        typeId: string
-    ) => {
-
-        return (
-            productTypes.find(
-                t => t.id === typeId
-            )?.name || 'N/A'
-        );
-    };
-
     const inputClasses =
         'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
 
@@ -206,15 +221,33 @@ const Category: React.FC<CategoryProps> = ({
         <Placeholder title="Category Management">
 
             {/* Search */}
-            <div className="mb-6">
-
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
                 <input
                     type="text"
                     placeholder="Search categories..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className={inputClasses}
+                    className={`${inputClasses} flex-1`}
                 />
+
+                <select
+                    value={typeFilter}
+                    onChange={e => setTypeFilter(e.target.value)}
+                    className={`${inputClasses} sm:w-auto`}
+                >
+                    <option value="all">
+                        All Product Types
+                    </option>
+
+                    {productTypes.map(type => (
+                        <option
+                            key={type.id}
+                            value={type.id}
+                        >
+                            {type.name}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {/* Form */}

@@ -108,6 +108,21 @@ export interface Branch extends BaseEntity {
 /* =========================================================
    PRODUCT
 ========================================================= */
+export interface ProductAttribute {
+    name: string;
+    value: string;
+    description?: string;
+    status?: ProductStatus;
+    stockByLocation?: Record<string, number>;
+    history?: StockHistoryItem[];
+    serialNumbersByLocation?: Record<
+        string,
+        string[]
+    >;
+    imageUrl?: string
+    tags?: string[];
+
+}
 
 // Product and DataProduct interfaces remain here as they are core entities
 // that might aggregate attributes from ProductType.ts
@@ -155,6 +170,8 @@ export interface Product extends BaseEntity {
     imageUrl?: string;
 
     tags?: string[];
+
+    attributes?: ProductAttribute[];
 
     stockByLocation: Record<string, number>;
 
@@ -240,6 +257,15 @@ export interface ProductUnit {
 
     status: ProductUnitStatus;
 }
+
+export type ProductUnitForm = Omit<
+    ProductUnit,
+    | 'id'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'status'
+>;
+
 
 /* =========================================================
    STOCK HISTORY
@@ -686,4 +712,15 @@ export interface Repair {
 export interface cssModule {
     name: string;
     css: string;
+}
+
+export interface variations {
+    id: string;
+    name: string;
+    sku: string;
+    color: string;
+    storage: string;
+    price: number;
+    stock: number;
+    status: 'Active' | 'Inactive';
 }
