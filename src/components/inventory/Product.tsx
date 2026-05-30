@@ -12,6 +12,7 @@ import {
     Category as CategoryInterface,
     SubCategory as SubCategoryInterface,
     Brand as BrandInterface,
+    MasterAttribute,
 } from '../../types';
 
 import Placeholder from '../ui/Placeholder';
@@ -20,6 +21,7 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import ProductDetail from './ProductDetail';
 import AddProductForm from './AddProductForm';
 import StatusBadge from '../ui/StatusBadge';
+import { EditIcon, TrashIcon, MultiDeleteIcon } from '../ui/Icons';
 
 type AddProductFormData = Omit<
     DataProduct,
@@ -40,6 +42,8 @@ type SortableKeys =
     | 'typeId'
     | 'brandId'
     | 'categoryId'
+    | 'configuration'
+    | 'conditionId'
     | 'totalStock'
     | 'status';
 
@@ -56,7 +60,14 @@ interface ProductProps {
     onAddBrand: (brand: any) => Promise<BrandInterface>;
     onAddCategory: (category: any) => Promise<CategoryInterface>;
     onUpdate: (product: DataProduct) => Promise<void>;
+    onDeleteVariant: (id: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
+    processors: MasterAttribute[];
+    rams: MasterAttribute[];
+    storages: MasterAttribute[];
+    colors: MasterAttribute[];
+    regions: MasterAttribute[];
+    conditions: MasterAttribute[];
 }
 
 const Product: React.FC<ProductProps> = ({
@@ -69,8 +80,15 @@ const Product: React.FC<ProductProps> = ({
     onAdd,
     onAddBrand,
     onAddCategory,
+    onDeleteVariant,
     onUpdate,
     onDelete,
+    processors,
+    rams,
+    storages,
+    colors,
+    regions,
+    conditions,
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] =
@@ -131,21 +149,29 @@ const Product: React.FC<ProductProps> = ({
     }, [allCategories]);
 
     const filteredProducts = useMemo(() => {
+        const lowerSearch = searchTerm.toLowerCase();
+
         return productsWithTotalStock
-            .filter(product =>
-                searchTerm === ''
-                    ? true
-                    : product.name
-                          .toLowerCase()
-                          .includes(
-                              searchTerm.toLowerCase()
-                          ) ||
-                      product.sku
-                          .toLowerCase()
-                          .includes(
-                              searchTerm.toLowerCase()
-                          )
-            )
+            .filter(product => {
+                if (!searchTerm) return true;
+
+                // Resolve names for deep searching
+                const typeName = getTypeName(product.typeId).toLowerCase();
+                const brandName = getBrandName(product.brandId).toLowerCase();
+                const categoryName = getCategoryName(product.categoryId).toLowerCase();
+                const config = getConfiguration(product).toLowerCase();
+                const condition = getConditionName(product.conditionId).toLowerCase();
+
+                return (
+                    product.name.toLowerCase().includes(lowerSearch) ||
+                    product.sku.toLowerCase().includes(lowerSearch) ||
+                    typeName.includes(lowerSearch) ||
+                    brandName.includes(lowerSearch) ||
+                    categoryName.includes(lowerSearch) ||
+                    config.includes(lowerSearch) ||
+                    condition.includes(lowerSearch)
+                );
+            })
             .filter(product =>
                 categoryFilter === 'All'
                     ? true
@@ -162,6 +188,13 @@ const Product: React.FC<ProductProps> = ({
         searchTerm,
         categoryFilter,
         statusFilter,
+        allCategories,
+        allProductTypes,
+        allBrands,
+        rams,
+        storages,
+        colors,
+        conditions,
     ]);
 
     const sortedProducts = useMemo(() => {
@@ -170,28 +203,44 @@ const Product: React.FC<ProductProps> = ({
         if (!sortConfig) return sortable;
 
         sortable.sort((a, b) => {
-            const aValue = a[
-                sortConfig.key
-            ] as string | number;
+            let aValue: string | number;
+            let bValue: string | number;
 
-            const bValue = b[
-                sortConfig.key
-            ] as string | number;
-
-            if (
-                typeof aValue === 'string' &&
-                typeof bValue === 'string'
-            ) {
-                return sortConfig.direction ===
-                    'ascending'
-                    ? aValue.localeCompare(bValue)
-                    : bValue.localeCompare(aValue);
+            // Logic to get the resolved sort value based on the key
+            switch (sortConfig.key) {
+                case 'typeId':
+                    aValue = getTypeName(a.typeId);
+                    bValue = getTypeName(b.typeId);
+                    break;
+                case 'brandId':
+                    aValue = getBrandName(a.brandId);
+                    bValue = getBrandName(b.brandId);
+                    break;
+                case 'categoryId':
+                    aValue = getCategoryName(a.categoryId);
+                    bValue = getCategoryName(b.categoryId);
+                    break;
+                case 'conditionId':
+                    aValue = getConditionName(a.conditionId);
+                    bValue = getConditionName(b.conditionId);
+                    break;
+                case 'configuration':
+                    aValue = getConfiguration(a);
+                    bValue = getConfiguration(b);
+                    break;
+                default:
+                    aValue = (a as any)[sortConfig.key] ?? '';
+                    bValue = (b as any)[sortConfig.key] ?? '';
             }
 
-            if (
-                typeof aValue === 'number' &&
-                typeof bValue === 'number'
-            ) {
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortConfig.direction ===
+                    'ascending'
+                    ? aValue.toLowerCase().localeCompare(bValue.toLowerCase())
+                    : bValue.toLowerCase().localeCompare(aValue.toLowerCase());
+            }
+
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
                 return sortConfig.direction ===
                     'ascending'
                     ? aValue - bValue
@@ -202,7 +251,18 @@ const Product: React.FC<ProductProps> = ({
         });
 
         return sortable;
-    }, [filteredProducts, sortConfig]);
+    }, [
+        filteredProducts,
+        sortConfig,
+        allCategories,
+        allProductTypes,
+        allBrands,
+        rams,
+        storages,
+        colors,
+        conditions,
+        processors,
+    ]);
 
     const totalPages = Math.ceil(
         sortedProducts.length / itemsPerPage
@@ -280,6 +340,25 @@ const Product: React.FC<ProductProps> = ({
         return allBrands.find(b => b.id === brandId)?.name || '-';
     };
 
+    const getProcessorName = (id?: string) => processors.find(p => p.id === id)?.name || '';
+    const getRamName = (id?: string) => rams.find(r => r.id === id)?.name || '';
+    const getStorageName = (id?: string) => storages.find(s => s.id === id)?.name || '';
+    const getColorName = (id?: string) => colors.find(c => c.id === id)?.name || '';
+    const getRegionName = (id?: string) => regions.find(r => r.id === id)?.name || '';
+    const getConditionName = (id?: string) => conditions.find(c => c.id === id)?.name || '-';
+
+    const getConfiguration = (product: DataProduct) => {
+        const parts = [
+            getProcessorName(product.processorId),
+            getRamName(product.ramId),
+            getStorageName(product.storageId),
+            getColorName(product.colorId),
+            getRegionName(product.regionId)
+        ].filter(Boolean);
+        
+        return parts.length > 0 ? parts.join(' / ') : '-';
+    };
+
     const handleFormSave = async (formData: any) => {
         if (editingProduct) {
             await onUpdate({
@@ -298,6 +377,11 @@ const Product: React.FC<ProductProps> = ({
         setProductToDelete(null);
     };
 
+    const handleDeleteVariantClick = async (id: string) => {
+        if (!window.confirm('Delete this specific variant configuration?')) return;
+        await onDeleteVariant(id);
+    };
+
     if (selectedProduct) {
         return (
             <ProductDetail
@@ -307,6 +391,12 @@ const Product: React.FC<ProductProps> = ({
             allProductTypes={allProductTypes}
             allSubCategories={allSubCategories}
             allBrands={allBrands}
+            processors={processors}
+            rams={rams}
+            storages={storages}
+            colors={colors}
+            regions={regions}
+            conditions={conditions}
             onBack={() => setSelectedProduct(null)}
             onEdit={() => {
                 setEditingProduct(selectedProduct);
@@ -368,6 +458,16 @@ const Product: React.FC<ProductProps> = ({
                             {renderSortableHeader(
                                 'Category',
                                 'categoryId'
+                            )}
+
+                            {renderSortableHeader(
+                                'Configuration',
+                                'configuration'
+                            )}
+
+                            {renderSortableHeader(
+                                'Condition',
+                                'conditionId'
                             )}
 
                             {renderSortableHeader(
@@ -433,6 +533,14 @@ const Product: React.FC<ProductProps> = ({
                                     </td>
 
                                     <td className="px-4 py-3">
+                                        {getConfiguration(product)}
+                                    </td>
+
+                                    <td className="px-4 py-3 text-sm">
+                                        {getConditionName(product.conditionId)}
+                                    </td>
+
+                                    <td className="px-4 py-3 text-sm">
                                         {
                                             product.totalStock
                                         }
@@ -454,11 +562,16 @@ const Product: React.FC<ProductProps> = ({
                                                     setIsModalOpen(true);
                                                 }}
                                                 className="text-amber-500 hover:text-amber-600 transition-colors"
-                                                title="Edit Product"
+                                                title="Edit Variant"
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
+                                            <EditIcon />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteVariantClick(product.id)}
+                                                className="text-orange-500 hover:text-orange-600 transition-colors"
+                                                title="Delete Only This Variant"
+                                            >
+                                            <TrashIcon />
                                             </button>
                                             <button
                                                 onClick={() =>
@@ -467,11 +580,9 @@ const Product: React.FC<ProductProps> = ({
                                                     )
                                                 }
                                                 className="text-red-600 hover:text-red-800 transition-colors"
-                                                title="Delete Product"
+                                                title="Delete Entire Product Model"
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
+                                            <MultiDeleteIcon />
                                             </button>
                                         </div>
                                     </td>
@@ -502,12 +613,12 @@ const Product: React.FC<ProductProps> = ({
                             }
                         }
                         branches={branches}
-                        processors={[]}
-                        rams={[]}
-                        storages={[]}
-                        colors={[]}
-                        regions={[]}
-                        conditions={[]}
+                        processors={processors}
+                        rams={rams}
+                        storages={storages}
+                        colors={colors}
+                        regions={regions}
+                        conditions={conditions}
                         existingCategories={
                             allCategories
                         }

@@ -8,11 +8,7 @@ export * from './utils/ProductType'; // Corrected import path
 export enum Page {
     Dashboard = 'Dashboard',
     Product = 'Product',
-    ProductType = 'ProductType',
-    Category = 'Category',
-    SubCategory = 'SubCategory',
-    Brand = 'Brand',
-    Variation = 'Variation',
+    ProductAttributes = 'ProductAttributes',
     PurchaseOrder = 'PurchaseOrder',
     Purchase = 'Purchase',
     Sale = 'Sale',
@@ -88,6 +84,20 @@ export interface ProductSpec extends BaseEntity {
     model?: string;
     displaySize?: string;
     status: 'active' | 'inactive';
+}
+
+export interface AddProductFormProps {
+    productSpecs: ProductSpec[];
+    brands: MasterAttribute[];
+    types: MasterAttribute[];
+    categories: MasterAttribute[];
+    subCategories: MasterAttribute[];
+    processors: MasterAttribute[];
+    rams: MasterAttribute[];
+    storages: MasterAttribute[];
+    colors: MasterAttribute[];
+    regions: MasterAttribute[];
+    conditions: MasterAttribute[];
 }
 
 export interface ProductVariant extends BaseEntity {
@@ -185,6 +195,13 @@ export interface Product extends BaseEntity {
     brandId?: string;
     brand?: string;
     model?: string;
+    productSpecId?: string;
+    processorId?: string;
+    ramId?: string;
+    storageId?: string;
+    colorId?: string;
+    regionId?: string;
+    conditionId?: string;
     variation?: string;
     color?: string;
     size?: string;
@@ -227,13 +244,22 @@ export interface DataProduct extends Product {
         string,
         string[]
     >;
-    displaysize: string; // only for tablet and laptop
+    displaySize: string; // only for tablet and laptop
     productNumber: string;
     sku: string;
     barcode?: string;
     shortName?: string;
     name: string;
     description?: string;
+    brand: string;
+    model: string;
+    color: string;
+    storage: string;
+    ram: string;
+    productSpecId?: string;
+    processorId?: string;
+    ramId?: string;
+    storageId?: string;
     imageUrl?: string;
     tags?: string[];
     hasSerialNumber: boolean;
@@ -242,6 +268,25 @@ export interface DataProduct extends Product {
     costPrice: number;
     ondelete: string;
     onupdate: string;
+    initialStock: number;
+    branchId: string;
+    skuSeparator: string;
+    skuExcludeSegments: string[];
+    processorCodes?: { [key: string]: string };
+    ramCodes?: { [key: string]: string };
+    storageCodes?: { [key: string]: string };
+    colorCodes?: { [key: string]: string };
+    regionCodes?: { [key: string]: string };
+    conditionCodes?: { [key: string]: string };
+    categoryId: string;
+    subCategoryId?: string;
+    brandId?: string;
+    typeId?: string;
+    variation?: string;
+    warrantyDays?: number;
+    reorderLevel?: number,
+    colorId: string,
+    conditionId: string,
     attributes?: ProductAttribute[];
 }
 
@@ -715,17 +760,6 @@ export interface Repair {
 export interface cssModule {
     name: string;
     css: string;
-}
-
-export interface variations {
-    id: string;
-    name: string;
-    sku: string;
-    color: string;
-    storage: string;
-    price: number;
-    stock: number;
-    status: 'Active' | 'Inactive';
 }
 
 /* =========================================================

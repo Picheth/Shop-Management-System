@@ -12,10 +12,8 @@ interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElem
     placeholder?: string;
     tooltip?: string;
     onChange?: (
-        e: React.ChangeEvent<
-            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        >
-    ) => void;
+    e: React.ChangeEvent<HTMLSelectElement>
+) => void;
 }
 
 /**

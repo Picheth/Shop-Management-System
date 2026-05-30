@@ -7,9 +7,17 @@ import {
     Category as CategoryInterface,
     SubCategory as SubCategoryInterface,
     Brand as BrandInterface,
+    MasterAttribute,
 } from '../../types';
 
 import { StatusBadge } from '../ui/StatusBadge';
+import { 
+    BackIcon, 
+    PrintIcon, 
+    EditIcon, 
+    ExportIcon, 
+    ImageIcon 
+} from '../ui/Icons';
 
 interface ProductDetailProps {
     product: DataProduct;
@@ -23,6 +31,18 @@ interface ProductDetailProps {
     allSubCategories: SubCategoryInterface[];
 
     allBrands: BrandInterface[];
+
+    processors: MasterAttribute[];
+
+    rams: MasterAttribute[];
+
+    storages: MasterAttribute[];
+
+    colors: MasterAttribute[];
+
+    regions: MasterAttribute[];
+
+    conditions: MasterAttribute[];
 
     onBack: () => void;
 
@@ -38,6 +58,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     allProductTypes,
     allSubCategories,
     allBrands,
+    processors,
+    rams,
+    storages,
+    colors,
+    regions,
+    conditions,
     onBack,
     onEdit,
 }) => {
@@ -77,58 +103,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
     }, [totalStock]);
 
-    const categoryName = useMemo(() => {
+    /* =========================================================
+       RESOLVER HELPERS
+    ========================================================= */
 
-        return (
-            allCategories.find(
-                cat => cat.id === product.categoryId
-            )?.name || 'N/A'
-        );
+    const getCategoryName = (id?: string) => allCategories.find(c => c.id === id)?.name || 'N/A';
+    const getTypeName = (id?: string) => allProductTypes.find(t => t.id === id)?.name || 'N/A';
+    const getSubCategoryName = (id?: string) => allSubCategories.find(sc => sc.id === id)?.name || 'N/A';
+    const getBrandName = (id?: string) => allBrands.find(b => b.id === id)?.name || 'N/A';
 
-    }, [
-        product.categoryId,
-        allCategories,
-    ]);
-
-    const typeName = useMemo(() => {
-
-        return (
-            allProductTypes.find(
-                type => type.id === product.typeId
-            )?.name || 'N/A'
-        );
-
-    }, [
-        product.typeId,
-        allProductTypes,
-    ]);
-
-    const subCategoryName = useMemo(() => {
-
-        return (
-            allSubCategories.find(
-                subCat =>
-                    subCat.id === product.subCategoryId
-            )?.name || 'N/A'
-        );
-
-    }, [
-        product.subCategoryId,
-        allSubCategories,
-    ]);
-
-    const brandName = useMemo(() => {
-
-        return (
-            allBrands.find(
-                brand => brand.id === product.brandId
-            )?.name || 'N/A'
-        );
-
-    }, [
-        product.brandId,
-        allBrands,
-    ]);
+    const getProcessorName = (id?: string) => processors.find(p => p.id === id)?.name || '';
+    const getRamName = (id?: string) => rams.find(r => r.id === id)?.name || '';
+    const getStorageName = (id?: string) => storages.find(s => s.id === id)?.name || '';
+    const getColorName = (id?: string) => colors.find(c => c.id === id)?.name || '';
+    const getRegionName = (id?: string) => regions.find(r => r.id === id)?.name || '';
+    const getConditionName = (id?: string) => conditions.find(c => c.id === id)?.name || '-';
 
     const filteredHistory = useMemo(() => {
         if (!product.history) return [];
@@ -226,20 +215,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                         onClick={() => window.print()}
                         className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 01-2-2H5a2 2 0 01-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                            />
-                        </svg>
+                        <PrintIcon className="mr-2" />
                         Print
                     </button>
 
@@ -247,20 +223,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                         onClick={onEdit}
                         className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                        </svg>
+                        <EditIcon className="mr-2" />
                         Edit Product
                     </button>
                 </div>
@@ -351,19 +314,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                             <DetailItem
                                 label="Type"
-                                value={typeName}
+                                value={getTypeName(product.typeId)}
                             />
 
                             <DetailItem
                                 label="Category"
-                                value={categoryName}
+                                value={getCategoryName(product.categoryId)}
                             />
 
                             {product.subCategoryId && (
 
                                 <DetailItem
                                     label="Sub-Category"
-                                    value={subCategoryName}
+                                    value={getSubCategoryName(product.subCategoryId)}
                                 />
                             )}
 
@@ -371,7 +334,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                                 <DetailItem
                                     label="Brand"
-                                    value={brandName}
+                                    value={getBrandName(product.brandId)}
                                 />
                             )}
 
@@ -391,11 +354,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                                 />
                             )}
 
-                            {(product.color ||
-    product.storage ||
-    product.ram ||
-    product.size ||
-    product.model) && (
+                            {(
+                                product.color ||
+                                product.storage ||
+                                product.ram ||
+                                product.size ||
+                                product.model ||
+                                product.colorId ||
+                                product.storageId ||
+                                product.ramId ||
+                                product.processorId ||
+                                product.regionId ||
+                                product.conditionId
+                            ) && (
 
     <div className="mt-6">
 
@@ -416,35 +387,35 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                 </div>
             )}
 
-            {product.color && (
+            {(product.color || product.colorId) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Color
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.color}
+                        {product.color || getColorName(product.colorId)}
                     </p>
                 </div>
             )}
 
-            {product.storage && (
+            {(product.storage || product.storageId) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Storage
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.storage}
+                        {product.storage || getStorageName(product.storageId)}
                     </p>
                 </div>
             )}
 
-            {product.ram && (
+            {(product.ram || product.ramId) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         RAM
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.ram}
+                        {product.ram || getRamName(product.ramId)}
                     </p>
                 </div>
             )}
@@ -456,6 +427,39 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {product.size}
+                    </p>
+                </div>
+            )}
+
+            {product.processorId && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Processor
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {getProcessorName(product.processorId)}
+                    </p>
+                </div>
+            )}
+
+            {product.regionId && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Region
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {getRegionName(product.regionId)}
+                    </p>
+                </div>
+            )}
+
+            {product.conditionId && (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Condition
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {getConditionName(product.conditionId)}
                     </p>
                 </div>
             )}
@@ -670,9 +674,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                                 onClick={handleExportCSV}
                                 className="inline-flex items-center px-2 py-1 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-800 rounded text-xs font-medium hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
+                                <ExportIcon className="mr-1" />
                                 Export CSV
                             </button>
                         )}

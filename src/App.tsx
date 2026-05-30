@@ -49,11 +49,7 @@ import Settlement from './components/operations/Settlement';
 
 import Inventory from './components/inventory/Inventory';
 import Product from './components/inventory/Product';
-import ProductType from './components/inventory/ProductType';
-import Category from './components/inventory/Category';
-import SubCategory from './components/inventory/SubCategory';
-import Brand from './components/inventory/Brand';
-import Variation from './components/inventory/Variation';
+import ProductAttributes from './components/settings/ProductAttribute';
 import BranchLocation from './components/inventory/BranchLocation';
 import StockTransfer from './components/inventory/StockTransfer';
 
@@ -103,14 +99,7 @@ const pageComponents: Partial<
     [Page.Dashboard]: Dashboard,
 
     [Page.Product]: Product,
-    [Page.ProductType]: ProductType,
-    [Page.Category]: Category,
-    [Page.SubCategory]: SubCategory,
-    [Page.Variation]: Variation,
-    [Page.Inventory]: Inventory,
-    [Page.BranchLocation]: BranchLocation,
-    [Page.StockTransfer]: StockTransfer,
-
+    [Page.ProductAttributes]: ProductAttributes,
     [Page.PurchaseOrder]: PurchaseOrder,
     [Page.Purchase]: Purchase,
     [Page.Sale]: Sale,
@@ -133,11 +122,12 @@ const pageComponents: Partial<
     [Page.Supplier]: Supplier,
     [Page.Contact]: Contact,
     [Page.ExpenseCategory]: ExpenseCategory,
+    [Page.Inventory]: Inventory,
+    [Page.BranchLocation]: BranchLocation,
+    [Page.StockTransfer]: StockTransfer,
 
     [Page.Staff]: Staff,
     [Page.Payroll]: Payroll,
-
-    [Page.Brand]: Brand, // Add Brand component to pageComponents
 };
 
 /* =========================
@@ -287,57 +277,37 @@ const App: React.FC = () => {
     const handleAddProduct = useCallback(
         async (formData: any) => {
             try {
-                // 1. Create the Product Specification
-                const specPayload: Omit<ProductSpec, 'id'> = {
-                    name: formData.name,
-                    brandId: formData.brandId,
-                    typeId: formData.typeId,
-                    categoryId: formData.categoryId,
-                    subCategoryId: formData.subCategoryId || undefined,
-                    model: formData.model,
-                    displaySize: formData.displaySize,
-                    status: 'active',
-                    createdAt: new Date().toISOString()
-                };
+                // Call the atomic RPC function
+                const { data, error } = await supabase.rpc('create_product_with_variant', {
+                    p_name: formData.name,
+                    p_brand_id: formData.brandId,
+                    p_type_id: formData.typeId,
+                    p_category_id: formData.categoryId,
+                    p_sub_category_id: formData.subCategoryId || null,
+                    p_model: formData.model || null,
+                    p_display_size: formData.displaySize || null,
+                    p_sku: formData.sku,
+                    p_stock: Number(formData.initialStock),
+                    p_cost_price: Number(formData.costPrice),
+                    p_sale_price: Number(formData.salePrice),
+                    p_storage_id: formData.storageId || null,
+                    p_ram_id: formData.ramId || null,
+                    p_color_id: formData.colorId || null,
+                    p_condition_id: formData.conditionId || null,
+                    p_description: formData.description || null,
+                    p_has_serial_number: !!formData.hasSerialNumber,
+                    p_has_imei: !!formData.hasIMEI,
+                    p_image_url: formData.imageUrl || null,
+                    p_attributes: formData.attributes || []
+                });
 
-                const { data: spec, error: specError } = await supabase
-                    .from('product_specs')
-                    .insert([specPayload])
-                    .select()
-                    .single();
+                if (error) throw error;
 
-                if (specError) throw specError;
-
-                // 2. Create the Product Variant linked to the Spec ID
-                const variantPayload: Omit<ProductVariant, 'id'> = {
-                    productSpecId: spec.id,
-                    sku: formData.sku,
-                    stock: Number(formData.initialStock),
-                    costPrice: Number(formData.costPrice),
-                    salePrice: Number(formData.salePrice),
-                    storageId: formData.storageId || undefined,
-                    ramId: formData.ramId || undefined,
-                    colorId: formData.colorId || undefined,
-                    conditionId: formData.conditionId || undefined,
-                    status: 'active',
-                    createdAt: new Date().toISOString()
-                };
-
-                const { data: variant, error: variantError } = await supabase
-                    .from('product_variants')
-                    .insert([variantPayload])
-                    .select()
-                    .single();
-
-                if (variantError) throw variantError;
-
-                // 3. Construct a DataProduct object to update local state without a refetch
+                // Construct local state object from the returned JSON
                 const newProductEntry: DataProduct = {
-                    ...spec,
-                    ...variant,
-                    id: variant.id,
+                    ...data,
                     stockByLocation: formData.stockByLocation,
-                    status: formData.status,
+                    status: formData.status || 'In Stock',
                     hasSerialNumber: formData.hasSerialNumber,
                     hasIMEI: formData.hasIMEI,
                     imageUrl: formData.imageUrl,
@@ -374,13 +344,35 @@ const App: React.FC = () => {
         []
     );
 
-    const handleDeleteProduct = useCallback(async (id: string) => {
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) {
-            console.error('Delete product error:', error.message);
-            return;
+    const handleDeleteProduct = useCallback(async (specId: string) => {
+        try {
+            const { error } = await supabase.rpc('delete_product_spec_cascade', {
+                p_spec_id: specId
+            });
+
+            if (error) throw error;
+
+            // Filter out all variants that belong to this specification
+            setProducts(prev => prev.filter(item => item.productSpecId !== specId));
+        } catch (error: any) {
+            console.error('Delete product spec error:', error.message);
+            alert('Delete failed: ' + error.message);
         }
-        setProducts(prev => prev.filter(item => item.id !== id));
+    }, []);
+
+    const handleDeleteVariant = useCallback(async (variantId: string) => {
+        try {
+            const { error } = await supabase.rpc('delete_specific_variant', {
+                p_variant_id: variantId
+            });
+
+            if (error) throw error;
+
+            setProducts(prev => prev.filter(item => item.id !== variantId));
+        } catch (error: any) {
+            console.error('Delete variant error:', error.message);
+            alert('Delete failed: ' + error.message);
+        }
     }, []);
 
     /* =========================
@@ -662,7 +654,7 @@ const App: React.FC = () => {
     const handleAddBrand = useCallback(
         async (
             newBrand: Omit<
-                Brand,
+                BrandInterface,
                 'id' | 'createdAt' | 'updatedAt'
             >
         ) => {
@@ -695,7 +687,7 @@ const App: React.FC = () => {
     );
 
     const handleUpdateBrand = useCallback(
-        async (updatedBrand: Brand) => {
+        async (updatedBrand: BrandInterface) => {
             const { error } =
                 await supabase
                     .from('brands')
@@ -775,7 +767,7 @@ const App: React.FC = () => {
             ]);
 
             if (brandsRes.data) {
-                setBrands(brandsRes.data as Brand[]);
+                setBrands(brandsRes.data as BrandInterface[]);
             }
 
             if (productsRes.data) {
@@ -843,41 +835,28 @@ const App: React.FC = () => {
     const pageProps: Partial<
         Record<Page, object>
     > = {
-        [Page.ProductType]: {
+        [Page.ProductAttributes]: {
             productTypes,
-            onAdd: handleAddProductType,
-            onUpdate:
-                handleUpdateProductType,
-            onDelete:
-                handleDeleteProductType,
-        },
-
-        [Page.Category]: {
             categories,
-            productTypes,
-            onAdd: handleAddCategory,
-            onUpdate:
-                handleUpdateCategory,
-            onDelete:
-                handleDeleteCategory,
-        },
-
-        [Page.SubCategory]: {
             subCategories,
-            categories,
-            onAdd:
-                handleAddSubCategory,
-            onUpdate:
-                handleUpdateSubCategory,
-            onDelete:
-                handleDeleteSubCategory,
-        },
-
-        [Page.Brand]: {
             brands,
-            onAdd: handleAddBrand,
-            onUpdate: handleUpdateBrand,
-            onDelete: handleDeleteBrand,
+            onUpdateProductType: handleUpdateProductType,
+            onDeleteProductType: handleDeleteProductType,
+            onAddCategory: handleAddCategory,
+            onUpdateCategory: handleUpdateCategory,
+            onDeleteCategory: handleDeleteCategory,
+            onAddSubCategory: handleAddSubCategory,
+            onUpdateSubCategory: handleUpdateSubCategory,
+            onDeleteSubCategory: handleDeleteSubCategory,
+            onAddBrand: handleAddBrand,
+            onUpdateBrand: handleUpdateBrand,
+            onDeleteBrand: handleDeleteBrand,
+            processors,
+            rams,
+            storages,
+            colors,
+            regions,
+            conditions,
         },
 
         [Page.Product]: {
@@ -891,6 +870,7 @@ const App: React.FC = () => {
             allBrands: brands, // Pass brands to Product
             onAddBrand: handleAddBrand,
             onAddCategory: handleAddCategory,
+            onDeleteVariant: handleDeleteVariant,
             allSubCategories:
                 subCategories,
             /* Pass new master tables to components */
@@ -900,6 +880,7 @@ const App: React.FC = () => {
             colors,
             regions,
             conditions,
+            onAdd: handleAddProduct,
         },
 
         [Page.Inventory]: {

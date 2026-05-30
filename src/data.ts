@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     Page,
     Branch,
@@ -15,7 +16,17 @@ import {
     Repair,
     LineItem,
     StockHistoryItem,
+    NavSection,
 } from './types';
+import { 
+    DashboardIcon, 
+    ProductIcon, 
+    AttributesIcon, 
+    PurchaseIcon, 
+    SaleIcon, 
+    TransferIcon, 
+    InventoryIcon 
+} from './components/ui/Icons';
 
 /* =========================================================
    BRANCHES
@@ -46,152 +57,11 @@ export const mockBranches: Branch[] = [
    PRODUCTS
 ========================================================= */
 
-export const mockProducts: DataProduct[] = [
-    
-];
+export const mockProducts: DataProduct[] =
+    [
+        
+    ];
 
-/* =========================================================
-   CATEGORIES
-========================================================= */
-
-export const mockCategories: Category[] = [
-    {
-        id: 'C1',
-        code: 'SMARTPHONE',
-        typeId: 'T1',
-        name: 'Smartphone',
-        active: true,
-    },
-    {
-        id: 'C2',
-        code: 'TABLET',
-        typeId: 'T1',
-        name: 'Tablet',
-        active: true,
-    },
-    {
-        id: 'C3',
-        code: 'CHARGER',
-        typeId: 'T2',
-        name: 'Charger',
-        active: true,
-    },
-    {
-        id: 'C4',
-        code: 'CABLE',
-        typeId: 'T2',
-        name: 'Cable',
-        active: true,
-    },
-    {
-        id: 'C5',
-        code: 'DISPLAY',
-        typeId: 'T3',
-        name: 'Display',
-        active: true,
-    },
-    {
-        id: 'C6',
-        code: 'BATTERY',
-        typeId: 'T3',
-        name: 'Battery',
-        active: true,
-    },
-    {
-        id: 'C7',
-        code: 'REPAIR_SVC',
-        typeId: 'T4',
-        name: 'Repair Service',
-        active: true,
-    },
-];
-
-/* =========================================================
-   SUB CATEGORIES
-========================================================= */
-
-export const mockSubCategories: SubCategory[] = [
-    {
-        id: 'SC1',
-        code: 'IOS',
-        categoryId: 'C1',
-        name: 'iOS Phones',
-        active: true,
-    },
-];
-
-/* =========================================================
-   BRANDS
-========================================================= */
-
-export const mockBrands: Brand[] = [
-    {
-        id: 'BR1',
-        code: 'APL',
-        name: 'Apple',
-    },
-    {
-        id: 'BR2',
-        code: 'SAM',
-        name: 'Samsung',
-    },
-];
-
-/* =========================================================
-   PRODUCT TYPES
-========================================================= */
-
-export const mockProductTypes: ProductType[] = [
-    {
-        id: 'T1',
-        code: 'DEV',
-        name: 'Device',
-        description: 'Phones, tablets, laptops',
-        active: true,
-    },
-    {
-        id: 'T2',
-        code: 'ACC',
-        name: 'Accessory',
-        description: 'Cases, chargers, cables',
-        active: true,
-    },
-    {
-        id: 'T3',
-        code: 'SPR',
-        name: 'Spare Part',
-        description: 'LCD, battery, IC',
-        active: true,
-    },
-    {
-        id: 'T4',
-        code: 'SVC',
-        name: 'Service',
-        description: 'Repair service, installation',
-        active: true,
-    },
-    {
-        id: 'T5',
-        code: 'DIG',
-        name: 'Digital Product',
-        description: 'Software, activation',
-        active: true,
-    },
-    {
-        id: 'T6',
-        code: 'CON',
-        name: 'Consumable',
-        description: 'Glue, cleaning liquid',
-        active: true,
-    },
-    {
-        id: 'T7',
-        code: 'BDL',
-        name: 'Bundle',
-        description: 'Package/set products',
-        active: true,
-    },
-];
 
 /* =========================================================
    SUPPLIERS
@@ -328,12 +198,45 @@ export const mockRepairs: Repair[] = [
 ========================================================= */
 
 export const navItems = [
-    { label: 'Dashboard', page: Page.Dashboard },
-    { label: 'Products', page: Page.Product },
-    { label: 'Purchase', page: Page.Purchase },
-    { label: 'Sales', page: Page.Sale },
-    { label: 'Stock Transfer', page: Page.StockTransfer },
-    { label: 'Inventory', page: Page.Inventory },
+    {
+        label: 'Dashboard',
+        page: Page.Dashboard,
+        icon: DashboardIcon,
+    },
+    {
+        label: 'Product',
+        page: Page.Product,
+        icon: ProductIcon,
+    },
+    {
+        label: 'Attributes',
+        page: Page.ProductAttributes,
+        icon: AttributesIcon,
+    },
+    {
+        label: 'Purchase',
+        page: Page.Purchase,
+        icon: PurchaseIcon,
+    },
+    {
+        label: 'Sale',
+        page: Page.Sale,
+        icon: SaleIcon,
+    },
+    {
+        label: 'Stock Transfer',
+        page: Page.StockTransfer,
+        icon: TransferIcon,
+    },
+    {
+        label: 'Inventory',
+        page: Page.Inventory,
+        icon: InventoryIcon,
+    },
+];
+
+export const navSections: NavSection[] = [
+    
 ];
 
 /* =========================================================
