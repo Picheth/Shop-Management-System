@@ -65,6 +65,49 @@ export interface BaseEntity {
     active?: boolean;
 }
 
+/* =========================================================
+   MASTER ATTRIBUTE TABLES
+========================================================= */
+
+export interface MasterAttribute extends BaseEntity {
+    name: string;
+    code?: string;
+}
+
+/* =========================================================
+   SPEC & VARIANT SYSTEM
+========================================================= */
+
+export interface ProductSpec extends BaseEntity {
+    name: string;
+    brandId: string;
+    typeId: string;
+    categoryId: string;
+    subCategoryId?: string;
+    shortModel?: string;
+    model?: string;
+    displaySize?: string;
+    status: 'active' | 'inactive';
+}
+
+export interface ProductVariant extends BaseEntity {
+    productSpecId: string;
+    processorId?: string;
+    ramId?: string;
+    storageId?: string;
+    colorId?: string;
+    regionId?: string;
+    conditionId?: string;
+    sku: string;
+    stock: number;
+    costPrice: number;
+    salePrice: number;
+    status: 'active' | 'inactive';
+    // Helper fields for UI display
+    spec?: ProductSpec;
+}
+
+
 export type ProductStatus =
     | 'In Stock'
     | 'Low Stock'
@@ -184,6 +227,13 @@ export interface DataProduct extends Product {
         string,
         string[]
     >;
+    displaysize: string; // only for tablet and laptop
+    productNumber: string;
+    sku: string;
+    barcode?: string;
+    shortName?: string;
+    name: string;
+    description?: string;
     imageUrl?: string;
     tags?: string[];
     hasSerialNumber: boolean;

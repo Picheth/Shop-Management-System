@@ -19,6 +19,9 @@ import {
     SubCategory as SubCategoryInterface,
     Repair as RepairType,
     Brand as BrandInterface,
+    ProductSpec,
+    ProductVariant,
+    MasterAttribute,
 } from './types';
 
 import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
@@ -174,6 +177,14 @@ const App: React.FC = () => {
     const [brands, setBrands] =
         useState<BrandInterface[]>([]);
 
+    /* New Master Attribute States */
+    const [processors, setProcessors] = useState<MasterAttribute[]>([]);
+    const [rams, setRams] = useState<MasterAttribute[]>([]);
+    const [storages, setStorages] = useState<MasterAttribute[]>([]);
+    const [colors, setColors] = useState<MasterAttribute[]>([]);
+    const [regions, setRegions] = useState<MasterAttribute[]>([]);
+    const [conditions, setConditions] = useState<MasterAttribute[]>([]);
+
     const [branches] =
         useState<Branch[]>(mockBranches);
 
@@ -274,19 +285,71 @@ const App: React.FC = () => {
     ========================= */
 
     const handleAddProduct = useCallback(
-        async (newProduct: any) => {
-            const { data, error } = await supabase
-                .from('products')
-                .insert([{ ...newProduct, createdAt: new Date().toISOString() }])
-                .select();
+        async (formData: any) => {
+            try {
+                // 1. Create the Product Specification
+                const specPayload: Omit<ProductSpec, 'id'> = {
+                    name: formData.name,
+                    brandId: formData.brandId,
+                    typeId: formData.typeId,
+                    categoryId: formData.categoryId,
+                    subCategoryId: formData.subCategoryId || undefined,
+                    model: formData.model,
+                    displaySize: formData.displaySize,
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
 
-            if (error) {
-                console.error('Add product error:', error.message);
-                return;
-            }
+                const { data: spec, error: specError } = await supabase
+                    .from('product_specs')
+                    .insert([specPayload])
+                    .select()
+                    .single();
 
-            if (data?.[0]) {
-                setProducts(prev => [data[0], ...prev]);
+                if (specError) throw specError;
+
+                // 2. Create the Product Variant linked to the Spec ID
+                const variantPayload: Omit<ProductVariant, 'id'> = {
+                    productSpecId: spec.id,
+                    sku: formData.sku,
+                    stock: Number(formData.initialStock),
+                    costPrice: Number(formData.costPrice),
+                    salePrice: Number(formData.salePrice),
+                    storageId: formData.storageId || undefined,
+                    ramId: formData.ramId || undefined,
+                    colorId: formData.colorId || undefined,
+                    conditionId: formData.conditionId || undefined,
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+
+                const { data: variant, error: variantError } = await supabase
+                    .from('product_variants')
+                    .insert([variantPayload])
+                    .select()
+                    .single();
+
+                if (variantError) throw variantError;
+
+                // 3. Construct a DataProduct object to update local state without a refetch
+                const newProductEntry: DataProduct = {
+                    ...spec,
+                    ...variant,
+                    id: variant.id,
+                    stockByLocation: formData.stockByLocation,
+                    status: formData.status,
+                    hasSerialNumber: formData.hasSerialNumber,
+                    hasIMEI: formData.hasIMEI,
+                    imageUrl: formData.imageUrl,
+                    description: formData.description,
+                    attributes: formData.attributes
+                } as DataProduct;
+
+                setProducts(prev => [newProductEntry, ...prev]);
+
+            } catch (error: any) {
+                console.error('Failed to add product spec/variant:', error.message);
+                alert('Save failed: ' + error.message);
             }
         },
         []
@@ -441,6 +504,7 @@ const App: React.FC = () => {
                     ...prev,
                     data[0],
                 ]);
+                    return data[0];
             }
         },
         []
@@ -624,6 +688,7 @@ const App: React.FC = () => {
                     ...prev,
                     data[0],
                 ]);
+                    return data[0];
             }
         },
         []
@@ -687,6 +752,12 @@ const App: React.FC = () => {
                 subCategoriesRes,
                 salesRes,
                 repairsRes,
+                processorsRes,
+                ramsRes,
+                storagesRes,
+                colorsRes,
+                regionsRes,
+                conditionsRes,
             ] = await Promise.all([
                 supabase.from('brands').select('*'),
                 supabase.from('products').select('*'),
@@ -695,6 +766,12 @@ const App: React.FC = () => {
                 supabase.from('sub_categories').select('*'),
                 supabase.from('sales').select('*'),
                 supabase.from('repairs').select('*'),
+                supabase.from('processors').select('*'),
+                supabase.from('rams').select('*'),
+                supabase.from('storages').select('*'),
+                supabase.from('colors').select('*'),
+                supabase.from('regions').select('*'),
+                supabase.from('conditions').select('*'),
             ]);
 
             if (brandsRes.data) {
@@ -730,6 +807,15 @@ const App: React.FC = () => {
             if (repairsRes.data) {
                 setRepairs(repairsRes.data as RepairType[]);
             }
+
+            /* Set Master Attributes */
+            if (processorsRes.data) setProcessors(processorsRes.data);
+            if (ramsRes.data) setRams(ramsRes.data);
+            if (storagesRes.data) setStorages(storagesRes.data);
+            if (colorsRes.data) setColors(colorsRes.data);
+            if (regionsRes.data) setRegions(regionsRes.data);
+            if (conditionsRes.data) setConditions(conditionsRes.data);
+
         } catch (error) {
             console.error('Failed to fetch initial data:', error);
         }
@@ -803,8 +889,17 @@ const App: React.FC = () => {
             allCategories:
                 categories,
             allBrands: brands, // Pass brands to Product
+            onAddBrand: handleAddBrand,
+            onAddCategory: handleAddCategory,
             allSubCategories:
                 subCategories,
+            /* Pass new master tables to components */
+            processors,
+            rams,
+            storages,
+            colors,
+            regions,
+            conditions,
         },
 
         [Page.Inventory]: {

@@ -53,6 +53,8 @@ interface ProductProps {
     allProductTypes: ProductTypeInterface[];
 
     onAdd: (product: any) => Promise<void>;
+    onAddBrand: (brand: any) => Promise<BrandInterface>;
+    onAddCategory: (category: any) => Promise<CategoryInterface>;
     onUpdate: (product: DataProduct) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
 }
@@ -65,6 +67,8 @@ const Product: React.FC<ProductProps> = ({
     allBrands,
     allProductTypes,
     onAdd,
+    onAddBrand,
+    onAddCategory,
     onUpdate,
     onDelete,
 }) => {
@@ -498,6 +502,12 @@ const Product: React.FC<ProductProps> = ({
                             }
                         }
                         branches={branches}
+                        processors={[]}
+                        rams={[]}
+                        storages={[]}
+                        colors={[]}
+                        regions={[]}
+                        conditions={[]}
                         existingCategories={
                             allCategories
                         }
@@ -505,6 +515,8 @@ const Product: React.FC<ProductProps> = ({
                             allSubCategories
                         }
                         existingBrands={allBrands}
+                        onQuickAddBrand={onAddBrand}
+                        onQuickAddCategory={onAddCategory}
                         existingProductTypes={
                             allProductTypes
                         }
