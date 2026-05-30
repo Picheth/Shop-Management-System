@@ -7,24 +7,28 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
+import ProductVariantManager from '../inventory/ProductVariant';
 
 import {
   ProductType as ProductTypeInterface,
   Category as CategoryInterface,
   SubCategory as SubCategoryInterface,
   Brand as BrandInterface,
-  Variation as VariationInterface,
+  ProductVariant,
+  MasterAttribute,
   ToastType as ToastKind,
+  DataProduct,
 } from '../../types';
 import { useDuplicateValidation } from './useDuplicateValidation';
 import { useFormValidation } from './useFormValidation';
 
 interface ProductAttributesProps {
+  products: DataProduct[];
   productTypes: ProductTypeInterface[];
   categories: CategoryInterface[];
   subCategories: SubCategoryInterface[];
   brands: BrandInterface[];
-  variations: VariationInterface[];
+  variants: ProductVariant[];
 
   onAddProductType: (
     newType: Omit<ProductTypeInterface, 'id' | 'createdAt' | 'updatedAt'>
@@ -69,18 +73,29 @@ interface ProductAttributesProps {
 
   onDeleteBrand: (id: string) => Promise<void>;
 
-  onAddVariation: (
-    newVariation: Omit<
-      VariationInterface,
+  onAddVariant: (
+    newVariant: Omit<
+      ProductVariant,
       'id' | 'createdAt' | 'updatedAt'
     >
   ) => Promise<void>;
 
-  onUpdateVariation: (
-    updatedVariation: VariationInterface
+  onBulkAddVariants: (
+    newVariants: any[]
   ) => Promise<void>;
 
-  onDeleteVariation: (id: string) => Promise<void>;
+  onUpdateVariant: (
+    updatedVariant: ProductVariant
+  ) => Promise<void>;
+
+  processors: MasterAttribute[];
+  rams: MasterAttribute[];
+  storages: MasterAttribute[];
+  colors: MasterAttribute[];
+  regions: MasterAttribute[];
+  conditions: MasterAttribute[];
+
+  onDeleteVariant: (id: string) => Promise<void>;
 
   refreshMasterData: () => void;
 
@@ -99,14 +114,15 @@ type Tab =
   | 'Categories'
   | 'Subcategories'
   | 'Brands'
-  | 'Variations';
+  | 'Variants';
 
 const ProductAttributes: React.FC<ProductAttributesProps> = ({
+  products,
   productTypes,
   categories,
   subCategories,
   brands,
-  variations,
+  variants,
 
   onAddProductType,
   onUpdateProductType,
@@ -124,9 +140,17 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
   onUpdateBrand,
   onDeleteBrand,
 
-  onAddVariation,
-  onUpdateVariation,
-  onDeleteVariation,
+  onAddVariant,
+  onBulkAddVariants,
+  onUpdateVariant,
+  onDeleteVariant,
+
+  processors,
+  rams,
+  storages,
+  colors,
+  regions,
+  conditions,
 
   refreshMasterData,
   showToast,
@@ -984,254 +1008,25 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
   };
 
   // =========================================================
-  // VARIATION TAB
+  // VARIANT TAB
   // =========================================================
 
-  const VariationTab: React.FC = () => {
-    const [search, setSearch] = useState('');
-
-    const [editingId, setEditingId] =
-      useState<string | null>(null);
-
-    const [form, setForm] = useState({
-      name: '',
-      type: '',
-      value: '',
-    });
-
-    const { isDuplicate, isValidating } = useDuplicateValidation('variations', 'name', form.name, editingId);
-
-    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-      required: ['name', 'type', 'value'],
-      labels: {
-        name: 'Variation Name',
-        type: 'Attribute Type',
-        value: 'Attribute Value'
-      }
-    });
-
-    const filteredVariations = useMemo(() => {
-      const term = search.toLowerCase();
-
-      if (!term) return variations;
-
-      return variations.filter(
-        (item) =>
-          item.name
-            .toLowerCase()
-            .includes(term) ||
-          item.type
-            .toLowerCase()
-            .includes(term)
-      );
-    }, [search, variations]);
-
-    const handleChange = (
-  e: React.ChangeEvent<
-    | HTMLInputElement
-    | HTMLTextAreaElement
-    | HTMLSelectElement
-  >
-) => {
-      const { name, value } = e.target;
-
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    };
-
-    const resetForm = () => {
-      setEditingId(null);
-
-      setForm({
-        name: '',
-        type: '',
-        value: '',
-      });
-    };
-
-    const handleSubmit = async (
-      e: React.FormEvent
-    ) => {
-      e.preventDefault();
-
-      setIsGlobalLoading(true);
-
-      try {
-        if (editingId) {
-          await onUpdateVariation({
-            id: editingId,
-            ...form,
-            updatedAt: new Date().toISOString(),
-          });
-        } else {
-          await onAddVariation(form);
-        }
-
-        resetForm();
-        refreshMasterData();
-      } catch (error: any) {
-        showToast(
-          'Failed to save variation',
-          'error'
-        );
-      } finally {
-        setIsGlobalLoading(false);
-      }
-    };
-
-    const handleDelete = async (
-      id: string
-    ) => {
-      if (
-        !window.confirm(
-          'Delete this variation?'
-        )
-      ) {
-        return;
-      }
-
-      try {
-        await onDeleteVariation(id);
-        showToast('Variation deleted successfully', 'success');
-        refreshMasterData();
-      } catch (error: any) {
-        showToast(
-          error.message,
-          'error'
-        );
-      }
-    };
-
+  const ProductVariantTab: React.FC = () => {
     return (
-      <>
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search variation..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            className={inputClasses}
-          />
-        </div>
-
-        <SettingsForm
-          title={editingId ? 'Edit Variation' : 'Add Variation'}
-          isEditing={!!editingId}
-          onCancel={resetForm}
-          onSubmit={handleSubmit}
-          isValidating={isValidating}
-          isDuplicate={isDuplicate}
-          isDisabled={isInvalid}
-          className="card mb-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormInput
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="e.g. iPhone 15 Pro"
-              isValidating={isValidating}
-              isDuplicate={isDuplicate}
-              error={fieldErrors.name}
-              required
-            />
-
-            <FormInput
-              label="Type"
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              placeholder="e.g. Color, Size"
-              error={fieldErrors.type}
-              required
-            />
-
-            <FormInput
-              label="Value"
-              name="value"
-              value={form.value}
-              onChange={handleChange}
-              placeholder="e.g. Titanium Blue"
-              error={fieldErrors.value}
-              required
-            />
-          </div>
-        </SettingsForm>
-
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-          <table className="min-w-full bg-white dark:bg-gray-800">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Value</th>
-                <th className="text-center">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredVariations.length >
-              0 ? (
-                filteredVariations.map(
-                  (item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 text-sm">{item.name}</td>
-                      <td className="px-4 py-3 text-sm">{item.type}</td>
-                      <td className="px-4 py-3 text-sm">{item.value}</td>
-
-                      <td>
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingId(
-                                item.id
-                              );
-
-                              setForm({
-                                name: item.name,
-                                type: item.type,
-                                value: item.value,
-                              });
-                            }}
-                            className="px-3 py-1 text-sm bg-amber-500 text-white rounded"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              handleDelete(
-                                item.id
-                              )
-                            }
-                            className="px-3 py-1 text-sm bg-red-500 text-white rounded"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )
-              ) : (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="text-center py-8 text-gray-500"
-                  >
-                    No variations found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </>
+      <ProductVariantManager
+        variants={variants}
+        products={products}
+        processors={processors}
+        rams={rams}
+        storages={storages}
+        colors={colors}
+        regions={regions}
+        conditions={conditions}
+        onAdd={onAddVariant}
+        onBulkAdd={onBulkAddVariants}
+        onUpdate={onUpdateVariant}
+        onDelete={onDeleteVariant}
+      />
     );
   };
 
@@ -1249,8 +1044,8 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       case 'Brands':
         return <BrandTab />;
 
-      case 'Variations':
-        return <VariationTab />;
+      case 'Variants':
+        return <ProductVariantTab />;
 
       default:
         return (
@@ -1274,7 +1069,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               'Categories',
               'Subcategories',
               'Brands',
-              'Variations',
+              'Variants',
             ] as Tab[]
           ).map((tab) => (
             <button

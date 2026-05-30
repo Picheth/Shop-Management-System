@@ -43,11 +43,27 @@ export interface NavItem {
     label: string;
     page: Page;
     icon: React.ReactElement;
+    disabled?: boolean;
+    children?: NavItem[];
+    onClick?: () => void;
+    href?: string;
+    external?: boolean;
+    active?: boolean;
 }
 
 export interface NavSection {
     title: string;
     items: NavItem[];
+    disabled?: boolean;
+    icon?: React.ReactElement;
+    children?: NavSection[];
+    onClick?: () => void;
+    href?: string;
+    external?: boolean;
+    active?: boolean;
+    id?: string;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 /* =========================================================
@@ -100,21 +116,25 @@ export interface AddProductFormProps {
     conditions: MasterAttribute[];
 }
 
-export interface ProductVariant extends BaseEntity {
-    productSpecId: string;
-    processorId?: string;
-    ramId?: string;
-    storageId?: string;
-    colorId?: string;
-    regionId?: string;
-    conditionId?: string;
-    sku: string;
-    stock: number;
-    costPrice: number;
-    salePrice: number;
-    status: 'active' | 'inactive';
-    // Helper fields for UI display
-    spec?: ProductSpec;
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  sku: string;
+  name?: string; // optional display name (e.g. "128GB Black USA NEW")
+  price?: number;
+  cost?: number;
+  stockQuantity?: number;
+  barcode?: string;
+  // Optional references (for master data relations)
+  processorId?: string;
+  ramId?: string;
+  storageId?: string;
+  colorId?: string;
+  regionId?: string;
+  conditionId?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 
@@ -236,7 +256,8 @@ export type ProductForm = Omit<
     | 'history'
 >;
 
-export interface DataProduct extends Product {
+export interface DataProduct extends Product{
+    shortModel: string;
     stockByLocation: Record<string, number>;
     history?: StockHistoryItem[];
     status: ProductStatus;

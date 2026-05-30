@@ -19,7 +19,6 @@ import {
     SubCategory as SubCategoryInterface,
     Repair as RepairType,
     Brand as BrandInterface,
-    ProductSpec,
     ProductVariant,
     MasterAttribute,
 } from './types';
@@ -154,6 +153,9 @@ const App: React.FC = () => {
 
     const [categories, setCategories] =
         useState<CategoryInterface[]>([]);
+
+    const [variants, setVariants] =
+        useState<ProductVariant[]>([]);
 
     const [subCategories, setSubCategories] =
         useState<SubCategoryInterface[]>([]);
@@ -744,6 +746,7 @@ const App: React.FC = () => {
                 subCategoriesRes,
                 salesRes,
                 repairsRes,
+                variantsRes,
                 processorsRes,
                 ramsRes,
                 storagesRes,
@@ -758,6 +761,7 @@ const App: React.FC = () => {
                 supabase.from('sub_categories').select('*'),
                 supabase.from('sales').select('*'),
                 supabase.from('repairs').select('*'),
+                supabase.from('product_variants').select('*'),
                 supabase.from('processors').select('*'),
                 supabase.from('rams').select('*'),
                 supabase.from('storages').select('*'),
@@ -800,6 +804,10 @@ const App: React.FC = () => {
                 setRepairs(repairsRes.data as RepairType[]);
             }
 
+            if (variantsRes.data) {
+                setVariants(variantsRes.data as ProductVariant[]);
+            }
+
             /* Set Master Attributes */
             if (processorsRes.data) setProcessors(processorsRes.data);
             if (ramsRes.data) setRams(ramsRes.data);
@@ -815,6 +823,37 @@ const App: React.FC = () => {
 
     fetchInitialData();
 }, []);
+
+    const handleAddVariant = useCallback(async (newVar: any) => {
+        const { data, error } = await supabase.from('product_variants').insert([{ ...newVar, createdAt: new Date().toISOString() }]).select();
+        if (error) console.error(error);
+        if (data?.[0]) setVariants(prev => [data[0], ...prev]);
+    }, []);
+
+    const handleBulkAddVariants = useCallback(async (newVariants: any[]) => {
+        const { data, error } = await supabase.rpc('create_product_variants_bulk', {
+            p_variants: newVariants
+        });
+
+        if (error) {
+            console.error('Bulk variant creation failed:', error.message);
+            throw error;
+        }
+
+        if (data) setVariants(prev => [...data, ...prev]);
+    }, []);
+
+    const handleUpdateVariant = useCallback(async (updatedVar: ProductVariant) => {
+        const { error } = await supabase.from('product_variants').update({ ...updatedVar, updatedAt: new Date().toISOString() }).eq('id', updatedVar.id);
+        if (error) console.error(error);
+        else setVariants(prev => prev.map(v => v.id === updatedVar.id ? updatedVar : v));
+    }, []);
+
+    const handleDeleteVariantGlobal = useCallback(async (id: string) => {
+        const { error } = await supabase.from('product_variants').delete().eq('id', id);
+        if (error) console.error(error);
+        else setVariants(prev => prev.filter(v => v.id !== id));
+    }, []);
 
     /* =========================
        CURRENT PAGE
@@ -840,6 +879,12 @@ const App: React.FC = () => {
             categories,
             subCategories,
             brands,
+            variants,
+            products,
+            onAddVariant: handleAddVariant,
+            onBulkAddVariants: handleBulkAddVariants,
+            onUpdateVariant: handleUpdateVariant,
+            onDeleteVariant: handleDeleteVariantGlobal,
             onUpdateProductType: handleUpdateProductType,
             onDeleteProductType: handleDeleteProductType,
             onAddCategory: handleAddCategory,

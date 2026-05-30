@@ -1,7 +1,6 @@
 {
   "MobilePhoneModels": [
       {
-    "sku":"",
     "brand":"Apple",
     "type":"Device",
     "category":"Phone",
