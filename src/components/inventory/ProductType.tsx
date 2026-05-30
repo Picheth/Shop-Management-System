@@ -5,6 +5,7 @@ import FormInput from '../ui/FormInput';
 import { useDuplicateValidation } from '../settings/useDuplicateValidation';
 import { useFormValidation } from '../settings/useFormValidation';
 import { ProductType as ProductTypeInterface } from '../../types';
+import { supabase } from '../../utils/supabase';
 
 interface ProductTypeProps {
     productTypes: ProductTypeInterface[];
@@ -21,6 +22,11 @@ interface ProductTypeProps {
         id: string
     ) => Promise<void>;
 }
+
+const { data, error } = await supabase
+    .from('product_types')
+    .select('*')
+    .order('createdAt', { ascending: false });
 
 const ProductType: React.FC<ProductTypeProps> = ({
     productTypes,
@@ -102,12 +108,15 @@ const ProductType: React.FC<ProductTypeProps> = ({
 
             if (editingId) {
 
+                const original = productTypes.find(t => t.id === editingId);
+
                 await onUpdate({
+                    ...original,
                     id: editingId,
                     ...form,
-                    createdAt: '',
+                    createdAt: original?.createdAt,
                     updatedAt: new Date().toISOString(),
-                });
+                } as ProductTypeInterface);
 
             } else {
 
