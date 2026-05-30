@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useDuplicateValidation } from '../settings/useDuplicateValidation';
+import { useFormValidation } from '../settings/useFormValidation';
 
 interface BranchLocationItem {
     id: string;
@@ -46,6 +51,8 @@ const BranchLocation: React.FC = () => {
     const [editingId, setEditingId] =
         useState<string | null>(null);
 
+    const [statusFilter, setStatusFilter] = useState('All');
+
     const [form, setForm] = useState({
         branchCode: '',
         branchName: '',
@@ -53,14 +60,34 @@ const BranchLocation: React.FC = () => {
         manager: '',
         phone: '',
         address: '',
+        status: 'Active' as 'Active' | 'Inactive',
+    });
+
+    const { isDuplicate, isValidating } = useDuplicateValidation('branches', 'branchCode', form.branchCode, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['branchCode', 'branchName', 'locationName'],
+        phone: ['phone'],
+        labels: {
+            branchCode: 'Branch Code',
+            branchName: 'Branch Name',
+            locationName: 'Location',
+            phone: 'Phone Number'
+        }
     });
 
     const filteredBranches = useMemo(() => {
-        if (!search) return branches;
+        let filtered = branches;
+
+        if (statusFilter !== 'All') {
+            filtered = filtered.filter(b => b.status === statusFilter);
+        }
+
+        if (!search) return filtered;
 
         const term = search.toLowerCase();
 
-        return branches.filter(
+        return filtered.filter(
             branch =>
                 branch.branchCode
                     .toLowerCase()
@@ -75,11 +102,11 @@ const BranchLocation: React.FC = () => {
                     .toLowerCase()
                     .includes(term)
         ); // Correctly filter branches
-    }, [search, branches]);
+    }, [search, branches, statusFilter]);
 
     const handleChange = (
         e: React.ChangeEvent<
-            HTMLInputElement | HTMLTextAreaElement
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
         >
     ) => {
         setForm(prev => ({
@@ -98,6 +125,7 @@ const BranchLocation: React.FC = () => {
             manager: '',
             phone: '',
             address: '',
+            status: 'Active',
         });
     };
 
@@ -121,7 +149,6 @@ const BranchLocation: React.FC = () => {
             const newBranch: BranchLocationItem = {
                 id: Date.now().toString(),
                 ...form,
-                status: 'Active',
             };
 
             setBranches(prev => [
@@ -145,6 +172,7 @@ const BranchLocation: React.FC = () => {
             manager: branch.manager,
             phone: branch.phone,
             address: branch.address,
+            status: branch.status,
         });
     };
 
@@ -177,14 +205,11 @@ const BranchLocation: React.FC = () => {
         );
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
-
     return (
         <Placeholder title="Branch & Location Management">
 
             {/* Search */}
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
                 <input
                     type="text"
                     placeholder="Search branch..."
@@ -192,103 +217,107 @@ const BranchLocation: React.FC = () => {
                     onChange={e =>
                         setSearch(e.target.value)
                     }
-                    className={inputClasses}
+                    className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
+
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="sm:w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Branch' : 'Add Branch'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
+                submitLabel={editingId ? 'Update Branch' : 'Add Branch'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Branch'
-                            : 'Add Branch'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Branch Code"
                         name="branchCode"
-                        placeholder="Branch Code"
+                        placeholder="e.g. BRA-001"
                         value={form.branchCode}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
+                        error={fieldErrors.branchCode}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Branch Name"
                         name="branchName"
-                        placeholder="Branch Name"
+                        placeholder="e.g. Main Branch"
                         value={form.branchName}
                         onChange={handleChange}
-                        className={inputClasses}
+                        error={fieldErrors.branchName}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Location"
                         name="locationName"
-                        placeholder="Location"
+                        placeholder="e.g. Phnom Penh"
                         value={form.locationName}
                         onChange={handleChange}
-                        className={inputClasses}
+                        error={fieldErrors.locationName}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Manager"
                         name="manager"
-                        placeholder="Manager Name"
+                        placeholder="Name of manager"
                         value={form.manager}
                         onChange={handleChange}
-                        className={inputClasses}
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Phone Number"
+                        type="tel"
                         name="phone"
-                        placeholder="Phone Number"
+                        placeholder="e.g. 012 345 678"
                         value={form.phone}
                         onChange={handleChange}
-                        className={inputClasses}
+                        error={fieldErrors.phone}
+                    />
+
+                    <FormSelect
+                        label="Status"
+                        name="status"
+                        value={form.status}
+                        onChange={handleChange}
+                        options={[
+                            { value: 'Active', label: 'Active' },
+                            { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                        required
                     />
                 </div>
 
                 <div className="mt-4">
-                    <textarea
+                    <FormInput
+                        label="Address"
+                        isTextArea
                         name="address"
-                        placeholder="Address"
+                        placeholder="Full physical address..."
                         value={form.address}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId ? 'Update Branch' : 'Add Branch'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

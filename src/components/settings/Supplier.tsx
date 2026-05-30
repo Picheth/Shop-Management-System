@@ -4,6 +4,7 @@ import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from './useDuplicateValidation';
+import { useFormValidation } from './useFormValidation';
 
 interface SupplierItem {
     id: string;
@@ -67,6 +68,18 @@ const Supplier: React.FC = () => {
 
     const { isDuplicate, isValidating } = useDuplicateValidation('suppliers', 'supplierCode', form.supplierCode, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['supplierCode', 'supplierName', 'phone'],
+        phone: ['phone'],
+        email: ['email'],
+        labels: {
+            supplierCode: 'Supplier Code',
+            supplierName: 'Supplier Name',
+            phone: 'Phone Number',
+            email: 'Email Address'
+        }
+    });
+
     const filteredSuppliers = useMemo(() => {
         let filtered = suppliers;
 
@@ -96,10 +109,12 @@ const Supplier: React.FC = () => {
     }, [search, suppliers, statusFilter]);
 
     const handleChange = (
-        e: React.ChangeEvent<
-            HTMLInputElement | HTMLTextAreaElement
-        >
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
         setForm(prev => ({
             ...prev,
             [e.target.name]: e.target.value,
@@ -234,6 +249,7 @@ const Supplier: React.FC = () => {
                 onSubmit={handleSubmit}
                 isValidating={isValidating}
                 isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
                 submitLabel={editingId ? 'Update Supplier' : 'Add Supplier'}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -245,6 +261,7 @@ const Supplier: React.FC = () => {
                         onChange={handleChange}
                         isValidating={isValidating}
                         isDuplicate={isDuplicate}
+                        error={fieldErrors.supplierCode}
                         required
                     />
 
@@ -254,6 +271,7 @@ const Supplier: React.FC = () => {
                         placeholder="e.g. Global Tech Solutions"
                         value={form.supplierName}
                         onChange={handleChange}
+                        error={fieldErrors.supplierName}
                         required
                     />
 
@@ -277,10 +295,12 @@ const Supplier: React.FC = () => {
 
                     <FormInput
                         label="Phone Number"
+                        type="tel"
                         name="phone"
                         placeholder="e.g. +855..."
                         value={form.phone}
                         onChange={handleChange}
+                        error={fieldErrors.phone}
                         required
                     />
 
@@ -291,6 +311,7 @@ const Supplier: React.FC = () => {
                         placeholder="e.g. contact@supplier.com"
                         value={form.email}
                         onChange={handleChange}
+                        error={fieldErrors.email}
                     />
 
                     <FormSelect

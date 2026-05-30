@@ -47,57 +47,7 @@ export const mockBranches: Branch[] = [
 ========================================================= */
 
 export const mockProducts: DataProduct[] = [
-    {
-        id: 'P1',
-        productNumber: 'PRD-001',
-        sku: 'IPHONE15-128',
-        name: 'iPhone 15 128GB',
-        categoryId: 'C1',
-        costPrice: 800,
-        salePrice: 950,
-        hasSerialNumber: true,
-        hasIMEI: true,
-        status: 'In Stock',
-
-        stockByLocation: {
-            B1: 10,
-            B2: 5,
-        },
-
-        serialNumbersByLocation: {
-            B1: ['SN001', 'SN002'],
-            B2: ['SN003'],
-        },
-
-        history: [
-            {
-                date: '2026-01-01',
-                action: 'Initial Stock',
-                change: 10,
-                newStock: 10,
-                branch: 'Head Office'
-            },
-        ],
-    },
-    {
-        id: 'P2',
-        productNumber: 'PRD-002',
-        sku: 'SAMSUNG-S24',
-        name: 'Samsung S24',
-        categoryId: 'C1',
-        costPrice: 700,
-        salePrice: 850,
-        hasSerialNumber: true,
-        hasIMEI: true,
-        status: 'Low Stock',
-
-        stockByLocation: {
-            B1: 3,
-            B2: 2,
-        },
-
-        history: [],
-    },
+    
 ];
 
 /* =========================================================

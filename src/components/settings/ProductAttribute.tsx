@@ -17,6 +17,7 @@ import {
   ToastType as ToastKind,
 } from '../../types';
 import { useDuplicateValidation } from './useDuplicateValidation';
+import { useFormValidation } from './useFormValidation';
 
 interface ProductAttributesProps {
   productTypes: ProductTypeInterface[];
@@ -162,6 +163,14 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
 
     const { isDuplicate, isValidating } = useDuplicateValidation('product_types', 'code', form.code, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+      required: ['code', 'name'],
+      labels: {
+        code: 'Type Code',
+        name: 'Type Name'
+      }
+    });
+
     const filteredProductTypes = useMemo(() => {
       if (!search) return productTypes;
 
@@ -178,10 +187,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     }, [search, productTypes]);
 
     const handleChange = (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement
-      >
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
       const { name, value } = e.target;
 
       setForm((prev) => ({
@@ -250,6 +261,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           onSubmit={handleSubmit}
           isValidating={isValidating}
           isDuplicate={isDuplicate}
+          isDisabled={isInvalid}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,6 +273,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               isValidating={isValidating}
               isDuplicate={isDuplicate}
+              error={fieldErrors.code}
               required
             />
 
@@ -270,6 +283,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               placeholder="e.g. Device"
               value={form.name}
               onChange={handleChange}
+              error={fieldErrors.name}
               required
             />
           </div>
@@ -388,6 +402,15 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
 
     const { isDuplicate, isValidating } = useDuplicateValidation('categories', 'code', form.code, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+      required: ['code', 'name', 'typeId'],
+      labels: {
+        code: 'Category Code',
+        name: 'Category Name',
+        typeId: 'Product Type'
+      }
+    });
+
     const typeMap = useMemo(() => {
       const map: Record<string, string> = {};
       productTypes.forEach((t) => {
@@ -409,8 +432,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     }, [search, categories, typeMap]);
 
     const handleChange = (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
       const { name, value } = e.target;
       setForm((prev) => ({ ...prev, [name]: value }));
     };
@@ -484,6 +511,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           onSubmit={handleSubmit}
           isValidating={isValidating}
           isDuplicate={isDuplicate}
+          isDisabled={isInvalid}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -495,6 +523,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               isValidating={isValidating}
               isDuplicate={isDuplicate}
+              error={fieldErrors.code}
               required
             />
             <FormInput
@@ -503,6 +532,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               placeholder="e.g. Smartphone"
               value={form.name}
               onChange={handleChange}
+              error={fieldErrors.name}
               required
             />
             <FormSelect
@@ -512,6 +542,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               placeholder="Select Product Type"
               options={productTypes.map(t => ({ value: t.id, label: t.name }))}
+              error={fieldErrors.typeId}
               required
             />
           </div>
@@ -577,6 +608,15 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
 
     const { isDuplicate, isValidating } = useDuplicateValidation('sub_categories', 'code', form.code, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+      required: ['code', 'name', 'categoryId'],
+      labels: {
+        code: 'Subcategory Code',
+        name: 'Subcategory Name',
+        categoryId: 'Parent Category'
+      }
+    });
+
     const categoryMap = useMemo(() => {
       const map: Record<string, string> = {};
       categories.forEach((c) => {
@@ -598,8 +638,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     }, [search, subCategories, categoryMap]);
 
     const handleChange = (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
       const { name, value } = e.target;
       setForm((prev) => ({ ...prev, [name]: value }));
     };
@@ -673,6 +717,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           onSubmit={handleSubmit}
           isValidating={isValidating}
           isDuplicate={isDuplicate}
+          isDisabled={isInvalid}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -684,6 +729,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               isValidating={isValidating}
               isDuplicate={isDuplicate}
+              error={fieldErrors.code}
               required
             />
             <FormInput
@@ -692,6 +738,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               placeholder="e.g. iOS Phones"
               value={form.name}
               onChange={handleChange}
+              error={fieldErrors.name}
               required
             />
             <FormSelect
@@ -701,6 +748,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               placeholder="Select Category"
               options={categories.map(c => ({ value: c.id, label: c.name }))}
+              error={fieldErrors.categoryId}
               required
             />
           </div>
@@ -765,6 +813,14 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
 
     const { isDuplicate, isValidating } = useDuplicateValidation('brands', 'code', form.code, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+      required: ['code', 'name'],
+      labels: {
+        code: 'Brand Code',
+        name: 'Brand Name'
+      }
+    });
+
     const filteredBrands = useMemo(() => {
       const term = search.toLowerCase();
       if (!term) return brands;
@@ -778,7 +834,13 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       );
     }, [search, brands]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
       const { name, value } = e.target;
       setForm((prev) => ({ ...prev, [name]: value }));
     };
@@ -851,6 +913,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           onSubmit={handleSubmit}
           isValidating={isValidating}
           isDuplicate={isDuplicate}
+          isDisabled={isInvalid}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -862,6 +925,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               onChange={handleChange}
               isValidating={isValidating}
               isDuplicate={isDuplicate}
+              error={fieldErrors.code}
               required
             />
             <FormInput
@@ -870,6 +934,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               placeholder="e.g. Apple"
               value={form.name}
               onChange={handleChange}
+              error={fieldErrors.name}
               required
             />
             <FormInput
@@ -934,6 +999,17 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       value: '',
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('variations', 'name', form.name, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+      required: ['name', 'type', 'value'],
+      labels: {
+        name: 'Variation Name',
+        type: 'Attribute Type',
+        value: 'Attribute Value'
+      }
+    });
+
     const filteredVariations = useMemo(() => {
       const term = search.toLowerCase();
 
@@ -951,8 +1027,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     }, [search, variations]);
 
     const handleChange = (
-      e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
       const { name, value } = e.target;
 
       setForm((prev) => ({
@@ -1043,6 +1123,9 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           isEditing={!!editingId}
           onCancel={resetForm}
           onSubmit={handleSubmit}
+          isValidating={isValidating}
+          isDuplicate={isDuplicate}
+          isDisabled={isInvalid}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1052,6 +1135,9 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               value={form.name}
               onChange={handleChange}
               placeholder="e.g. iPhone 15 Pro"
+              isValidating={isValidating}
+              isDuplicate={isDuplicate}
+              error={fieldErrors.name}
               required
             />
 
@@ -1061,6 +1147,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               value={form.type}
               onChange={handleChange}
               placeholder="e.g. Color, Size"
+              error={fieldErrors.type}
               required
             />
 
@@ -1070,6 +1157,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
               value={form.value}
               onChange={handleChange}
               placeholder="e.g. Titanium Blue"
+              error={fieldErrors.value}
               required
             />
           </div>

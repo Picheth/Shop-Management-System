@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 
 import {
@@ -92,12 +94,12 @@ const Category: React.FC<CategoryProps> = ({
     }, [search, categories, typeFilter, typeMap]);
 
     const handleChange = (
-        e: React.ChangeEvent<
-            HTMLInputElement |
-            HTMLTextAreaElement |
-            HTMLSelectElement
-        >
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
 
         const { name, value } = e.target;
 
@@ -252,51 +254,29 @@ const Category: React.FC<CategoryProps> = ({
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Category' : 'Add New Category'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                submitLabel={editingId ? 'Update Category' : 'Add Category'}
             >
-
-                <div className="flex items-center justify-between mb-4">
-
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-
-                        {editingId
-                            ? 'Edit Category'
-                            : 'Add New Category'}
-                    </h2>
-
-                    {editingId && (
-
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Category Code"
                         name="code"
-                        placeholder="Category Code"
+                        placeholder="e.g. SMARTPHONE"
                         value={form.code}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Category Name"
                         name="name"
-                        placeholder="Category Name"
+                        placeholder="e.g. Smartphone"
                         value={form.name}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
@@ -312,28 +292,17 @@ const Category: React.FC<CategoryProps> = ({
                 </div>
 
                 <div className="mt-4">
-
-                    <textarea
+                    <FormInput
+                        label="Description"
+                        isTextArea
                         name="description"
                         placeholder="Description (Optional)"
                         value={form.description}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Category'
-                            : 'Add Category'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

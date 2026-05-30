@@ -4,6 +4,7 @@ import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from './useDuplicateValidation';
+import { useFormValidation } from './useFormValidation';
 
 interface AccountItem {
     id: string;
@@ -73,6 +74,17 @@ const ChartOfAccount: React.FC = () => {
     });
 
     const { isDuplicate, isValidating } = useDuplicateValidation('chart_of_accounts', 'accountCode', form.accountCode, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['accountCode', 'accountName', 'accountType', 'balance'],
+        minMax: { balance: { min: 0 } },
+        labels: {
+            accountCode: 'Account Code',
+            accountName: 'Account Name',
+            accountType: 'Account Type',
+            balance: 'Initial Balance',
+        }
+    });
 
     const filteredAccounts = useMemo(() => {
         if (!search) return accounts;
@@ -234,6 +246,7 @@ const ChartOfAccount: React.FC = () => {
                 onSubmit={handleSubmit}
                 isValidating={isValidating}
                 isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
                 submitLabel={editingId ? 'Update Account' : 'Add Account'}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -245,6 +258,7 @@ const ChartOfAccount: React.FC = () => {
                         onChange={handleChange}
                         isValidating={isValidating}
                         isDuplicate={isDuplicate}
+                        error={fieldErrors.accountCode}
                         required
                     />
 
@@ -254,6 +268,7 @@ const ChartOfAccount: React.FC = () => {
                         placeholder="e.g. Cash on Hand"
                         value={form.accountName}
                         onChange={handleChange}
+                        error={fieldErrors.accountName}
                         required
                     />
 
@@ -269,6 +284,7 @@ const ChartOfAccount: React.FC = () => {
                             { value: 'Revenue', label: 'Revenue' },
                             { value: 'Expense', label: 'Expense' },
                         ]}
+                        error={fieldErrors.accountType}
                         required
                     />
 
@@ -279,6 +295,7 @@ const ChartOfAccount: React.FC = () => {
                         placeholder="0.00"
                         value={form.balance}
                         onChange={handleChange}
+                        error={fieldErrors.balance}
                         min="0"
                         required
                     />

@@ -3,13 +3,11 @@ import React, {
     useState,
 } from 'react';
 import Placeholder from '../ui/Placeholder';
-import { DataProduct, Branch, StockTransfer, Page } from '../../types';
-
-type RepairStatus =
-    | 'Pending'
-    | 'In Progress'
-    | 'Completed'
-    | 'Cancelled';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useFormValidation } from '../settings/useFormValidation';
+import { DataProduct, Branch, StockTransfer, Page, RepairStatus } from '../../types';
 
 interface RepairItem {
     id: string;
@@ -109,6 +107,21 @@ const RepairCenter: React.FC<RepairCenterProps> =
                 status:
                     'Pending' as RepairStatus,
             });
+
+        const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+            required: ['customer', 'phone', 'device', 'branch', 'entryDate', 'estimatedCost', 'issue'],
+            phone: ['phone'],
+            minMax: { estimatedCost: { min: 0 } },
+            labels: {
+                customer: 'Customer Name',
+                phone: 'Phone Number',
+                device: 'Device',
+                branch: 'Branch',
+                entryDate: 'Entry Date',
+                estimatedCost: 'Estimated Cost',
+                issue: 'Issue Description'
+            }
+        });
 
         const filteredRepairs =
             useMemo(() => {
@@ -472,117 +485,95 @@ const RepairCenter: React.FC<RepairCenterProps> =
                 </div>
 
                 {/* Form */}
-                <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                    className="card mb-6"
+            <SettingsForm
+                title={editingId ? 'Edit Repair' : 'Add New Repair'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
+                onSubmit={handleSubmit}
+                isDisabled={isInvalid}
+                submitLabel={editingId ? 'Update Repair' : 'Add Repair'}
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {editingId
-                                ? 'Edit Repair'
-                                : 'Add Repair'}
-                        </h2>
-
-                        {editingId && (
-                            <button
-                                type="button"
-                                onClick={
-                                    resetForm
-                                }
-                                className="text-sm text-red-500 hover:text-red-600"
-                            >
-                                Cancel
-                            </button>
-                        )}
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Customer Name"
                             name="customer"
-                            placeholder="Customer Name"
+                        placeholder="Enter customer name"
                             value={
                                 form.customer
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                            required
-                        />
+                        error={fieldErrors.customer}
+                        required
+                    />
 
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Phone"
+                        type="tel"
                             name="phone"
-                            placeholder="Phone"
+                        placeholder="e.g. 012 345 678"
                             value={
                                 form.phone
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                            required
-                        />
+                        error={fieldErrors.phone}
+                        required
+                    />
 
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Device"
                             name="device"
-                            placeholder="Device"
+                        placeholder="e.g. iPhone 14 Pro"
                             value={
                                 form.device
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                            required
-                        />
+                        error={fieldErrors.device}
+                        required
+                    />
 
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Serial Number"
                             name="serialNumber"
-                            placeholder="Serial Number"
+                        placeholder="Device serial or IMEI"
                             value={
                                 form.serialNumber
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                        />
+                    />
 
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Technician"
                             name="technician"
-                            placeholder="Technician"
+                        placeholder="Assign technician"
                             value={
                                 form.technician
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                        />
+                    />
 
-                        <input
-                            type="text"
+                    <FormSelect
+                        label="Branch"
                             name="branch"
-                            placeholder="Branch"
-                            value={
-                                form.branch
-                            }
-                            onChange={
-                                handleChange
-                            }
-                            className="input-field"
-                            required
-                        />
+                        value={form.branch}
+                        onChange={handleChange}
+                        placeholder="Select Branch"
+                        options={branches.map(b => ({ value: b.name, label: b.name }))}
+                        error={fieldErrors.branch}
+                        required
+                    />
 
-                        <input
+                    <FormInput
+                        label="Entry Date"
                             type="date"
                             name="entryDate"
                             value={
@@ -591,26 +582,28 @@ const RepairCenter: React.FC<RepairCenterProps> =
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                            required
-                        />
+                        error={fieldErrors.entryDate}
+                        required
+                    />
 
-                        <input
+                    <FormInput
+                        label="Estimated Cost"
                             type="number"
                             name="estimatedCost"
-                            placeholder="Estimated Cost"
+                        placeholder="0.00"
                             value={
                                 form.estimatedCost
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
+                        error={fieldErrors.estimatedCost}
                             min="0"
                             required
                         />
 
-                        <select
+                    <FormSelect
+                        label="Status"
                             name="status"
                             value={
                                 form.status
@@ -618,50 +611,34 @@ const RepairCenter: React.FC<RepairCenterProps> =
                             onChange={
                                 handleChange
                             }
-                            className="input-field"
-                        >
-                            <option value="Pending">
-                                Pending
-                            </option>
+                        options={[
+                            { value: 'Pending', label: 'Pending' },
+                            { value: 'In Progress', label: 'In Progress' },
+                            { value: 'Completed', label: 'Completed' },
+                            { value: 'Cancelled', label: 'Cancelled' },
+                        ]}
+                        required
+                    />
+                </div>
 
-                            <option value="In Progress">
-                                In Progress
-                            </option>
-
-                            <option value="Completed">
-                                Completed
-                            </option>
-
-                            <option value="Cancelled">
-                                Cancelled
-                            </option>
-                        </select>
-                    </div>
-
-                    <div className="mt-4">
-                        <textarea
+                <div className="mt-4">
+                    <FormInput
+                        label="Issue Description"
+                        isTextArea
                             name="issue"
-                            placeholder="Issue Description"
+                        placeholder="Detailed issue description..."
                             value={
                                 form.issue
                             }
                             onChange={
                                 handleChange
                             }
-                            className="input-field h-24"
-                            required
-                        />
-                    </div>
-
-                    <div className="flex justify-end mt-4">
-                        <button
-                            type="submit"
-                            className="btn-primary"
-                        >
-                            {editingId ? 'Update Repair' : 'Add Repair'}
-                        </button>
-                    </div>
-                </form>
+                        error={fieldErrors.issue}
+                        className="h-24"
+                        required
+                    />
+                </div>
+            </SettingsForm>
 
                 {/* Table */}
                 <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

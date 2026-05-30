@@ -7,6 +7,7 @@ interface SettingsFormProps {
     onSubmit: (e: React.FormEvent) => void;
     isValidating?: boolean;
     isDuplicate?: boolean;
+    isDisabled?: boolean;
     submitLabel?: string;
     children: React.ReactNode;
     className?: string;
@@ -19,6 +20,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
     onSubmit,
     isValidating = false,
     isDuplicate = false,
+    isDisabled = false,
     submitLabel,
     children,
     className = "",
@@ -57,7 +59,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
             <div className="flex justify-end mt-4">
                 <button
                     type="submit"
-                    disabled={isValidating || isDuplicate}
+                    disabled={isValidating || isDuplicate || isDisabled}
                     className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
                 >
                     {displaySubmitLabel}

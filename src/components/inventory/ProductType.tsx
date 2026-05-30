@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import { useDuplicateValidation } from '../settings/useDuplicateValidation';
+import { useFormValidation } from '../settings/useFormValidation';
 import { ProductType as ProductTypeInterface } from '../../types';
 
 interface ProductTypeProps {
@@ -36,6 +40,16 @@ const ProductType: React.FC<ProductTypeProps> = ({
         active: true,
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('product_types', 'code', form.code, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['code', 'name'],
+        labels: {
+            code: 'Type Code',
+            name: 'Type Name'
+        }
+    });
+
     const filteredProductTypes = useMemo(() => {
 
         if (!search) return productTypes;
@@ -53,7 +67,9 @@ const ProductType: React.FC<ProductTypeProps> = ({
     }, [search, productTypes]);
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >
     ) => {
 
         const { name, value } = e.target;
@@ -178,76 +194,52 @@ const ProductType: React.FC<ProductTypeProps> = ({
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Product Type' : 'Add New Product Type'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
+                submitLabel={editingId ? 'Update Type' : 'Add Type'}
             >
-
-                <div className="flex items-center justify-between mb-4">
-
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Product Type'
-                            : 'Add New Product Type'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Type Code"
                         name="code"
-                        placeholder="Type Code"
+                        placeholder="e.g. DEV"
                         value={form.code}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
+                        error={fieldErrors.code}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Type Name"
                         name="name"
-                        placeholder="Type Name"
+                        placeholder="e.g. Device"
                         value={form.name}
                         onChange={handleChange}
-                        className={inputClasses}
+                        error={fieldErrors.name}
                         required
                     />
                 </div>
 
                 <div className="mt-4">
-
-                    <textarea
+                    <FormInput
+                        label="Description"
+                        isTextArea
                         name="description"
-                        placeholder="Description"
+                        placeholder="Enter description..."
                         value={form.description}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Type'
-                            : 'Add Type'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

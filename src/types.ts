@@ -131,57 +131,38 @@ export interface ProductAttribute {
 
 export interface Product extends BaseEntity {
     productNumber: string;
-
     sku: string;
     barcode?: string;
-
     shortName?: string;
-
     name: string;
     description?: string;
-
     typeId?: string;
     categoryId: string;
     subCategoryId?: string;
-
     brandId?: string;
     brand?: string;
-
     model?: string;
     variation?: string;
-
     color?: string;
     size?: string;
     storage?: string;
     ram?: string;
-
     costPrice: number;
     salePrice: number;
-
     wholesalePrice?: number;
-
     reorderLevel?: number;
-
     hasSerialNumber: boolean;
     hasIMEI: boolean;
-
     warrantyDays?: number;
-
     imageUrl?: string;
-
     tags?: string[];
-
     attributes?: ProductAttribute[];
-
     stockByLocation: Record<string, number>;
-
     serialNumbersByLocation?: Record<
         string,
         string[]
     >;
-
     status: ProductStatus;
-
     history?: StockHistoryItem[];
 }
 
@@ -209,6 +190,9 @@ export interface DataProduct extends Product {
     hasIMEI: boolean;
     salePrice: number;
     costPrice: number;
+    ondelete: string;
+    onupdate: string;
+    attributes?: ProductAttribute[];
 }
 
 /* =========================================================
@@ -530,22 +514,15 @@ export interface Staff extends BaseEntity {
 
 export interface Payroll extends BaseEntity {
     payrollNumber?: string;
-
     staffId: string;
-
     month: string;
-
     basicSalary: number;
-
     allowances?: number;
-
     deductions?: number;
-
     totalSalary: number;
-
     paymentDate: string;
-
     note?: string;
+    status: 'Pending' | 'Paid';
 }
 
 /* =========================================================
@@ -637,15 +614,11 @@ export interface ChartOfAccount {
 
 export interface RepairCenter extends BaseEntity {
     code: string;
-
+    id: string;
     name: string;
-
     contactPerson?: string;
-
     phone?: string;
-
     email?: string;
-
     address?: string;
 }
 
@@ -661,47 +634,27 @@ export type RepairStatus =
 
 export interface Repair {
     repairNumber?: string;
-
+    id: string;
     branchId: string;
-
     customerId?: string;
-
     customer: string;
-
     phone?: string;
-
     productId?: string;
-
     productName?: string;
-
     serialNumber?: string;
-
     imei?: string;
-
     device?: string;
-
     issue: string;
-
     diagnosis?: string;
-
     solution?: string;
-
     technician?: string;
-
     estimatedCost?: number;
-
     repairCost?: number;
-
     entryDate: string;
-
     completedDate?: string;
-
     items?: LineItem[];
-
     total: number;
-
     note?: string;
-
     status: RepairStatus;
 }
 
@@ -724,3 +677,9 @@ export interface variations {
     stock: number;
     status: 'Active' | 'Inactive';
 }
+
+/* =========================================================
+   UI / TOAST
+========================================================= */
+
+export type ToastType = 'success' | 'error' | 'warning' | 'info';

@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import FormInput from '../ui/FormInput';
+import InlineFormInput from '../ui/InlineFormInput';
+import InlineFormSelect from '../ui/InlineFormSelect';
 import {
     DataProduct,
     LineItem,
@@ -47,12 +50,6 @@ const PurchaseOrderForm: React.FC<
 
     const [error, setError] =
         useState('');
-
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500';
-
-    const labelClasses =
-        'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 
     const handleAddItem = () => {
         if (products.length === 0) {
@@ -233,60 +230,23 @@ onAdd({
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <FormInput
+                    label="Supplier"
+                    name="supplier"
+                    placeholder="Supplier name"
+                    value={supplier}
+                    onChange={e => setSupplier(e.target.value)}
+                    required
+                />
 
-                {/* Supplier */}
-                <div>
-                    <label
-                        htmlFor="supplier"
-                        className={
-                            labelClasses
-                        }
-                    >
-                        Supplier
-                    </label>
-
-                    <input
-                        type="text"
-                        id="supplier"
-                        value={supplier}
-                        onChange={e =>
-                            setSupplier(
-                                e.target.value
-                            )
-                        }
-                        className={
-                            inputClasses
-                        }
-                        required
-                    />
-                </div>
-
-                {/* Expected Date */}
-                <div>
-                    <label
-                        htmlFor="expectedDate"
-                        className={
-                            labelClasses
-                        }
-                    >
-                        Expected Delivery
-                    </label>
-
-                    <input
-                        type="date"
-                        id="expectedDate"
-                        value={expectedDate}
-                        onChange={e =>
-                            setExpectedDate(
-                                e.target.value
-                            )
-                        }
-                        className={
-                            inputClasses
-                        }
-                        required
-                    />
-                </div>
+                <FormInput
+                    label="Expected Delivery"
+                    type="date"
+                    name="expectedDate"
+                    value={expectedDate}
+                    onChange={e => setExpectedDate(e.target.value)}
+                    required
+                />
             </div>
 
             {/* Items */}
@@ -317,111 +277,56 @@ onAdd({
                                 <div className="grid grid-cols-12 gap-2 items-center">
 
                                     {/* Product */}
-                                    <select
-                                        value={
-                                            item.productId
-                                        }
-                                        onChange={e =>
-                                            handleItemChange(
-                                                index,
-                                                'productId',
-                                                e.target
-                                                    .value
-                                            )
-                                        }
-                                        className={`${inputClasses} col-span-5`}
-                                    >
-                                        {products.map(
-                                            p => {
-                                                const totalStock =
-                                                    Object.values(
-                                                        p.stockByLocation
-                                                    ).reduce(
-                                                        (
-                                                            sum,
-                                                            count
-                                                        ) =>
-                                                            sum +
-                                                            count,
-                                                        0
-                                                    );
-
-                                                return (
-                                                    <option
-                                                        key={
-                                                            p.id
-                                                        }
-                                                        value={
-                                                            p.id
-                                                        }
-                                                    >
-                                                        {p.name}{' '}
-                                                        ({p.sku})
-                                                        - Stock:{' '}
-                                                        {
-                                                            totalStock
-                                                        }
-                                                    </option>
-                                                );
-                                            }
-                                        )}
-                                    </select>
+                                    <div className="col-span-5">
+                                        <InlineFormSelect
+                                            value={item.productId}
+                                            onChange={e => handleItemChange(index, 'productId', e.target.value)}
+                                            options={products.map(p => {
+                                                const totalStock = Object.values(p.stockByLocation).reduce((sum, count) => sum + count, 0);
+                                                return {
+                                                    value: p.id,
+                                                    label: `${p.name} (${p.sku}) - Stock: ${totalStock}`
+                                                };
+                                            })}
+                                        />
+                                    </div>
 
                                     {/* Quantity */}
-                                    <input
-                                        type="number"
-                                        placeholder="Qty"
-                                        value={
-                                            item.quantity
-                                        }
-                                        onChange={e =>
-                                            handleItemChange(
-                                                index,
-                                                'quantity',
-                                                Number(
-                                                    e.target
-                                                        .value
-                                                )
-                                            )
-                                        }
-                                        className={`${inputClasses} col-span-2`}
-                                        min="1"
-                                    />
+                                    <div className="col-span-2">
+                                        <InlineFormInput
+                                            type="number"
+                                            placeholder="Qty"
+                                            value={item.quantity}
+                                            onChange={e => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                            min="1"
+                                        />
+                                    </div>
 
                                     {/* Price */}
-                                    <input
-                                        type="number"
-                                        placeholder="Price"
-                                        value={
-                                            item.price
-                                        }
-                                        onChange={e =>
-                                            handleItemChange(
-                                                index,
-                                                'price',
-                                                Number(
-                                                    e.target
-                                                        .value
-                                                )
-                                            )
-                                        }
-                                        className={`${inputClasses} col-span-3`}
-                                        min="0"
-                                        step="0.01"
-                                    />
+                                    <div className="col-span-3">
+                                        <InlineFormInput
+                                            type="number"
+                                            placeholder="Price"
+                                            value={item.price}
+                                            onChange={e => handleItemChange(index, 'price', Number(e.target.value))}
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                    </div>
 
                                     {/* Remove */}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleRemoveItem(
-                                                index
-                                            )
-                                        }
-                                        className="col-span-2 text-red-500 hover:text-red-700 text-sm"
-                                    >
-                                        Remove
-                                    </button>
+                                    <div className="col-span-2 flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveItem(index)}
+                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                            title="Remove item"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Suggestion */}

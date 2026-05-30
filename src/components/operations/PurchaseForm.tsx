@@ -1,4 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import InlineFormInput from '../ui/InlineFormInput';
+import InlineFormSelect from '../ui/InlineFormSelect';
 
 import {
     DataProduct,
@@ -422,80 +426,40 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
                 {/* BRANCH */}
 
-                <div>
-
-                    <label
-                        htmlFor="branchId"
-                        className={labelClasses}
-                    >
-                        Branch
-                    </label>
-
-                    <select
-                        id="branchId"
-                        value={branchId}
-                        onChange={(e) =>
-                            setBranchId(
-                                e.target.value
-                            )
-                        }
-                        className={inputClasses}
-                    >
-                        {branches.map(branch => (
-                            <option
-                                key={branch.id}
-                                value={branch.id}
-                            >
-                                {branch.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <FormSelect
+                    label="Branch"
+                    name="branchId"
+                    value={branchId}
+                    onChange={(e) => setBranchId(e.target.value)}
+                    options={branches.map(branch => ({ 
+                        value: branch.id, 
+                        label: branch.name 
+                    }))}
+                    required
+                />
 
                 {/* SUPPLIER */}
 
-                <div>
-
-                    <label
-                        htmlFor="supplierId"
-                        className={labelClasses}
-                    >
-                        Supplier
-                    </label>
-
-                    <input
-                        id="supplierId"
-                        type="text"
-                        value={supplier}
-                        onChange={(e) => setSupplier(e.target.value)}
-                        className={inputClasses}
-                        required
-                    />
-                </div>
+                <FormInput
+                    label="Supplier"
+                    name="supplier"
+                    placeholder="Supplier name"
+                    value={supplier}
+                    onChange={(e) => setSupplier(e.target.value)}
+                    required
+                />
 
                 {/* PURCHASE DATE */}
 
-                <div className="md:col-span-2">
-
-                    <label
-                        htmlFor="purchaseDate"
-                        className={labelClasses}
-                    >
-                        Purchase Date
-                    </label>
-
-                    <input
-                        id="purchaseDate"
-                        type="date"
-                        value={purchaseDate}
-                        onChange={(e) =>
-                            setPurchaseDate(
-                                e.target.value
-                            )
-                        }
-                        className={inputClasses}
-                    />
-                </div>
+                <FormInput
+                    label="Purchase Date"
+                    type="date"
+                    name="purchaseDate"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    className="md:col-span-2"
+                    required
+                />
             </div>
 
             {/* ITEMS */}
@@ -525,124 +489,68 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                             <div className="grid grid-cols-12 gap-2">
 
                                 {/* PRODUCT */}
-
-                                <select
-                                    value={item.productId}
-                                    onChange={(e) =>
-                                        handleItemChange(
-                                            index,
-                                            'productId',
-                                            e.target.value
-                                        )
-                                    }
-                                    className={`${inputClasses} col-span-5`}
-                                >
-
-                                    {products.map(p => (
-
-                                        <option
-                                            key={p.id}
-                                            value={p.id}
-                                        >
-                                            {p.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="col-span-5">
+                                    <InlineFormSelect
+                                        value={item.productId}
+                                        onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                        options={products.map(p => ({ value: p.id, label: p.name }))}
+                                    />
+                                </div>
 
                                 {/* QTY */}
-
-                                <input
-                                    type="number"
-                                    value={item.quantity}
-                                    min="1"
-                                    onChange={(e) =>
-                                        handleItemChange(
-                                            index,
-                                            'quantity',
-                                            Number(
-                                                e.target.value
-                                            )
-                                        )
-                                    }
-                                    className={`${inputClasses} col-span-2`}
-                                />
+                                <div className="col-span-2">
+                                    <InlineFormInput
+                                        type="number"
+                                        value={item.quantity}
+                                        min="1"
+                                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                    />
+                                </div>
 
                                 {/* PRICE */}
-
-                                <input
-                                    type="number"
-                                    value={item.price}
-                                    min="0"
-                                    step="0.01"
-                                    onChange={(e) =>
-                                        handleItemChange(
-                                            index,
-                                            'price',
-                                            Number(
-                                                e.target.value
-                                            )
-                                        )
-                                    }
-                                    className={`${inputClasses} col-span-3`}
-                                />
+                                <div className="col-span-3">
+                                    <InlineFormInput
+                                        type="number"
+                                        value={item.price}
+                                        min="0"
+                                        step="0.01"
+                                        onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
+                                    />
+                                </div>
 
                                 {/* REMOVE */}
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        handleRemoveItem(
-                                            index
-                                        )
-                                    }
-                                    className="col-span-2 text-red-500 hover:text-red-700"
-                                >
-                                    ✕
-                                </button>
+                                <div className="col-span-2 flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveItem(index)}
+                                        className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                        title="Remove item"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
                             {/* SERIAL */}
-
                             {selectedProduct?.hasSerialNumber && (
-
-                                <textarea
+                                <InlineFormInput
+                                    isTextArea
                                     placeholder="Serial Numbers (one per line)"
-                                    value={
-                                        item.serialNumbers?.join(
-                                            '\n'
-                                        ) || ''
-                                    }
-                                    onChange={(e) =>
-                                        handleItemChange(
-                                            index,
-                                            'serialNumbers',
-                                            e.target.value
-                                        )
-                                    }
-                                    className={inputClasses}
+                                    value={item.serialNumbers?.join('\n') || ''}
+                                    onChange={(e) => handleItemChange(index, 'serialNumbers', e.target.value)}
                                     rows={3}
                                 />
                             )}
 
                             {/* IMEI */}
-
                             {selectedProduct?.hasIMEI && (
-
-                                <textarea
+                                <InlineFormInput
+                                    isTextArea
                                     placeholder="IMEI Numbers (one per line)"
-                                    value={
-                                        item.imeis?.join(
-                                            '\n'
-                                        ) || ''
-                                    }
-                                    onChange={(e) =>
-                                        handleItemChange(
-                                            index,
-                                            'imeis',
-                                            e.target.value
-                                        )
-                                    }
-                                    className={inputClasses}
+                                    value={item.imeis?.join('\n') || ''}
+                                    onChange={(e) => handleItemChange(index, 'imeis', e.target.value)}
                                     rows={3}
                                 />
                             )}

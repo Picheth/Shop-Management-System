@@ -304,6 +304,10 @@ const Product: React.FC<ProductProps> = ({
             allSubCategories={allSubCategories}
             allBrands={allBrands}
             onBack={() => setSelectedProduct(null)}
+            onEdit={() => {
+                setEditingProduct(selectedProduct);
+                setIsModalOpen(true);
+            }}
             />
         );
     }

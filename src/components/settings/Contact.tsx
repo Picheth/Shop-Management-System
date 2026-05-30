@@ -4,6 +4,7 @@ import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from './useDuplicateValidation';
+import { useFormValidation } from './useFormValidation';
 
 interface ContactItem {
     id: string;
@@ -64,6 +65,17 @@ const Contact: React.FC = () => {
     });
 
     const { isDuplicate, isValidating } = useDuplicateValidation('contacts', 'name', form.name, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['name', 'phone'],
+        phone: ['phone'],
+        email: ['email'],
+        labels: {
+            name: 'Full Name',
+            phone: 'Phone Number',
+            email: 'Email Address'
+        }
+    });
 
     const filteredContacts = useMemo(() => {
         let filtered = contacts;
@@ -230,6 +242,7 @@ const Contact: React.FC = () => {
                 onSubmit={handleSubmit}
                 isValidating={isValidating}
                 isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
                 submitLabel={editingId ? 'Update Contact' : 'Add Contact'}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -241,6 +254,7 @@ const Contact: React.FC = () => {
                         onChange={handleChange}
                         isValidating={isValidating}
                         isDuplicate={isDuplicate}
+                        error={fieldErrors.name}
                         required
                     />
 
@@ -254,10 +268,12 @@ const Contact: React.FC = () => {
 
                     <FormInput
                         label="Phone Number"
+                        type="tel"
                         name="phone"
                         placeholder="e.g. 012 345 678"
                         value={form.phone}
                         onChange={handleChange}
+                        error={fieldErrors.phone}
                         required
                     />
 
@@ -268,6 +284,7 @@ const Contact: React.FC = () => {
                         placeholder="e.g. john@example.com"
                         value={form.email}
                         onChange={handleChange}
+                        error={fieldErrors.email}
                     />
 
                     <FormSelect

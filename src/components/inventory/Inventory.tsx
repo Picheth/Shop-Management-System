@@ -44,12 +44,15 @@ const Inventory: React.FC<InventoryProps> = ({ products, setProducts, branches }
         productId: string,
         branchId: string,
         newQuantity: number,
-        reason: string
+        reason: string,
+        note?: string
     ) => {
         const branchName = branches.find(b => b.id === branchId)?.name || 'Unknown';
 
         const currentStock = productToAdjust?.stockByLocation[branchId] || 0;
         const change = newQuantity - currentStock;
+
+        const finalReason = note ? `${reason} (${note})` : reason;
 
         await recordStockChange(
             productId,
@@ -57,7 +60,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, setProducts, branches }
             branchName,
             change,
             'Adjustment',
-            reason
+            finalReason
         );
 
         setIsModalOpen(false);

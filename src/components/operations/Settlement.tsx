@@ -3,6 +3,10 @@ import React, {
     useState,
 } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useFormValidation } from '../settings/useFormValidation';
 
 type SettlementStatus =
     | 'Pending'
@@ -109,6 +113,18 @@ const Settlement: React.FC =
                     'Pending' as SettlementStatus,
                 note: '',
             });
+
+        const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+            required: ['customer', 'invoiceNo', 'settlementDate', 'amount', 'paidAmount'],
+            minMax: { amount: { min: 0 }, paidAmount: { min: 0 } },
+            labels: {
+                customer: 'Customer',
+                invoiceNo: 'Invoice No',
+                settlementDate: 'Settlement Date',
+                amount: 'Total Amount',
+                paidAmount: 'Paid Amount'
+            }
+        });
 
         const filteredSettlements =
             useMemo(() => {
@@ -504,52 +520,31 @@ const Settlement: React.FC =
                 </div>
 
                 {/* Form */}
-                <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+            <SettingsForm
+                title={editingId ? 'Edit Settlement' : 'Add New Settlement'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
+                onSubmit={handleSubmit}
+                isDisabled={isInvalid}
+                submitLabel={editingId ? 'Update Settlement' : 'Add Settlement'}
                 >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {editingId
-                                ? 'Edit Settlement'
-                                : 'Add Settlement'}
-                        </h2>
-
-                        {editingId && (
-                            <button
-                                type="button"
-                                onClick={
-                                    resetForm
-                                }
-                                className="text-sm text-red-500 hover:text-red-600"
-                            >
-                                Cancel
-                            </button>
-                        )}
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Customer"
                             name="customer"
-                            placeholder="Customer"
+                        placeholder="Customer Name"
                             value={
                                 form.customer
                             }
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
-                            required
-                        />
+                        error={fieldErrors.customer}
+                        required
+                    />
 
-                        <input
-                            type="text"
+                    <FormInput
+                        label="Invoice No"
                             name="invoiceNo"
                             placeholder="Invoice No"
                             value={
@@ -558,13 +553,12 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
-                            required
-                        />
+                        error={fieldErrors.invoiceNo}
+                        required
+                    />
 
-                        <select
+                    <FormSelect
+                        label="Payment Method"
                             name="paymentMethod"
                             value={
                                 form.paymentMethod
@@ -572,31 +566,17 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
-                        >
-                            <option value="Cash">
-                                Cash
-                            </option>
+                        options={[
+                            { value: 'Cash', label: 'Cash' },
+                            { value: 'ABA Transfer', label: 'ABA Transfer' },
+                            { value: 'Bank Transfer', label: 'Bank Transfer' },
+                            { value: 'Credit Card', label: 'Credit Card' },
+                        ]}
+                        required
+                    />
 
-                            <option value="ABA Transfer">
-                                ABA
-                                Transfer
-                            </option>
-
-                            <option value="Bank Transfer">
-                                Bank
-                                Transfer
-                            </option>
-
-                            <option value="Credit Card">
-                                Credit
-                                Card
-                            </option>
-                        </select>
-
-                        <input
+                    <FormInput
+                        label="Settlement Date"
                             type="date"
                             name="settlementDate"
                             value={
@@ -605,13 +585,12 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
-                            required
-                        />
+                        error={fieldErrors.settlementDate}
+                        required
+                    />
 
-                        <input
+                    <FormInput
+                        label="Total Amount"
                             type="number"
                             name="amount"
                             placeholder="Total Amount"
@@ -621,14 +600,13 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                        error={fieldErrors.amount}
                             min="0"
                             required
                         />
 
-                        <input
+                    <FormInput
+                        label="Paid Amount"
                             type="number"
                             name="paidAmount"
                             placeholder="Paid Amount"
@@ -638,14 +616,13 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
+                        error={fieldErrors.paidAmount}
                             min="0"
                             required
                         />
 
-                        <select
+                    <FormSelect
+                        label="Status"
                             name="status"
                             value={
                                 form.status
@@ -653,30 +630,20 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={
-                                inputClasses
-                            }
-                        >
-                            <option value="Pending">
-                                Pending
-                            </option>
+                        options={[
+                            { value: 'Pending', label: 'Pending' },
+                            { value: 'Paid', label: 'Paid' },
+                            { value: 'Partial', label: 'Partial' },
+                            { value: 'Cancelled', label: 'Cancelled' },
+                        ]}
+                        required
+                    />
+                </div>
 
-                            <option value="Paid">
-                                Paid
-                            </option>
-
-                            <option value="Partial">
-                                Partial
-                            </option>
-
-                            <option value="Cancelled">
-                                Cancelled
-                            </option>
-                        </select>
-                    </div>
-
-                    <div className="mt-4">
-                        <textarea
+                <div className="mt-4">
+                    <FormInput
+                        label="Note"
+                        isTextArea
                             name="note"
                             placeholder="Settlement Note"
                             value={
@@ -685,19 +652,10 @@ const Settlement: React.FC =
                             onChange={
                                 handleChange
                             }
-                            className={`${inputClasses} h-24`}
-                        />
-                    </div>
-
-                    <div className="flex justify-end mt-4">
-                        <button
-                            type="submit"
-                            className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                        >
-                            {editingId ? 'Update Settlement' : 'Add Settlement'}
-                        </button>
-                    </div>
-                </form>
+                        className="h-24"
+                    />
+                </div>
+            </SettingsForm>
 
                 {/* Table */}
                 <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

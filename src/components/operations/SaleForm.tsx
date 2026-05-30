@@ -1,5 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { DataProduct, LineItem, Sale, Branch } from '../../types';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import InlineFormInput from '../ui/InlineFormInput';
+import InlineFormSelect from '../ui/InlineFormSelect';
 
 type SaleFormData = Omit<Sale, 'id' | 'total'>;
 
@@ -217,20 +221,33 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
                         Tip: Focus this field and scan a serial number to automatically add products.
                     </p>
                 </div>
-                 <div>
-                    <label htmlFor="branchId" className={labelClasses}>Branch</label>
-                    <select id="branchId" value={branchId} onChange={e => {setBranchId(e.target.value); setItems([]); setError('');}} className={inputClasses} required>
-                         {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="customer" className={labelClasses}>Customer</label>
-                    <input type="text" id="customer" value={customer} onChange={e => {setCustomer(e.target.value); setError('');}} className={inputClasses} required />
-                </div>
-                <div className="md:col-span-2">
-                    <label htmlFor="saleDate" className={labelClasses}>Sale Date</label>
-                    <input type="date" id="saleDate" value={saleDate} onChange={e => {setSaleDate(e.target.value); setError('');}} className={inputClasses} required />
-                </div>
+
+                <FormSelect
+                    label="Branch"
+                    name="branchId"
+                    value={branchId}
+                    onChange={e => {setBranchId(e.target.value); setItems([]); setError('');}}
+                    options={branches.map(branch => ({ value: branch.id, label: branch.name }))}
+                    required
+                />
+
+                <FormInput
+                    label="Customer"
+                    name="customer"
+                    value={customer}
+                    onChange={e => {setCustomer(e.target.value); setError('');}}
+                    required
+                />
+
+                <FormInput
+                    label="Sale Date"
+                    type="date"
+                    name="saleDate"
+                    value={saleDate}
+                    onChange={e => {setSaleDate(e.target.value); setError('');}}
+                    className="md:col-span-2"
+                    required
+                />
             </div>
 
             <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Items Sold</h3>
@@ -242,28 +259,48 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
                     return (
                         <div key={index} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-100 dark:border-gray-700">
                             <div className="grid grid-cols-12 gap-2 items-center">
-                                <select 
-                                    value={item.productId}
-                                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                                    className={`${inputClasses} col-span-5`}
-                                >
-                                    {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name} ({(p.stockByLocation[branchId] || 0)})</option>)}
-                                </select>
-                                <input 
-                                    type="number" 
-                                    placeholder="Qty" 
-                                    value={item.quantity}
-                                    onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                                    className={`${inputClasses} col-span-2`} min="1" max={stock}
-                                />
-                                <input 
-                                    type="number" 
-                                    placeholder="Price" 
-                                    value={item.price}
-                                    onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                                    className={`${inputClasses} col-span-3`} min="0" step="0.01"
-                                />
-                                <button type="button" onClick={() => handleRemoveItem(index)} className="col-span-2 text-red-500 hover:text-red-700 text-center">✕</button>
+                                <div className="col-span-5">
+                                    <InlineFormSelect 
+                                        value={item.productId}
+                                        onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                        options={availableProducts.map(p => ({ 
+                                            value: p.id, 
+                                            label: `${p.name} (${p.stockByLocation[branchId] || 0})` 
+                                        }))}
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <InlineFormInput 
+                                        type="number" 
+                                        placeholder="Qty" 
+                                        value={item.quantity}
+                                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                                        min="1" 
+                                        max={stock}
+                                    />
+                                </div>
+                                <div className="col-span-3">
+                                    <InlineFormInput 
+                                        type="number" 
+                                        placeholder="Price" 
+                                        value={item.price}
+                                        onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
+                                        min="0" 
+                                        step="0.01"
+                                    />
+                                </div>
+                                <div className="col-span-2 flex justify-center">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => handleRemoveItem(index)} 
+                                        className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                        title="Remove item"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             {availableSerials.length > 0 && (
                                 <div className="mt-2">

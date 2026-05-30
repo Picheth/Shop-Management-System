@@ -3,6 +3,7 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import { useDuplicateValidation } from './useDuplicateValidation';
+import { useFormValidation } from './useFormValidation';
 
 interface ExpenseCategoryItem {
     id: string;
@@ -60,6 +61,16 @@ const ExpenseCategory: React.FC = () => {
 
     const { isDuplicate, isValidating } = useDuplicateValidation('expense_categories', 'code', form.code, editingId);
 
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['code', 'name', 'budget'],
+        minMax: { budget: { min: 0 } },
+        labels: {
+            code: 'Category Code',
+            name: 'Category Name',
+            budget: 'Monthly Budget',
+        }
+    });
+
     const filteredCategories = useMemo(() => {
         if (!search) return categories;
 
@@ -79,11 +90,7 @@ const ExpenseCategory: React.FC = () => {
         );
     }, [search, categories]);
 
-    const handleChange = (
-        e: React.ChangeEvent<
-            HTMLInputElement | HTMLTextAreaElement
-        >
-    ) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setForm(prev => ({
             ...prev,
             [e.target.name]: e.target.value,
@@ -197,9 +204,7 @@ const ExpenseCategory: React.FC = () => {
                     type="text"
                     placeholder="Search expense category..."
                     value={search}
-                    onChange={e =>
-                        setSearch(e.target.value)
-                    }
+                    onChange={e => setSearch(e.target.value)}
                     className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
             </div>
@@ -212,6 +217,7 @@ const ExpenseCategory: React.FC = () => {
                 onSubmit={handleSubmit}
                 isValidating={isValidating}
                 isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
                 submitLabel={editingId ? 'Update Category' : 'Add Category'}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -223,6 +229,7 @@ const ExpenseCategory: React.FC = () => {
                         onChange={handleChange}
                         isValidating={isValidating}
                         isDuplicate={isDuplicate}
+                        error={fieldErrors.code}
                         required
                     />
 
@@ -232,6 +239,7 @@ const ExpenseCategory: React.FC = () => {
                         placeholder="e.g. Office Supplies"
                         value={form.name}
                         onChange={handleChange}
+                        error={fieldErrors.name}
                         required
                     />
 
@@ -242,6 +250,7 @@ const ExpenseCategory: React.FC = () => {
                         placeholder="0.00"
                         value={form.budget}
                         onChange={handleChange}
+                        error={fieldErrors.budget}
                         min="0"
                         required
                     />

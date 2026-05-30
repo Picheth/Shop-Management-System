@@ -4,6 +4,7 @@ import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from '../settings/useDuplicateValidation';
+import { useFormValidation } from '../settings/useFormValidation';
 import { Staff as StaffType } from '../../types';
 
 const initialStaff: StaffType[] = [
@@ -47,6 +48,18 @@ const Staff: React.FC = () => {
 
     // Real-time duplication check for staff code
     const { isDuplicate, isValidating } = useDuplicateValidation('staff', 'code', form.code, editingId);
+
+    const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
+        required: ['code', 'name'],
+        phone: ['phone'],
+        email: ['email'],
+        labels: {
+            code: 'Staff Code',
+            name: 'Full Name',
+            phone: 'Phone Number',
+            email: 'Email Address'
+        }
+    });
 
     const filteredStaff = useMemo(() => {
         let filtered = staffList;
@@ -171,6 +184,7 @@ const Staff: React.FC = () => {
                 onSubmit={handleSubmit}
                 isValidating={isValidating}
                 isDuplicate={isDuplicate}
+                isDisabled={isInvalid}
                 submitLabel={editingId ? 'Update Staff' : 'Add Staff'}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -182,6 +196,7 @@ const Staff: React.FC = () => {
                         onChange={handleChange}
                         isValidating={isValidating}
                         isDuplicate={isDuplicate}
+                        error={fieldErrors.code}
                         required
                     />
 
@@ -191,6 +206,7 @@ const Staff: React.FC = () => {
                         placeholder="Enter full name"
                         value={form.name}
                         onChange={handleChange}
+                        error={fieldErrors.name}
                         required
                     />
 
@@ -204,10 +220,12 @@ const Staff: React.FC = () => {
 
                     <FormInput
                         label="Phone Number"
+                        type="tel"
                         name="phone"
                         placeholder="e.g. 012 345 678"
                         value={form.phone}
                         onChange={handleChange}
+                        error={fieldErrors.phone}
                     />
 
                     <FormInput
@@ -217,6 +235,7 @@ const Staff: React.FC = () => {
                         placeholder="e.g. email@example.com"
                         value={form.email}
                         onChange={handleChange}
+                        error={fieldErrors.email}
                     />
 
                     <FormSelect

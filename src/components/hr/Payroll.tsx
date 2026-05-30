@@ -187,11 +187,12 @@ const Payroll: React.FC = () => {
         }, [payrolls]);
 
     const handleChange = (
-        e: React.ChangeEvent<
-            HTMLInputElement |
-            HTMLSelectElement
-        >
-    ) => {
+  e: React.ChangeEvent<
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+  >
+) => {
         setForm(prev => ({
             ...prev,
             [e.target.name]:
