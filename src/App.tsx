@@ -300,7 +300,8 @@ const App: React.FC = () => {
                     p_has_serial_number: !!formData.hasSerialNumber,
                     p_has_imei: !!formData.hasIMEI,
                     p_image_url: formData.imageUrl || null,
-                    p_attributes: formData.attributes || []
+                    p_attributes: formData.attributes || [],
+                    p_is_active: formData.isActive ?? true
                 });
 
                 if (error) throw error;
@@ -329,19 +330,57 @@ const App: React.FC = () => {
 
     const handleUpdateProduct = useCallback(
         async (updatedProduct: DataProduct) => {
-            const { error } = await supabase
-                .from('products')
-                .update({ ...updatedProduct, updatedAt: new Date().toISOString() })
-                .eq('id', updatedProduct.id);
+            try {
+                // Use the isActive field directly instead of deriving it from stock status
+                const isActive = updatedProduct.isActive ?? true;
 
-            if (error) {
+                const { data, error } = await supabase.rpc('update_product_spec_and_variant', {
+                    p_variant_id: updatedProduct.id,
+                    p_spec_id: updatedProduct.productSpecId,
+                    p_name: updatedProduct.name,
+                    p_brand_id: updatedProduct.brandId,
+                    p_type_id: updatedProduct.typeId,
+                    p_category_id: updatedProduct.categoryId,
+                    p_sub_category_id: updatedProduct.subCategoryId || null,
+                    p_model: updatedProduct.model || null,
+                    p_display_size: updatedProduct.displaySize || null,
+                    p_sku: updatedProduct.sku,
+                    p_stock_quantity: Number(updatedProduct.stockQuantity), // Assuming stockQuantity is the source of truth
+                    p_cost_price: Number(updatedProduct.costPrice),
+                    p_sale_price: Number(updatedProduct.salePrice),
+                    p_processor_id: updatedProduct.processorId || null,
+                    p_ram_id: updatedProduct.ramId || null,
+                    p_storage_id: updatedProduct.storageId || null,
+                    p_color_id: updatedProduct.colorId || null,
+                    p_region_id: updatedProduct.regionId || null,
+                    p_condition_id: updatedProduct.conditionId || null,
+                    p_is_active: isActive,
+                    p_description: updatedProduct.description || null,
+                    p_has_serial_number: !!updatedProduct.hasSerialNumber,
+                    p_has_imei: !!updatedProduct.hasIMEI,
+                    p_image_url: updatedProduct.imageUrl || null,
+                    p_attributes: updatedProduct.attributes || []
+                });
+
+                if (error) throw error;
+
+                // Merge the updated data from RPC with existing client-side fields
+                const mergedProduct: DataProduct = {
+                    ...updatedProduct, // Preserve client-side fields like stockByLocation, resolved names
+                    ...data, // Overwrite with fresh data from DB
+                    // Ensure stockQuantity is correctly set from the RPC response
+                    stockQuantity: data.stockQuantity,
+                    // Re-derive status if needed, or ensure RPC returns a compatible status
+                    status: isActive ? (data.stockQuantity > 0 ? 'In Stock' : 'Out of Stock') : 'Out of Stock',
+                } as DataProduct;
+
+                setProducts(prev =>
+                    prev.map(item => (item.id === mergedProduct.id ? mergedProduct : item))
+                );
+            } catch (error: any) {
                 console.error('Update product error:', error.message);
-                return;
+                alert('Update failed: ' + error.message);
             }
-
-            setProducts(prev =>
-                prev.map(item => (item.id === updatedProduct.id ? updatedProduct : item))
-            );
         },
         []
     );

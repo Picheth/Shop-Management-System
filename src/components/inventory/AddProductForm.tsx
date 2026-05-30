@@ -37,6 +37,7 @@ type AddProductFormData = {
   salePrice: number;
   costPrice: number;
   initialStock: number;
+  isActive: boolean;
 
   branchId: string;
 
@@ -124,6 +125,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           0
         )
       : 0,
+
+    isActive: initialData?.isActive ?? true,
 
     branchId:
       initialData?.stockByLocation
@@ -663,6 +666,17 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           <div className="space-y-4">
 
             <div className="flex flex-wrap gap-6">
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={form.isActive}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Product</span>
+              </label>
 
               <label className="flex items-center gap-2">
                 <input

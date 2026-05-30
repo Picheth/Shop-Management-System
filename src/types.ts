@@ -257,6 +257,7 @@ export type ProductForm = Omit<
 >;
 
 export interface DataProduct extends Product{
+    stockQuantity: any;
     shortModel: string;
     stockByLocation: Record<string, number>;
     history?: StockHistoryItem[];
@@ -279,6 +280,7 @@ export interface DataProduct extends Product{
     ram: string;
     productSpecId?: string;
     processorId?: string;
+    isActive?: boolean; // Added for consistency with ProductVariant
     ramId?: string;
     storageId?: string;
     imageUrl?: string;
