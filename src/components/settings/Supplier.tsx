@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface SupplierItem {
     id: string;
@@ -48,6 +52,8 @@ const Supplier: React.FC = () => {
         string | null
     >(null);
 
+    const [statusFilter, setStatusFilter] = useState('All');
+
     const [form, setForm] = useState({
         supplierCode: '',
         supplierName: '',
@@ -56,14 +62,23 @@ const Supplier: React.FC = () => {
         phone: '',
         email: '',
         address: '',
+        status: 'Active' as 'Active' | 'Inactive',
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('suppliers', 'supplierCode', form.supplierCode, editingId);
+
     const filteredSuppliers = useMemo(() => {
-        if (!search) return suppliers;
+        let filtered = suppliers;
+
+        if (statusFilter !== 'All') {
+            filtered = filtered.filter(s => s.status === statusFilter);
+        }
+
+        if (!search) return filtered;
 
         const term = search.toLowerCase();
 
-        return suppliers.filter(
+        return filtered.filter(
             supplier =>
                 supplier.supplierCode
                     .toLowerCase()
@@ -78,7 +93,7 @@ const Supplier: React.FC = () => {
                     .toLowerCase()
                     .includes(term)
         );
-    }, [search, suppliers]);
+    }, [search, suppliers, statusFilter]);
 
     const handleChange = (
         e: React.ChangeEvent<
@@ -100,6 +115,7 @@ const Supplier: React.FC = () => {
             phone: '',
             email: '',
             address: '',
+            status: 'Active',
         });
 
         setEditingId(null);
@@ -151,6 +167,7 @@ const Supplier: React.FC = () => {
             phone: supplier.phone,
             email: supplier.email,
             address: supplier.address,
+            status: supplier.status,
         });
     };
 
@@ -183,14 +200,11 @@ const Supplier: React.FC = () => {
         );
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
-
     return (
         <Placeholder title="Supplier Management">
 
             {/* Search */}
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
                 <input
                     type="text"
                     placeholder="Search supplier..."
@@ -198,116 +212,112 @@ const Supplier: React.FC = () => {
                     onChange={e =>
                         setSearch(e.target.value)
                     }
-                    className={inputClasses}
+                    className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
+
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="sm:w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Supplier' : 'Add Supplier'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                submitLabel={editingId ? 'Update Supplier' : 'Add Supplier'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Supplier'
-                            : 'Add Supplier'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Supplier Code"
                         name="supplierCode"
-                        placeholder="Supplier Code"
+                        placeholder="e.g. SUP-001"
                         value={form.supplierCode}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Supplier Name"
                         name="supplierName"
-                        placeholder="Supplier Name"
+                        placeholder="e.g. Global Tech Solutions"
                         value={form.supplierName}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Short Name"
                         name="shortName"
-                        placeholder="Short Name"
+                        placeholder="e.g. GlobalTech"
                         value={form.shortName}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Contact Person"
                         name="contactPerson"
-                        placeholder="Contact Person"
+                        placeholder="Name of primary contact"
                         value={form.contactPerson}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Phone Number"
                         name="phone"
-                        placeholder="Phone Number"
+                        placeholder="e.g. +855..."
                         value={form.phone}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
+                    <FormInput
+                        label="Email Address"
                         type="email"
                         name="email"
-                        placeholder="Email"
+                        placeholder="e.g. contact@supplier.com"
                         value={form.email}
                         onChange={handleChange}
-                        className={inputClasses}
+                    />
+
+                    <FormSelect
+                        label="Status"
+                        name="status"
+                        value={form.status}
+                        onChange={handleChange}
+                        options={[
+                            { value: 'Active', label: 'Active' },
+                            { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                        required
                     />
                 </div>
 
                 <div className="mt-4">
-                    <textarea
+                    <FormInput
+                        label="Address"
+                        isTextArea
                         name="address"
-                        placeholder="Address"
+                        placeholder="Full physical address..."
                         value={form.address}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Supplier'
-                            : 'Add Supplier'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import FormSelect from '../ui/FormSelect';
 
 import {
     Category as CategoryInterface,
@@ -299,28 +300,15 @@ const Category: React.FC<CategoryProps> = ({
                         required
                     />
 
-                    <select
+                    <FormSelect
+                        label="Product Type"
                         name="typeId"
                         value={form.typeId}
                         onChange={handleChange}
-                        className={inputClasses}
+                        placeholder="Select Product Type"
+                        options={productTypes.map(t => ({ value: t.id, label: t.name }))}
                         required
-                    >
-
-                        <option value="">
-                            Select Product Type
-                        </option>
-
-                        {productTypes.map(type => (
-
-                            <option
-                                key={type.id}
-                                value={type.id}
-                            >
-                                {type.name}
-                            </option>
-                        ))}
-                    </select>
+                    />
                 </div>
 
                 <div className="mt-4">

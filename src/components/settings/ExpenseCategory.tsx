@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
 import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface ExpenseCategoryItem {
@@ -104,11 +106,6 @@ const ExpenseCategory: React.FC = () => {
     ) => {
         e.preventDefault();
 
-        if (isDuplicate) {
-            alert(`Expense category code "${form.code}" already exists.`);
-            return;
-        }
-
         if (editingId) {
             setCategories(prev =>
                 prev.map(item =>
@@ -191,9 +188,6 @@ const ExpenseCategory: React.FC = () => {
         );
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
-
     return (
         <Placeholder title="Expense Category Management">
 
@@ -206,88 +200,65 @@ const ExpenseCategory: React.FC = () => {
                     onChange={e =>
                         setSearch(e.target.value)
                     }
-                    className={inputClasses}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Expense Category' : 'Add Expense Category'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                submitLabel={editingId ? 'Update Category' : 'Add Category'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Expense Category'
-                            : 'Add Expense Category'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Category Code"
                         name="code"
-                        placeholder="Category Code"
+                        placeholder="e.g. EXP-001"
                         value={form.code}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Category Name"
                         name="name"
-                        placeholder="Category Name"
+                        placeholder="e.g. Office Supplies"
                         value={form.name}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
+                    <FormInput
+                        label="Monthly Budget"
                         type="number"
                         name="budget"
-                        placeholder="Monthly Budget"
+                        placeholder="0.00"
                         value={form.budget}
                         onChange={handleChange}
-                        className={inputClasses}
                         min="0"
                         required
                     />
                 </div>
 
                 <div className="mt-4">
-                    <textarea
+                    <FormInput
+                        label="Description"
+                        isTextArea
                         name="description"
-                        placeholder="Description"
+                        placeholder="Enter category description..."
                         value={form.description}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Category'
-                            : 'Add Category'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface ContactItem {
     id: string;
@@ -44,6 +48,8 @@ const Contact: React.FC = () => {
     const [editingId, setEditingId] =
         useState<string | null>(null);
 
+    const [statusFilter, setStatusFilter] = useState('All');
+
     const [form, setForm] = useState({
         name: '',
         company: '',
@@ -54,14 +60,23 @@ const Contact: React.FC = () => {
             | 'Customer'
             | 'Supplier'
             | 'Partner',
+        status: 'Active' as 'Active' | 'Inactive',
     });
 
+    const { isDuplicate, isValidating } = useDuplicateValidation('contacts', 'name', form.name, editingId);
+
     const filteredContacts = useMemo(() => {
-        if (!search) return contacts;
+        let filtered = contacts;
+
+        if (statusFilter !== 'All') {
+            filtered = filtered.filter(c => c.status === statusFilter);
+        }
+
+        if (!search) return filtered;
 
         const term = search.toLowerCase();
 
-        return contacts.filter(
+        return filtered.filter(
             contact =>
                 contact.name
                     .toLowerCase()
@@ -76,7 +91,7 @@ const Contact: React.FC = () => {
                     .toLowerCase()
                     .includes(term)
         );
-    }, [contacts, search]);
+    }, [contacts, search, statusFilter]);
 
     const handleChange = (
         e: React.ChangeEvent<
@@ -101,6 +116,7 @@ const Contact: React.FC = () => {
             email: '',
             address: '',
             type: 'Customer',
+            status: 'Active',
         });
     };
 
@@ -124,7 +140,6 @@ const Contact: React.FC = () => {
             const newContact: ContactItem = {
                 id: Date.now().toString(),
                 ...form,
-                status: 'Active',
             };
 
             setContacts(prev => [
@@ -148,6 +163,7 @@ const Contact: React.FC = () => {
             email: contact.email,
             address: contact.address,
             type: contact.type,
+            status: contact.status,
         });
     };
 
@@ -180,14 +196,11 @@ const Contact: React.FC = () => {
         );
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
-
     return (
         <Placeholder title="Contact Management">
 
             {/* Search */}
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
                 <input
                     type="text"
                     placeholder="Search contact..."
@@ -195,114 +208,106 @@ const Contact: React.FC = () => {
                     onChange={e =>
                         setSearch(e.target.value)
                     }
-                    className={inputClasses}
+                    className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
+
+                <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value)}
+                    className="sm:w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                >
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Contact' : 'Add Contact'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                submitLabel={editingId ? 'Update Contact' : 'Add Contact'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Contact'
-                            : 'Add Contact'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Full Name"
                         name="name"
-                        placeholder="Full Name"
+                        placeholder="e.g. John Doe"
                         value={form.name}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Company"
                         name="company"
-                        placeholder="Company"
+                        placeholder="e.g. Acme Corp"
                         value={form.company}
                         onChange={handleChange}
-                        className={inputClasses}
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Phone Number"
                         name="phone"
-                        placeholder="Phone Number"
+                        placeholder="e.g. 012 345 678"
                         value={form.phone}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <input
+                    <FormInput
+                        label="Email Address"
                         type="email"
                         name="email"
-                        placeholder="Email"
+                        placeholder="e.g. john@example.com"
                         value={form.email}
                         onChange={handleChange}
-                        className={inputClasses}
                     />
 
-                    <select
+                    <FormSelect
+                        label="Contact Type"
                         name="type"
                         value={form.type}
                         onChange={handleChange}
-                        className={inputClasses}
-                    >
-                        <option value="Customer">
-                            Customer
-                        </option>
+                        options={[
+                            { value: 'Customer', label: 'Customer' },
+                            { value: 'Supplier', label: 'Supplier' },
+                            { value: 'Partner', label: 'Partner' },
+                        ]}
+                        required
+                    />
 
-                        <option value="Supplier">
-                            Supplier
-                        </option>
-
-                        <option value="Partner">
-                            Partner
-                        </option>
-                    </select>
-                </div>
-
-                <div className="mt-4">
-                    <textarea
-                        name="address"
-                        placeholder="Address"
-                        value={form.address}
+                    <FormSelect
+                        label="Status"
+                        name="status"
+                        value={form.status}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        options={[
+                            { value: 'Active', label: 'Active' },
+                            { value: 'Inactive', label: 'Inactive' },
+                        ]}
+                        required
                     />
                 </div>
 
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Contact'
-                            : 'Add Contact'}
-                    </button>
+                <div className="mt-4">
+                    <FormInput
+                        label="Address"
+                        isTextArea
+                        name="address"
+                        placeholder="Full contact address..."
+                        value={form.address}
+                        onChange={handleChange}
+                        className="h-24"
+                    />
                 </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

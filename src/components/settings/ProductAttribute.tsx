@@ -4,6 +4,9 @@ import React, {
 } from 'react';
 
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
 
 import {
   ProductType as ProductTypeInterface,
@@ -203,11 +206,6 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     ) => {
       e.preventDefault();
 
-      if (isDuplicate) {
-        showToast(`Product type code "${form.code}" already exists.`, 'error');
-        return;
-      }
-
       try {
         if (editingId) {
           await onUpdateProductType({
@@ -245,68 +243,47 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           />
         </div>
 
-        <form
+        <SettingsForm
+          title={editingId ? 'Edit Product Type' : 'Add Product Type'}
+          isEditing={!!editingId}
+          onCancel={resetForm}
           onSubmit={handleSubmit}
+          isValidating={isValidating}
+          isDuplicate={isDuplicate}
           className="card mb-4"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">
-              {editingId
-                ? 'Edit Product Type'
-                : 'Add Product Type'}
-            </h3>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="text-sm text-red-500"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
+            <FormInput
+              label="Type Code"
               name="code"
-              placeholder="Type Code"
+              placeholder="e.g. DEV"
               value={form.code}
               onChange={handleChange}
-              className={`${inputClasses} ${isDuplicate ? 'border-red-500 focus:ring-red-500' : ''}`}
+              isValidating={isValidating}
+              isDuplicate={isDuplicate}
               required
             />
 
-            <input
-              type="text"
+            <FormInput
+              label="Type Name"
               name="name"
-              placeholder="Type Name"
+              placeholder="e.g. Device"
               value={form.name}
               onChange={handleChange}
-              className={inputClasses}
               required
             />
           </div>
 
-          <textarea
+          <FormInput
+            label="Description"
+            isTextArea
             name="description"
-            placeholder="Description"
+            placeholder="Enter description..."
             value={form.description}
             onChange={handleChange}
-            className={`${inputClasses} mt-4 h-24`}
+            className="mt-4 h-24"
           />
-
-          <div className="flex justify-end mt-4">
-            <button
-              type="submit"
-              disabled={isValidating || isDuplicate}
-              className="btn-primary disabled:opacity-50"
-            >
-              {isValidating ? 'Checking...' : isDuplicate ? 'Code Exists' : editingId ? 'Update' : 'Add'}
-            </button>
-          </div>
-        </form>
+        </SettingsForm>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="min-w-full bg-white dark:bg-gray-800">
@@ -452,11 +429,6 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (isDuplicate) {
-        showToast(`Category code "${form.code}" already exists.`, 'error');
-        return;
-      }
-
       setIsGlobalLoading(true);
       try {
         if (editingId) {
@@ -505,32 +477,54 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="card mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">{editingId ? 'Edit Category' : 'Add Category'}</h3>
-            {editingId && (
-              <button type="button" onClick={resetForm} className="text-sm text-red-500">
-                Cancel
-              </button>
-            )}
-          </div>
+        <SettingsForm
+          title={editingId ? 'Edit Category' : 'Add Category'}
+          isEditing={!!editingId}
+          onCancel={resetForm}
+          onSubmit={handleSubmit}
+          isValidating={isValidating}
+          isDuplicate={isDuplicate}
+          className="card mb-4"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input name="code" placeholder="Code" value={form.code} onChange={handleChange} className={`${inputClasses} ${isDuplicate ? 'border-red-500 focus:ring-red-500' : ''}`} required />
-            <input name="name" placeholder="Name" value={form.name} onChange={handleChange} className={inputClasses} required />
-            <select name="typeId" value={form.typeId} onChange={handleChange} className={inputClasses} required>
-              <option value="">Select Product Type</option>
-              {productTypes.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+            <FormInput
+              label="Category Code"
+              name="code"
+              placeholder="e.g. SMARTPHONE"
+              value={form.code}
+              onChange={handleChange}
+              isValidating={isValidating}
+              isDuplicate={isDuplicate}
+              required
+            />
+            <FormInput
+              label="Category Name"
+              name="name"
+              placeholder="e.g. Smartphone"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+            <FormSelect
+              label="Product Type"
+              name="typeId"
+              value={form.typeId}
+              onChange={handleChange}
+              placeholder="Select Product Type"
+              options={productTypes.map(t => ({ value: t.id, label: t.name }))}
+              required
+            />
           </div>
-          <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} className={`${inputClasses} mt-4 h-24`} />
-          <div className="flex justify-end mt-4">
-            <button type="submit" disabled={isValidating || isDuplicate} className="btn-primary disabled:opacity-50">
-              {isValidating ? 'Validating...' : isDuplicate ? 'Code Exists' : editingId ? 'Update' : 'Add'}
-            </button>
-          </div>
-        </form>
+          <FormInput
+            label="Description"
+            isTextArea
+            name="description"
+            placeholder="Enter description..."
+            value={form.description}
+            onChange={handleChange}
+            className="h-24 mt-4"
+          />
+        </SettingsForm>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="min-w-full bg-white dark:bg-gray-800">
@@ -624,11 +618,6 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (isDuplicate) {
-        showToast(`Subcategory code "${form.code}" already exists.`, 'error');
-        return;
-      }
-
       setIsGlobalLoading(true);
       try {
         if (editingId) {
@@ -677,32 +666,54 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="card mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">{editingId ? 'Edit Subcategory' : 'Add Subcategory'}</h3>
-            {editingId && (
-              <button type="button" onClick={resetForm} className="text-sm text-red-500">
-                Cancel
-              </button>
-            )}
-          </div>
+        <SettingsForm
+          title={editingId ? 'Edit Subcategory' : 'Add Subcategory'}
+          isEditing={!!editingId}
+          onCancel={resetForm}
+          onSubmit={handleSubmit}
+          isValidating={isValidating}
+          isDuplicate={isDuplicate}
+          className="card mb-4"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input name="code" placeholder="Code" value={form.code} onChange={handleChange} className={`${inputClasses} ${isDuplicate ? 'border-red-500 focus:ring-red-500' : ''}`} required />
-            <input name="name" placeholder="Name" value={form.name} onChange={handleChange} className={inputClasses} required />
-            <select name="categoryId" value={form.categoryId} onChange={handleChange} className={inputClasses} required>
-              <option value="">Select Category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <FormInput
+              label="Subcategory Code"
+              name="code"
+              placeholder="e.g. IOS"
+              value={form.code}
+              onChange={handleChange}
+              isValidating={isValidating}
+              isDuplicate={isDuplicate}
+              required
+            />
+            <FormInput
+              label="Subcategory Name"
+              name="name"
+              placeholder="e.g. iOS Phones"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+            <FormSelect
+              label="Parent Category"
+              name="categoryId"
+              value={form.categoryId}
+              onChange={handleChange}
+              placeholder="Select Category"
+              options={categories.map(c => ({ value: c.id, label: c.name }))}
+              required
+            />
           </div>
-          <textarea name="description" placeholder="Description" value={form.description} onChange={handleChange} className={`${inputClasses} mt-4 h-24`} />
-          <div className="flex justify-end mt-4">
-            <button type="submit" disabled={isValidating || isDuplicate} className="btn-primary disabled:opacity-50">
-              {isValidating ? 'Validating...' : isDuplicate ? 'Code Exists' : editingId ? 'Update' : 'Add'}
-            </button>
-          </div>
-        </form>
+          <FormInput
+            label="Description"
+            isTextArea
+            name="description"
+            placeholder="Enter description..."
+            value={form.description}
+            onChange={handleChange}
+            className="h-24 mt-4"
+          />
+        </SettingsForm>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="min-w-full bg-white dark:bg-gray-800">
@@ -785,11 +796,6 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (isDuplicate) {
-        showToast(`Brand code "${form.code}" already exists.`, 'error');
-        return;
-      }
-
       setIsGlobalLoading(true);
       try {
         if (editingId) {
@@ -838,25 +844,50 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="card mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">{editingId ? 'Edit Brand' : 'Add Brand'}</h3>
-            {editingId && (
-              <button type="button" onClick={resetForm} className="text-sm text-red-500">Cancel</button>
-            )}
-          </div>
+        <SettingsForm
+          title={editingId ? 'Edit Brand' : 'Add Brand'}
+          isEditing={!!editingId}
+          onCancel={resetForm}
+          onSubmit={handleSubmit}
+          isValidating={isValidating}
+          isDuplicate={isDuplicate}
+          className="card mb-4"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <input name="code" placeholder="Code" value={form.code} onChange={handleChange} className={`${inputClasses} ${isDuplicate ? 'border-red-500 focus:ring-red-500' : ''}`} required />
-            <input name="name" placeholder="Name" value={form.name} onChange={handleChange} className={inputClasses} required />
-            <input name="shortName" placeholder="Short Name" value={form.shortName} onChange={handleChange} className={inputClasses} />
-            <input name="country" placeholder="Country" value={form.country} onChange={handleChange} className={inputClasses} />
+            <FormInput
+              label="Brand Code"
+              name="code"
+              placeholder="e.g. APL"
+              value={form.code}
+              onChange={handleChange}
+              isValidating={isValidating}
+              isDuplicate={isDuplicate}
+              required
+            />
+            <FormInput
+              label="Brand Name"
+              name="name"
+              placeholder="e.g. Apple"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+            <FormInput
+              label="Short Name"
+              name="shortName"
+              placeholder="e.g. Apple"
+              value={form.shortName}
+              onChange={handleChange}
+            />
+            <FormInput
+              label="Country"
+              name="country"
+              placeholder="e.g. USA"
+              value={form.country}
+              onChange={handleChange}
+            />
           </div>
-          <div className="flex justify-end mt-4">
-            <button type="submit" disabled={isValidating || isDuplicate} className="btn-primary disabled:opacity-50">
-              {isValidating ? 'Validating...' : isDuplicate ? 'Code Exists' : editingId ? 'Update' : 'Add'}
-            </button>
-          </div>
-        </form>
+        </SettingsForm>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="min-w-full bg-white dark:bg-gray-800">
@@ -1007,50 +1038,42 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           />
         </div>
 
-        <form
+        <SettingsForm
+          title={editingId ? 'Edit Variation' : 'Add Variation'}
+          isEditing={!!editingId}
+          onCancel={resetForm}
           onSubmit={handleSubmit}
           className="card mb-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
+            <FormInput
+              label="Name"
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="Name"
-              className={inputClasses}
+              placeholder="e.g. iPhone 15 Pro"
               required
             />
 
-            <input
+            <FormInput
+              label="Type"
               name="type"
               value={form.type}
               onChange={handleChange}
-              placeholder="Type (e.g. Color, Size)"
-              className={inputClasses}
+              placeholder="e.g. Color, Size"
               required
             />
 
-            <input
+            <FormInput
+              label="Value"
               name="value"
               value={form.value}
               onChange={handleChange}
-              placeholder="Value (e.g. Red, XL)"
-              className={inputClasses}
+              placeholder="e.g. Titanium Blue"
               required
             />
           </div>
-
-          <div className="flex justify-end mt-4">
-            <button
-              type="submit"
-              className="btn-primary"
-            >
-              {editingId
-                ? 'Update'
-                : 'Add'}
-            </button>
-          </div>
-        </form>
+        </SettingsForm>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="min-w-full bg-white dark:bg-gray-800">

@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
+import { useDuplicateValidation } from '../settings/useDuplicateValidation';
 
 interface PayrollItem {
     id: string;
@@ -85,6 +89,8 @@ const Payroll: React.FC = () => {
             | 'Pending'
             | 'Paid',
     });
+
+    const { isDuplicate, isValidating } = useDuplicateValidation('payrolls', 'payroll_no', form.payrollNo, editingId);
 
     const filteredPayrolls =
         useMemo(() => {
@@ -347,25 +353,16 @@ const Payroll: React.FC = () => {
         );
     };
 
-    const inputClasses =
-        'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
-
     return (
         <Placeholder title="Payroll">
-
             {/* Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         Total Payroll
                     </p>
-
                     <h2 className="text-2xl font-bold text-sky-600 mt-2">
-                        $
-                        {totalSalary.toFixed(
-                            2
-                        )}
+                        ${totalSalary.toFixed(2)}
                     </h2>
                 </div>
 
@@ -373,12 +370,8 @@ const Payroll: React.FC = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         Paid Salary
                     </p>
-
                     <h2 className="text-2xl font-bold text-green-600 mt-2">
-                        $
-                        {totalPaid.toFixed(
-                            2
-                        )}
+                        ${totalPaid.toFixed(2)}
                     </h2>
                 </div>
 
@@ -386,37 +379,24 @@ const Payroll: React.FC = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         Pending Salary
                     </p>
-
                     <h2 className="text-2xl font-bold text-red-600 mt-2">
-                        $
-                        {totalPending.toFixed(
-                            2
-                        )}
+                        ${totalPending.toFixed(2)}
                     </h2>
                 </div>
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-
                 <input
                     type="text"
                     placeholder="Search payroll..."
                     value={search}
-                    onChange={e =>
-                        setSearch(
-                            e.target.value
-                        )
-                    }
-                    className={
-                        inputClasses
-                    }
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
 
                 <select
-                    value={
-                        filterStatus
-                    }
+                    value={filterStatus}
                     onChange={e =>
                         setFilterStatus(
                             e.target
@@ -426,255 +406,138 @@ const Payroll: React.FC = () => {
                                 | 'Paid'
                         )
                     }
-                    className={
-                        inputClasses
-                    }
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                 >
-                    <option value="All">
-                        All Status
-                    </option>
-
-                    <option value="Pending">
-                        Pending
-                    </option>
-
-                    <option value="Paid">
-                        Paid
-                    </option>
+                    <option value="All">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
                 </select>
             </div>
 
             {/* Form */}
-            <form
-                onSubmit={
-                    handleSubmit
-                }
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+            <SettingsForm
+                title={editingId ? 'Edit Payroll Record' : 'Add New Payroll'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
+                onSubmit={handleSubmit}
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                submitLabel={editingId ? 'Update Record' : 'Add Record'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Payroll'
-                            : 'Add Payroll'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={
-                                resetForm
-                            }
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Payroll No"
                         name="payrollNo"
-                        placeholder="Payroll No"
-                        value={
-                            form.payrollNo
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="e.g. PAY-001"
+                        value={form.payrollNo}
+                        onChange={handleChange}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Employee Name"
                         name="employeeName"
-                        placeholder="Employee Name"
-                        value={
-                            form.employeeName
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="Enter name"
+                        value={form.employeeName}
+                        onChange={handleChange}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Position"
                         name="position"
-                        placeholder="Position"
-                        value={
-                            form.position
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="e.g. Sales"
+                        value={form.position}
+                        onChange={handleChange}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Branch"
                         name="branch"
-                        placeholder="Branch"
-                        value={
-                            form.branch
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="Branch Name"
+                        value={form.branch}
+                        onChange={handleChange}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Salary Month"
                         name="salaryMonth"
-                        placeholder="Salary Month"
-                        value={
-                            form.salaryMonth
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="e.g. May 2026"
+                        value={form.salaryMonth}
+                        onChange={handleChange}
                         required
                     />
 
-                    <input
+                    <FormInput
+                        label="Basic Salary"
                         type="number"
                         name="basicSalary"
-                        placeholder="Basic Salary"
-                        value={
-                            form.basicSalary
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="0.00"
+                        value={form.basicSalary}
+                        onChange={handleChange}
                         min="0"
                         required
                     />
 
-                    <input
+                    <FormInput
+                        label="Allowance"
                         type="number"
                         name="allowance"
-                        placeholder="Allowance"
-                        value={
-                            form.allowance
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="0.00"
+                        value={form.allowance}
+                        onChange={handleChange}
                         min="0"
                     />
 
-                    <input
+                    <FormInput
+                        label="Deduction"
                         type="number"
                         name="deduction"
-                        placeholder="Deduction"
-                        value={
-                            form.deduction
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        placeholder="0.00"
+                        value={form.deduction}
+                        onChange={handleChange}
                         min="0"
                     />
 
-                    <input
+                    <FormInput
+                        label="Payment Date"
                         type="date"
                         name="paymentDate"
-                        value={
-                            form.paymentDate
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
+                        value={form.paymentDate}
+                        onChange={handleChange}
                         required
                     />
 
-                    <select
+                    <FormSelect
+                        label="Payment Method"
                         name="paymentMethod"
-                        value={
-                            form.paymentMethod
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
-                    >
-                        <option value="Cash">
-                            Cash
-                        </option>
+                        value={form.paymentMethod}
+                        onChange={handleChange}
+                        options={[
+                            { value: 'Cash', label: 'Cash' },
+                            { value: 'ABA', label: 'ABA' },
+                            { value: 'Bank', label: 'Bank' },
+                        ]}
+                        required
+                    />
 
-                        <option value="ABA">
-                            ABA
-                        </option>
-
-                        <option value="Bank">
-                            Bank
-                        </option>
-                    </select>
-
-                    <select
+                    <FormSelect
+                        label="Status"
                         name="status"
-                        value={
-                            form.status
-                        }
-                        onChange={
-                            handleChange
-                        }
-                        className={
-                            inputClasses
-                        }
-                    >
-                        <option value="Pending">
-                            Pending
-                        </option>
-
-                        <option value="Paid">
-                            Paid
-                        </option>
-                    </select>
+                        value={form.status}
+                        onChange={handleChange}
+                        options={[
+                            { value: 'Pending', label: 'Pending' },
+                            { value: 'Paid', label: 'Paid' },
+                        ]}
+                        required
+                    />
                 </div>
-
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Payroll'
-                            : 'Add Payroll'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

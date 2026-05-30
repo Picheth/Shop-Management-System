@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import Placeholder from '../ui/Placeholder';
+import SettingsForm from '../ui/SettingsForm';
+import FormInput from '../ui/FormInput';
+import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from './useDuplicateValidation';
 
 interface AccountItem {
@@ -120,11 +123,6 @@ const ChartOfAccount: React.FC = () => {
     ) => {
         e.preventDefault();
 
-        if (isDuplicate) {
-            alert(`Account code "${form.accountCode}" already exists.`);
-            return;
-        }
-
         if (editingId) {
             setAccounts(prev =>
                 prev.map(item =>
@@ -229,110 +227,75 @@ const ChartOfAccount: React.FC = () => {
             </div>
 
             {/* Form */}
-            <form
+            <SettingsForm
+                title={editingId ? 'Edit Account' : 'Add Account'}
+                isEditing={!!editingId}
+                onCancel={resetForm}
                 onSubmit={handleSubmit}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6"
+                isValidating={isValidating}
+                isDuplicate={isDuplicate}
+                submitLabel={editingId ? 'Update Account' : 'Add Account'}
             >
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {editingId
-                            ? 'Edit Account'
-                            : 'Add Account'}
-                    </h2>
-
-                    {editingId && (
-                        <button
-                            type="button"
-                            onClick={resetForm}
-                            className="text-sm text-red-500 hover:text-red-600"
-                        >
-                            Cancel Edit
-                        </button>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Account Code"
                         name="accountCode"
-                        placeholder="Account Code"
+                        placeholder="e.g. 1000"
                         value={form.accountCode}
                         onChange={handleChange}
-                        className={inputClasses}
+                        isValidating={isValidating}
+                        isDuplicate={isDuplicate}
                         required
                     />
 
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Account Name"
                         name="accountName"
-                        placeholder="Account Name"
+                        placeholder="e.g. Cash on Hand"
                         value={form.accountName}
                         onChange={handleChange}
-                        className={inputClasses}
                         required
                     />
 
-                    <select
+                    <FormSelect
+                        label="Account Type"
                         name="accountType"
                         value={form.accountType}
                         onChange={handleChange}
-                        className={inputClasses}
-                    >
-                        <option value="Asset">
-                            Asset
-                        </option>
+                        options={[
+                            { value: 'Asset', label: 'Asset' },
+                            { value: 'Liability', label: 'Liability' },
+                            { value: 'Equity', label: 'Equity' },
+                            { value: 'Revenue', label: 'Revenue' },
+                            { value: 'Expense', label: 'Expense' },
+                        ]}
+                        required
+                    />
 
-                        <option value="Liability">
-                            Liability
-                        </option>
-
-                        <option value="Equity">
-                            Equity
-                        </option>
-
-                        <option value="Revenue">
-                            Revenue
-                        </option>
-
-                        <option value="Expense">
-                            Expense
-                        </option>
-                    </select>
-
-                    <input
+                    <FormInput
+                        label="Initial Balance"
                         type="number"
                         name="balance"
-                        placeholder="Balance"
+                        placeholder="0.00"
                         value={form.balance}
                         onChange={handleChange}
-                        className={inputClasses}
                         min="0"
                         required
                     />
                 </div>
 
                 <div className="mt-4">
-                    <textarea
+                    <FormInput
+                        label="Description"
+                        isTextArea
                         name="description"
-                        placeholder="Description"
+                        placeholder="Enter account description..."
                         value={form.description}
                         onChange={handleChange}
-                        className={`${inputClasses} h-24`}
+                        className="h-24"
                     />
                 </div>
-
-                <div className="flex justify-end mt-4">
-                    <button
-                        type="submit"
-                        className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md"
-                    >
-                        {editingId
-                            ? 'Update Account'
-                            : 'Add Account'}
-                    </button>
-                </div>
-            </form>
+            </SettingsForm>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">

@@ -308,28 +308,15 @@ const SubCategory: React.FC<SubCategoryProps> = ({
                         required
                     />
 
-                    <select
+                    <FormSelect
+                        label="Parent Category"
                         name="categoryId"
                         value={form.categoryId}
                         onChange={handleChange}
-                        className={inputClasses}
+                        placeholder="Select Parent Category"
+                        options={categories.map(c => ({ value: c.id, label: c.name }))}
                         required
-                    >
-
-                        <option value="">
-                            Select Parent Category
-                        </option>
-
-                        {categories.map(cat => (
-
-                            <option
-                                key={cat.id}
-                                value={cat.id}
-                            >
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
+                    />
                 </div>
 
                 <div className="mt-4">
