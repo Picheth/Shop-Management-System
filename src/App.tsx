@@ -3,6 +3,7 @@ import React, {
     useEffect,
     useMemo,
     useCallback,
+    useRef,
 } from 'react';
 
 import Sidebar from './components/Sidebar';
@@ -20,11 +21,14 @@ import {
     Repair as RepairType,
     Brand as BrandInterface,
     ProductVariant,
+    ToastType,
     MasterAttribute,
+    ErrorLog,
 } from './types';
 
 import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
 import { supabase } from './utils/supabase';
+import ConfirmationModal from './components/ui/ConfirmationModal';
 
 /* =========================
    CORE
@@ -71,6 +75,7 @@ import BalanceSheet from './components/reports/BalanceSheet';
 import IncomeStatement from './components/reports/IncomeStatement';
 import ProfitAndLoss from './components/reports/ProfitAndLoss';
 import Report from './components/reports/Report';
+import ErrorDashboard from './components/reports/ErrorDashboard';
 
 /* =========================
    SETTINGS
@@ -80,6 +85,7 @@ import ChartOfAccount from './components/settings/ChartOfAccount';
 import Supplier from './components/settings/Supplier';
 import Contact from './components/settings/Contact';
 import ExpenseCategory from './components/settings/ExpenseCategory';
+import CompanySettings from './components/settings/CompanySettings';
 
 /* =========================
    HR
@@ -116,6 +122,7 @@ const pageComponents: Partial<
     [Page.IncomeStatement]: IncomeStatement,
     [Page.ProfitAndLoss]: ProfitAndLoss,
     [Page.Report]: Report,
+    [Page.ErrorDashboard]: ErrorDashboard,
 
     [Page.ChartOfAccount]: ChartOfAccount,
     [Page.Supplier]: Supplier,
@@ -124,6 +131,7 @@ const pageComponents: Partial<
     [Page.Inventory]: Inventory,
     [Page.BranchLocation]: BranchLocation,
     [Page.StockTransfer]: StockTransfer,
+    [Page.CompanySettings]: CompanySettings, // Assuming Page.CompanySettings exists in Page enum
 
     [Page.Staff]: Staff,
     [Page.Payroll]: Payroll,
@@ -139,6 +147,24 @@ const App: React.FC = () => {
 
     const [isSidebarOpen, setSidebarOpen] =
         useState(false);
+
+    const [isGlobalLoading, setIsGlobalLoading] =
+        useState(false);
+
+    const [initialSearchTerm, setInitialSearchTerm] =
+        useState('');
+
+    const [companyLogoUrl, setCompanyLogoUrl] = useState(
+        "https://via.placeholder.com/150x50?text=Your+Logo"
+    );
+    const [companyName, setCompanyName] = useState("");
+    const [address, setAddress] = useState("");
+    const [signatureUrl, setSignatureUrl] = useState("");
+
+    const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType; isVisible: boolean }>>([]);
+    const toastTimers = useRef<Map<string, { exitId: any; removeId: any; remaining: number; start: number }>>(new Map());
+    const TOAST_DURATION = 3000;
+    const EXIT_OFFSET = 300;
 
     /* =========================
        MASTER DATA
@@ -156,6 +182,18 @@ const App: React.FC = () => {
 
     const [variants, setVariants] =
         useState<ProductVariant[]>([]);
+
+    const [productToUpdate, setProductToUpdate] =
+        useState<DataProduct | null>(null);
+
+    const [pendingSale, setPendingSale] =
+        useState<SaleType | null>(null);
+
+    const [pendingStockTransfer, setPendingStockTransfer] =
+        useState<StockTransferType | null>(null);
+    
+    const [pendingTransfersCount, setPendingTransfersCount] =
+        useState(0);
 
     const [subCategories, setSubCategories] =
         useState<SubCategoryInterface[]>([]);
@@ -177,6 +215,10 @@ const App: React.FC = () => {
     const [regions, setRegions] = useState<MasterAttribute[]>([]);
     const [conditions, setConditions] = useState<MasterAttribute[]>([]);
 
+    const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+    const [showClearLogsConfirm, setShowClearLogsConfirm] =
+        useState(false);
+
     const [branches] =
         useState<Branch[]>(mockBranches);
 
@@ -186,11 +228,252 @@ const App: React.FC = () => {
         );
 
     /* =========================
+       ROUTING HANDLER (URL PARAMS)
+    ========================= */
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const pageParam = params.get('page');
+        const searchParam = params.get('search');
+        const idParam = params.get('id');
+
+        if (pageParam && Object.values(Page).includes(pageParam as any)) {
+            setCurrentPage(pageParam as Page);
+        }
+
+        if (searchParam || idParam) {
+            setInitialSearchTerm(searchParam || idParam || '');
+        }
+
+        // Clean up URL to prevent unwanted re-routing on manual page refreshes later
+        if (pageParam || searchParam || idParam) {
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
+
+    /* =========================
+       TOAST HANDLER
+    ========================= */
+
+    const clearToastTimers = (id: string) => {
+        const timer = toastTimers.current.get(id);
+        if (timer) {
+            clearTimeout(timer.exitId);
+            clearTimeout(timer.removeId);
+        }
+    };
+
+    const startToastTimers = useCallback((id: string, duration: number) => {
+        clearToastTimers(id);
+
+        const exitId = setTimeout(() => {
+            setToasts(prev => prev.map(t => t.id === id ? { ...t, isVisible: false } : t));
+        }, Math.max(0, duration - EXIT_OFFSET));
+
+        const removeId = setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+            toastTimers.current.delete(id);
+        }, duration);
+
+        toastTimers.current.set(id, { exitId, removeId, remaining: duration, start: Date.now() });
+    }, []);
+
+    const fetchPendingTransfersCount = useCallback(async () => {
+        const { count, error } = await supabase
+            .from('stock_transfers')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'Pending');
+        if (!error && count !== null) setPendingTransfersCount(count);
+    }, []);
+
+    const showToast = useCallback((message: string, type: ToastType = 'info') => {
+        const id = Math.random().toString(36).substring(2, 9);
+        setToasts(prev => [...prev, { id, message, type, isVisible: true }]);
+        startToastTimers(id, TOAST_DURATION);
+    }, [startToastTimers]);
+
+    const handleToastMouseEnter = (id: string) => {
+        const timer = toastTimers.current.get(id);
+        if (timer) {
+            const elapsed = Date.now() - timer.start;
+            timer.remaining = Math.max(0, timer.remaining - elapsed);
+            clearToastTimers(id);
+        }
+    };
+
+    const handleToastMouseLeave = (id: string) => {
+        const timer = toastTimers.current.get(id);
+        if (timer && timer.remaining > 0) {
+            startToastTimers(id, timer.remaining);
+        }
+    };
+
+    const handleCopy = useCallback((text: string) => {
+        navigator.clipboard.writeText(text);
+        showToast('Message copied to clipboard', 'info');
+    }, [showToast]);
+
+    const handleUpdateSignature = useCallback(async (file: File) => {
+        setIsGlobalLoading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `authorized-signature-${Date.now()}.${fileExt}`;
+            const filePath = `branding/${fileName}`;
+
+            // 1. Upload to Supabase Storage (Bucket name: 'settings')
+            const { error: uploadError } = await supabase.storage
+                .from('settings')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('settings')
+                .getPublicUrl(filePath);
+
+            // 3. Update state
+            setSignatureUrl(publicUrl);
+            
+            // 4. Persist to database
+            const { error: dbError } = await supabase
+                .from('settings')
+                .update({ signature_url: publicUrl })
+                .eq('id', 1);
+
+            if (dbError) throw dbError;
+
+            showToast('Signature updated successfully', 'success');
+        } catch (error: any) {
+            showToast(`Upload failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast]);
+
+    /* =========================
+       ERROR LOG HANDLERS
+    ========================= */
+
+    const fetchErrorLogs = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('error_logs')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (!error && data) {
+            setErrorLogs(data as ErrorLog[]);
+        }
+    }, []);
+
+    const handleDeleteLog = useCallback(async (id: string) => {
+        setIsGlobalLoading(true);
+        try {
+            const { error } = await supabase.from('error_logs').delete().eq('id', id);
+            if (error) throw error;
+            setErrorLogs(prev => prev.filter(log => log.id !== id));
+            showToast('Log entry deleted', 'success');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast]);
+
+    const confirmClearAllLogs = useCallback(async () => {
+        setShowClearLogsConfirm(false);
+        setIsGlobalLoading(true);
+        try {
+            // Delete all entries from error_logs
+            const { error } = await supabase
+                .from('error_logs')
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000');
+
+            if (error) throw error;
+            setErrorLogs([]);
+            showToast('All system logs have been cleared', 'success');
+        } catch (error: any) {
+            console.error('Clear logs error:', error.message);
+            showToast('Failed to clear logs: ' + error.message, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast]);
+
+    /* =========================
+       LOGO HANDLER
+    ========================= */
+
+    const handleUpdateLogo = useCallback(async (file: File) => {
+        setIsGlobalLoading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `company-logo-${Date.now()}.${fileExt}`;
+            const filePath = `branding/${fileName}`;
+
+            // 1. Upload to Supabase Storage (Bucket name: 'settings')
+            const { error: uploadError } = await supabase.storage
+                .from('settings')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('settings')
+                .getPublicUrl(filePath);
+
+            // 3. Update state
+            setCompanyLogoUrl(publicUrl);
+            
+            // 4. Persist to database
+            const { error: dbError } = await supabase
+                .from('settings')
+                .update({ company_logo_url: publicUrl })
+                .eq('id', 1);
+
+            if (dbError) throw dbError;
+
+            showToast('Company logo updated successfully', 'success');
+        } catch (error: any) {
+            console.error('Logo upload error:', error.message);
+            showToast(`Upload failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast]);
+
+    const handleUpdateCompanyInfo = useCallback(async (name: string, addr: string) => {
+        setIsGlobalLoading(true);
+        try {
+            const { error } = await supabase
+                .from('settings')
+                .update({ 
+                    company_name: name,
+                    address: addr 
+                })
+                .eq('id', 1);
+
+            if (error) throw error;
+            setCompanyName(name);
+            setAddress(addr);
+            showToast('Company information updated successfully', 'success');
+        } catch (error: any) {
+            showToast(`Update failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast]);
+
+    /* =========================
        SALE HANDLER
     ========================= */
 
-    const handleSale = useCallback(
-        async (sale: SaleType) => {
+    const confirmSale = useCallback(
+        async () => {
+            if (!pendingSale) return;
+            const sale = pendingSale;
+            setPendingSale(null);
+            setIsGlobalLoading(true);
             try {
                 const { error } =
                     await supabase.rpc(
@@ -262,15 +545,202 @@ const App: React.FC = () => {
                         };
                     })
                 );
-            } catch (error) {
+                showToast('Sale processed and stock updated', 'success');
+            } catch (error: any) {
                 console.error(
                     'Failed sale processing:',
                     error
                 );
+                showToast(`Sale failed: ${error.message}`, 'error');
+            } finally {
+                setIsGlobalLoading(false);
             }
+        },
+        [pendingSale, showToast]
+    );
+
+    const handleSale = useCallback(
+        (sale: SaleType) => {
+            setPendingSale(sale);
         },
         []
     );
+
+    /* =========================
+       STOCK TRANSFER HANDLER
+    ========================= */
+
+    const confirmStockTransfer = useCallback(async () => {
+        if (!pendingStockTransfer) return;
+        const transfer = pendingStockTransfer;
+        setPendingStockTransfer(null);
+        setIsGlobalLoading(true);
+
+        try {
+            // 1. Record the transfer in Supabase
+            const { error: transferError } = await supabase
+                .from('stock_transfers')
+                .insert([{
+                    ...transfer,
+                    createdAt: new Date().toISOString()
+                }]);
+
+            if (transferError) throw transferError;
+
+            // 2. Update local product state only if the transfer is being saved as 'Completed' (Bulk Support)
+            if (transfer.status === 'Completed') {
+                setProducts(prev => prev.map(product => {
+                    const item = transfer.items.find(i => i.productId === product.id);
+                    if (!item) return product;
+
+                    const newStockByLocation = { ...product.stockByLocation };
+                    
+                    // Deduct from source
+                    newStockByLocation[transfer.fromBranchId] = 
+                        (newStockByLocation[transfer.fromBranchId] || 0) - item.quantity;
+                    
+                    // Add to destination
+                    newStockByLocation[transfer.toBranchId] = 
+                        (newStockByLocation[transfer.toBranchId] || 0) + item.quantity;
+
+                    return {
+                        ...product,
+                        stockByLocation: newStockByLocation
+                    };
+                }));
+            }
+
+            // 3. Update local transfers list
+            setStockTransfers(prev => [transfer, ...prev]);
+            
+            showToast(transfer.status === 'Pending' ? 'Stock transfer request created' : 'Stock transfer successful', 'success');
+            fetchPendingTransfersCount(); // Re-fetch count after new transfer
+        } catch (error: any) {
+            console.error('Transfer failed:', error.message);
+            showToast(`Transfer failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [pendingStockTransfer, showToast, branches, fetchPendingTransfersCount]);
+
+    const handleStockTransfer = useCallback(
+        (transfer: StockTransferType) => {
+            setPendingStockTransfer(transfer);
+        },
+        []
+    );
+
+    const handleCancelStockTransfer = useCallback(async (transfer: StockTransferType) => {
+        if (!window.confirm('Are you sure you want to cancel this transfer?')) return;
+
+        setIsGlobalLoading(true);
+        try {
+            // 1. Reverse stock changes if the transfer was already 'Completed'
+            if (transfer.status === 'Completed') {
+                setProducts(prev => prev.map(product => {
+                    const item = transfer.items.find(i => i.productId === product.id);
+                    if (!item) return product;
+
+                    const newStockByLocation = { ...product.stockByLocation };
+                    
+                    // Add back to source
+                    newStockByLocation[transfer.fromBranchId] = 
+                        (newStockByLocation[transfer.fromBranchId] || 0) + item.quantity;
+                    
+                    // Deduct from destination
+                    newStockByLocation[transfer.toBranchId] = 
+                        (newStockByLocation[transfer.toBranchId] || 0) - item.quantity;
+
+                    return {
+                        ...product,
+                        stockByLocation: newStockByLocation
+                    };
+                }));
+            }
+
+            // 2. Update status in Supabase
+            const { error } = await supabase
+                .from('stock_transfers')
+                .update({ status: 'Cancelled' })
+                .eq('id', transfer.id);
+
+            if (error) throw error;
+
+            // 3. Update local state
+            setStockTransfers(prev => 
+                prev.map(t => t.id === transfer.id ? { ...t, status: 'Cancelled' } : t)
+            );
+            
+            showToast('Stock transfer cancelled successfully', 'success');
+            fetchPendingTransfersCount(); // Re-fetch count after cancellation
+        } catch (error: any) {
+            console.error('Cancel transfer failed:', error.message);
+            showToast(`Cancel failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast, fetchPendingTransfersCount]);
+
+    const handleConfirmStockTransfer = useCallback(async (transfer: StockTransferType) => {
+        if (!window.confirm('Confirm and process this stock movement?')) return;
+
+        setIsGlobalLoading(true);
+        try {
+            // Check stock for all items in the transfer
+            for (const item of transfer.items) {
+                const productInQuestion = products.find(p => p.id === item.productId);
+                const currentSourceStock = productInQuestion?.stockByLocation[transfer.fromBranchId] || 0;
+
+                if (currentSourceStock < item.quantity) {
+                    throw new Error(`Insufficient stock for ${productInQuestion?.name || 'Product'}. Available: ${currentSourceStock}`);
+                }
+            }
+
+            // If stock is sufficient, proceed with confirmation
+
+            // 1. Update status in Supabase
+            const { error } = await supabase
+                .from('stock_transfers')
+                .update({ status: 'Completed' })
+                .eq('id', transfer.id);
+
+            if (error) throw error;
+
+            // 2. Perform stock movement in local state
+            setProducts(prev => prev.map(product => {
+                const item = transfer.items.find(i => i.productId === product.id);
+                if (!item) return product;
+
+                const newStockByLocation = { ...product.stockByLocation };
+                
+                // Deduct from source
+                newStockByLocation[transfer.fromBranchId] = 
+                    (newStockByLocation[transfer.fromBranchId] || 0) - item.quantity;
+                
+                // Add to destination
+                newStockByLocation[transfer.toBranchId] = 
+                    (newStockByLocation[transfer.toBranchId] || 0) + item.quantity;
+
+                return {
+                    ...product,
+                    stockByLocation: newStockByLocation
+                };
+            }));
+
+            // 3. Update local transfers list status
+            setStockTransfers(prev => 
+                prev.map(t => t.id === transfer.id ? { ...t, status: 'Completed' } : t)
+            );
+            
+            showToast('Transfer confirmed and inventory updated', 'success');
+            fetchPendingTransfersCount(); // Re-fetch count after confirmation
+        } catch (error: any) {
+            console.error('Confirmation failed:', error.message);
+            showToast(`Confirmation failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast, products, fetchPendingTransfersCount]);
 
     /* =========================
        PRODUCT PERSISTENCE
@@ -278,6 +748,7 @@ const App: React.FC = () => {
 
     const handleAddProduct = useCallback(
         async (formData: any) => {
+            setIsGlobalLoading(true);
             try {
                 // Call the atomic RPC function
                 const { data, error } = await supabase.rpc('create_product_with_variant', {
@@ -319,17 +790,24 @@ const App: React.FC = () => {
                 } as DataProduct;
 
                 setProducts(prev => [newProductEntry, ...prev]);
+                showToast('Product added successfully', 'success');
 
             } catch (error: any) {
                 console.error('Failed to add product spec/variant:', error.message);
-                alert('Save failed: ' + error.message);
+                showToast(`Save failed: ${error.message}`, 'error');
+            } finally {
+                setIsGlobalLoading(false);
             }
         },
-        []
+        [showToast]
     );
 
-    const handleUpdateProduct = useCallback(
-        async (updatedProduct: DataProduct) => {
+    const confirmUpdateProduct = useCallback(
+        async () => {
+            if (!productToUpdate) return;
+            const updatedProduct = productToUpdate;
+            setProductToUpdate(null);
+            setIsGlobalLoading(true);
             try {
                 // Use the isActive field directly instead of deriving it from stock status
                 const isActive = updatedProduct.isActive ?? true;
@@ -377,15 +855,26 @@ const App: React.FC = () => {
                 setProducts(prev =>
                     prev.map(item => (item.id === mergedProduct.id ? mergedProduct : item))
                 );
+                showToast('Product updated successfully', 'success');
             } catch (error: any) {
                 console.error('Update product error:', error.message);
-                alert('Update failed: ' + error.message);
+                showToast('Update failed: ' + error.message, 'error');
+            } finally {
+                setIsGlobalLoading(false);
             }
+        },
+        [productToUpdate, showToast]
+    );
+
+    const handleUpdateProduct = useCallback(
+        (updatedProduct: DataProduct) => {
+            setProductToUpdate(updatedProduct);
         },
         []
     );
 
     const handleDeleteProduct = useCallback(async (specId: string) => {
+        setIsGlobalLoading(true);
         try {
             const { error } = await supabase.rpc('delete_product_spec_cascade', {
                 p_spec_id: specId
@@ -395,13 +884,17 @@ const App: React.FC = () => {
 
             // Filter out all variants that belong to this specification
             setProducts(prev => prev.filter(item => item.productSpecId !== specId));
+            showToast('Product and all its variants deleted successfully', 'success');
         } catch (error: any) {
             console.error('Delete product spec error:', error.message);
-            alert('Delete failed: ' + error.message);
+            showToast('Delete failed: ' + error.message, 'error');
+        } finally {
+            setIsGlobalLoading(false);
         }
-    }, []);
+    }, [showToast]);
 
     const handleDeleteVariant = useCallback(async (variantId: string) => {
+        setIsGlobalLoading(true);
         try {
             const { error } = await supabase.rpc('delete_specific_variant', {
                 p_variant_id: variantId
@@ -410,11 +903,14 @@ const App: React.FC = () => {
             if (error) throw error;
 
             setProducts(prev => prev.filter(item => item.id !== variantId));
+            showToast('Variant deleted successfully', 'success');
         } catch (error: any) {
             console.error('Delete variant error:', error.message);
-            alert('Delete failed: ' + error.message);
+            showToast('Delete failed: ' + error.message, 'error');
+        } finally {
+            setIsGlobalLoading(false);
         }
-    }, []);
+    }, [showToast]);
 
     /* =========================
        PRODUCT TYPES
@@ -792,6 +1288,8 @@ const App: React.FC = () => {
                 colorsRes,
                 regionsRes,
                 conditionsRes,
+                settingsRes,
+                errorLogsRes,
             ] = await Promise.all([
                 supabase.from('brands').select('*'),
                 supabase.from('products').select('*'),
@@ -807,6 +1305,8 @@ const App: React.FC = () => {
                 supabase.from('colors').select('*'),
                 supabase.from('regions').select('*'),
                 supabase.from('conditions').select('*'),
+                supabase.from('settings').select('*').eq('id', 1).single(),
+                supabase.from('error_logs').select('*').order('created_at', { ascending: false }),
             ]);
 
             if (brandsRes.data) {
@@ -855,13 +1355,50 @@ const App: React.FC = () => {
             if (regionsRes.data) setRegions(regionsRes.data);
             if (conditionsRes.data) setConditions(conditionsRes.data);
 
+            if (settingsRes.data) {
+                // Existing settings logic
+                if (settingsRes.data.company_logo_url) setCompanyLogoUrl(settingsRes.data.company_logo_url);
+                if (settingsRes.data.company_name) setCompanyName(settingsRes.data.company_name);
+                if (settingsRes.data.address) setAddress(settingsRes.data.address);
+            }
+
+            if (errorLogsRes.data) {
+                setErrorLogs(errorLogsRes.data as ErrorLog[]);
+            }
+
         } catch (error) {
             console.error('Failed to fetch initial data:', error);
         }
+        fetchPendingTransfersCount(); // Fetch pending count after initial data
     };
 
     fetchInitialData();
-}, []);
+}, [fetchPendingTransfersCount]);
+
+    /**
+     * Refreshes the product variants list from the database.
+     * This uses the specific ordering requested: newest first.
+     */
+    const refreshVariants = useCallback(async () => {
+        setIsGlobalLoading(true);
+        try {
+        const { data, error } = await supabase
+            .from('product_variants')
+            .select('*')
+            .order('createdAt', { ascending: false });
+        
+        if (error) {
+            console.error('Error fetching variants:', error.message);
+            return;
+        }
+        
+        if (data) {
+            setVariants(data as ProductVariant[]);
+        }
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, []);
 
     const handleAddVariant = useCallback(async (newVar: any) => {
         const { data, error } = await supabase.from('product_variants').insert([{ ...newVar, createdAt: new Date().toISOString() }]).select();
@@ -889,16 +1426,21 @@ const App: React.FC = () => {
     }, []);
 
     const handleDeleteVariantGlobal = useCallback(async (id: string) => {
+        setIsGlobalLoading(true);
         try {
             const { error } = await supabase.rpc('delete_specific_variant', {
                 p_variant_id: id
             });
             if (error) throw error;
             setVariants(prev => prev.filter(v => v.id !== id));
+            showToast('Variant deleted successfully', 'success');
         } catch (error: any) {
             console.error('Delete variant error:', error.message);
+            showToast('Delete failed: ' + error.message, 'error');
+        } finally {
+            setIsGlobalLoading(false);
         }
-    }, []);
+    }, [showToast]);
 
     /* =========================
        CURRENT PAGE
@@ -916,9 +1458,9 @@ const App: React.FC = () => {
        PAGE PROPS
     ========================= */
 
-    const pageProps: Partial<
+    const pageProps = useMemo((): Partial<
         Record<Page, object>
-    > = {
+    > => ({
         [Page.ProductAttributes]: {
             productTypes,
             categories,
@@ -947,6 +1489,9 @@ const App: React.FC = () => {
             colors,
             regions,
             conditions,
+            setIsGlobalLoading,
+            showToast,
+            refreshMasterData: refreshVariants, // Mapping refreshVariants to the expected prop
         },
 
         [Page.Product]: {
@@ -963,6 +1508,7 @@ const App: React.FC = () => {
             onDeleteVariant: handleDeleteVariant,
             allSubCategories:
                 subCategories,
+            onUpdate: handleUpdateProduct,
             /* Pass new master tables to components */
             processors,
             rams,
@@ -999,10 +1545,36 @@ const App: React.FC = () => {
 
         [Page.StockTransfer]: {
             products,
-            setProducts,
             branches,
             stockTransfers,
-            setStockTransfers,
+            onTransfer: handleStockTransfer,
+            onCancelTransfer: handleCancelStockTransfer,
+            onConfirmTransfer: handleConfirmStockTransfer,
+            companyLogoUrl,
+            companyName,
+            address,
+            initialSearchTerm,
+            pendingTransfersCount, // Pass pending count to Sidebar
+            signatureUrl,
+            showToast,
+        },
+
+        [Page.CompanySettings]: {
+            currentLogo: companyLogoUrl,
+            onUpdateLogo: handleUpdateLogo,
+            companyName,
+            address,
+            onUpdateInfo: handleUpdateCompanyInfo,
+            currentSignature: signatureUrl,
+            onUpdateSignature: handleUpdateSignature,
+        },
+
+        [Page.ErrorDashboard]: {
+            logs: errorLogs,
+            onDelete: handleDeleteLog,
+            onRefresh: fetchErrorLogs,
+            onClearAll: () => setShowClearLogsConfirm(true),
+            showToast,
         },
 
         [Page.RepairCenter]: {
@@ -1012,19 +1584,153 @@ const App: React.FC = () => {
             onNavigate:
                 setCurrentPage,
         },
-    };
+    }), [
+        productTypes, categories, subCategories, brands, variants, products, 
+        processors, rams, storages, colors, regions, conditions,
+        branches, stockTransfers, initialSearchTerm, pendingTransfersCount,
+        companyLogoUrl, companyName, address, showToast, 
+        handleSale, handleStockTransfer, handleCancelStockTransfer, 
+        handleConfirmStockTransfer, handleAddProduct, handleUpdateProduct,
+        handleDeleteProduct, handleDeleteVariant, handleAddVariant,
+        handleBulkAddVariants, handleUpdateVariant, handleDeleteVariantGlobal,
+        handleUpdateProductType, handleDeleteProductType, handleAddCategory,
+        handleUpdateCategory, handleDeleteCategory, handleAddSubCategory,
+        handleUpdateSubCategory, handleDeleteSubCategory, handleAddBrand,
+        handleUpdateBrand, handleDeleteBrand, refreshVariants, handleUpdateLogo,
+        handleUpdateCompanyInfo, handleUpdateSignature,
+        errorLogs, handleDeleteLog, fetchErrorLogs, confirmClearAllLogs,
+        signatureUrl
+    ]);
 
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+            {isGlobalLoading && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/10 dark:bg-white/5 backdrop-blur-[1px]">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-600 border-t-transparent"></div>
+                </div>
+            )}
+
+            <div className="fixed bottom-4 right-4 z-[10000] flex flex-col-reverse items-end space-y-2">
+                {toasts.map(t => {
+                    const isCopyable = t.type === 'error' || /\[[A-Z0-9_-]+\]/.test(t.message);
+                    
+                    return (
+                    <div
+                        key={t.id}
+                        onMouseEnter={() => handleToastMouseEnter(t.id)}
+                        onMouseLeave={() => handleToastMouseLeave(t.id)}
+                        className={`w-full max-w-sm group ${
+                            t.isVisible ? 'animate-fade-in-up group-hover:[animation-play-state:paused]' : 'animate-fade-out-down'
+                        }`}
+                    >
+                        <div className={`relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border ${
+                            t.type === 'success' 
+                                ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400' 
+                                : t.type === 'error'
+                                ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400'
+                                : 'bg-sky-50 border-sky-200 text-sky-800 dark:bg-sky-900/30 dark:border-sky-800 dark:text-sky-400'
+                        }`}>
+                            <div 
+                                className={`flex-1 text-sm font-medium ${isCopyable ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                onClick={() => isCopyable && handleCopy(t.message)}
+                                title={isCopyable ? 'Click to copy message' : undefined}
+                            >
+                                {t.message}
+                                {isCopyable && (
+                                    <span className="ml-2 inline-block opacity-40 group-hover:opacity-100 transition-opacity">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                        </svg>
+                                    </span>
+                                )}
+                            </div>
+                            
+                            <button 
+                                onClick={() => setToasts(prev => prev.filter(toastItem => toastItem.id !== t.id))}
+                                className="hover:opacity-70 transition-opacity"
+                            >
+                                ✕
+                            </button>
+
+                            {/* Progress Bar */}
+                            <div 
+                                className={`absolute bottom-0 left-0 h-0.5 ${
+                                    t.isVisible ? 'animate-toast-progress group-hover:[animation-play-state:paused]' : 'w-0'
+                                } ${
+                                    t.type === 'success' ? 'bg-green-500' : t.type === 'error' ? 'bg-red-500' : 'bg-sky-500'
+                                }`}
+                            />
+                        </div>
+                    </div>
+                );})}
+            </div>
+
+            {productToUpdate && (
+                <ConfirmationModal
+                    title="Confirm Product Update"
+                    message={`Are you sure you want to save changes to "${productToUpdate.name}"? This will update inventory and specification details across all branches.`}
+                    confirmText="Save Changes"
+                    isDanger={false}
+                    onConfirm={confirmUpdateProduct}
+                    onCancel={() => setProductToUpdate(null)}
+                />
+            )}
+
+            {pendingSale && (
+                <ConfirmationModal
+                    title="Confirm Sale Transaction"
+                    message={`Proceed with processing this sale? This will immediately reduce stock by ${pendingSale.items.reduce((acc, item) => acc + item.quantity, 0)} unit(s) at the selected branch.`}
+                    confirmText="Process Sale"
+                    isDanger={false}
+                    onConfirm={confirmSale}
+                    onCancel={() => setPendingSale(null)}
+                />
+            )}
+
+            {pendingStockTransfer && (
+                <ConfirmationModal
+                    title="Confirm Stock Transfer"
+                    message={pendingStockTransfer.status === 'Pending' 
+                        ? `Create a transfer request for ${pendingStockTransfer.quantity} unit(s) from ${
+                            branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
+                        } to ${
+                            branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
+                        }?`
+                        : `Move ${pendingStockTransfer.quantity} unit(s) from ${
+                            branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
+                        } to ${
+                            branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
+                        }?`
+                    }
+                    confirmText={pendingStockTransfer.status === 'Pending' ? "Create Request" : "Transfer Stock"}
+                    isDanger={false}
+                    onConfirm={confirmStockTransfer}
+                    onCancel={() => setPendingStockTransfer(null)}
+                />
+            )}
+
+            {showClearLogsConfirm && (
+                <ConfirmationModal
+                    title="Clear All Error Logs"
+                    message="Are you sure you want to permanently delete all error log entries? This action cannot be undone and will clear the system health history."
+                    confirmText="Clear All Logs"
+                    isDanger={true}
+                    onConfirm={confirmClearAllLogs}
+                    onCancel={() => setShowClearLogsConfirm(false)}
+                />
+            )}
+
             <Sidebar
                 currentPage={currentPage}
-                setCurrentPage={
-                    setCurrentPage
-                }
+                setCurrentPage={(page: Page) => {
+                    setCurrentPage(page);
+                    setInitialSearchTerm(''); // Clear search when user navigates manually
+                }}
+                pendingTransfersCount={pendingTransfersCount} // Pass to Sidebar
                 isOpen={isSidebarOpen}
                 setIsOpen={setSidebarOpen}
             />
-
+            
             <div className="flex flex-1 flex-col overflow-hidden">
                 <Header
                     currentPage={

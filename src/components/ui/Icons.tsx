@@ -78,6 +78,49 @@ export const PrintIcon: React.FC<IconProps> = ({ size = 20, className = '', ...p
     </svg>
 );
 
+export const LinkIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.826a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.103-1.103" />
+    </svg>
+);
+
+export const EmailIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+);
+
+export const WhatsAppIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.397-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.197 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414zM12.004 20c-1.99 0-3.951-.533-5.67-1.542l-.406-.24-4.212 1.105 1.125-4.106-.264-.42A9.85 9.85 0 013.064 9.88C3.064 4.428 7.488 0 12.94 0 14.639 0 16.248.659 17.448 1.859a9.85 9.85 0 012.852 7.441C20.3 14.75 15.875 19.178 10.422 19.178c-.015 0-.03 0-.046 0z" />
+    </svg>
+);
+
+export const TelegramIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.69-.88-.48-1.38-.78-2.23-1.11-1-.38-.35-1.11.22-1.62.15-.14 2.72-2.47 2.77-2.6.01-.01.01-.06 0-.08-.01-.02-.04-.01-.06-.01-.03 0-.48.1-1.36.43-.88.33-1.68.61-2.48.91l-1.8-.56c-.39-.12-.4-.39.08-.56l7.03-2.73c.32-.12.61.02.58.41z"/>
+    </svg>
+);
+
+export const CopyIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+    </svg>
+);
+
+export const CheckIcon: React.FC<IconProps> = ({ size = 20, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+);
+
+export const PdfIcon: React.FC<IconProps> = ({ size = 16, className = '', ...props }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1m1 0h1m-3 4h4m-4 4h4" />
+    </svg>
+);
+
 export const InfoIcon: React.FC<IconProps> = ({ size = 14, className = '', ...props }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

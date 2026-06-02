@@ -165,14 +165,22 @@ export const mockSales: Sale[] = [
 export const mockStockTransfers: StockTransfer[] = [
     {
         id: 'ST-001',
-        transferNumber: 'TRF-2026-001',
+        transferNumber: 'TRF-001',
         fromBranchId: 'B1',
         toBranchId: 'B2',
-        transferDate: '2026-05-03',
-        items: [],
-        total: 0,
+        transferDate: '2026-05-01',
+        total: 950,
+        items: [
+            {
+                sku: 'IPHONE15-128',
+                productId: 'P1',
+                productName: 'iPhone 15 128GB',
+                quantity: 1,
+                price: 950,
+            },
+        ],
         status: 'Pending',
-        note: 'Initial transfer',
+        quantity: undefined,
     },
 ];
 

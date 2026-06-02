@@ -33,6 +33,8 @@ export enum Page {
     IncomeStatement = 'IncomeStatement',
     ProfitAndLoss = 'ProfitAndLoss',
     ChartOfAccount = 'ChartOfAccount',
+    ErrorDashboard = 'ErrorDashboard',
+    CompanySettings = 'CompanySettings'
 }
 
 /* =========================================================
@@ -257,38 +259,14 @@ export type ProductForm = Omit<
 >;
 
 export interface DataProduct extends Product{
-    stockQuantity: any;
+    stockQuantity: number;
     shortModel: string;
-    stockByLocation: Record<string, number>;
-    history?: StockHistoryItem[];
-    status: ProductStatus;
-    serialNumbersByLocation?: Record<
-        string,
-        string[]
-    >;
     displaySize: string; // only for tablet and laptop
-    productNumber: string;
-    sku: string;
-    barcode?: string;
-    shortName?: string;
-    name: string;
-    description?: string;
     brand: string;
     model: string;
     color: string;
     storage: string;
     ram: string;
-    productSpecId?: string;
-    processorId?: string;
-    isActive?: boolean; // Added for consistency with ProductVariant
-    ramId?: string;
-    storageId?: string;
-    imageUrl?: string;
-    tags?: string[];
-    hasSerialNumber: boolean;
-    hasIMEI: boolean;
-    salePrice: number;
-    costPrice: number;
     ondelete: string;
     onupdate: string;
     initialStock: number;
@@ -301,16 +279,9 @@ export interface DataProduct extends Product{
     colorCodes?: { [key: string]: string };
     regionCodes?: { [key: string]: string };
     conditionCodes?: { [key: string]: string };
-    categoryId: string;
-    subCategoryId?: string;
-    brandId?: string;
-    typeId?: string;
-    variation?: string;
-    warrantyDays?: number;
-    reorderLevel?: number,
-    colorId: string,
-    conditionId: string,
-    attributes?: ProductAttribute[];
+    colorId: string;
+    conditionId: string;
+    isActive?: boolean;
 }
 
 /* =========================================================
@@ -428,6 +399,7 @@ export interface LineItem {
     total?: number;
 
     serialNumbers?: string[];
+    dimensions?: string;
     imeis?: string[];
 }
 
@@ -527,10 +499,16 @@ export interface StockTransfer {
     toBranchId: string;
     transferDate: string;
     id: string;
+    shortCode?: string;
     items: LineItem[];
     total: number;
     note?: string;
     status: StockTransferStatus;
+    quantity?: number;
+    history?: StockHistoryItem[];
+    createdAt?: string;
+    updatedAt?: string;
+    purpose?: string;
 
 }
 
@@ -780,9 +758,21 @@ export interface Repair {
    CSS MODULE
 ========================================================= */
 
-export interface cssModule {
+export interface CssModule {
     name: string;
     css: string;
+}
+
+
+export interface ErrorLog {
+    id: string;
+    created_at: string;
+    message: string;
+    stack: string;
+    component_name: string;
+    url: string;
+    severity: 'critical' | 'warning' | 'info';
+    user_id?: string;
 }
 
 /* =========================================================
@@ -790,3 +780,30 @@ export interface cssModule {
 ========================================================= */
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+export interface Toast {
+    id: string;
+    type: ToastType;
+    message: string;
+}
+
+export interface Notification {
+    id: string;
+    type: ToastType;
+    message: string;
+}
+
+/* =====================================================
+COMPANY SETTINGS
+===================================================== */
+
+export interface CompanySettings {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    logo: string;
+    currency: string;
+    taxRate: number;
+}
