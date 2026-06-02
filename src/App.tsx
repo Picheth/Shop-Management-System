@@ -194,6 +194,8 @@ const App: React.FC = () => {
     
     const [pendingTransfersCount, setPendingTransfersCount] =
         useState(0);
+    const [pendingRepairsCount, setPendingRepairsCount] =
+        useState(0);
 
     const [subCategories, setSubCategories] =
         useState<SubCategoryInterface[]>([]);
@@ -284,6 +286,14 @@ const App: React.FC = () => {
             .select('*', { count: 'exact', head: true })
             .eq('status', 'Pending');
         if (!error && count !== null) setPendingTransfersCount(count);
+    }, []);
+
+    const fetchPendingRepairsCount = useCallback(async () => {
+        const { count, error } = await supabase
+            .from('repairs')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'Pending');
+        if (!error && count !== null) setPendingRepairsCount(count);
     }, []);
 
     const showToast = useCallback((message: string, type: ToastType = 'info') => {
@@ -565,6 +575,64 @@ const App: React.FC = () => {
         },
         []
     );
+
+    /* =========================
+       REPAIR HANDLERS
+    ========================= */
+
+    const handleAddRepair = useCallback(async (data: Omit<RepairType, 'id'>) => {
+        setIsGlobalLoading(true);
+        try {
+            const { data: newRepair, error } = await supabase
+                .from('repairs')
+                .insert([data])
+                .select()
+                .single();
+
+            if (error) throw error;
+            setRepairs(prev => [newRepair as RepairType, ...prev]);
+            showToast('Repair record added successfully', 'success');
+            fetchPendingRepairsCount();
+        } catch (error: any) {
+            showToast(`Failed to add repair: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast, fetchPendingRepairsCount]);
+
+    const handleUpdateRepair = useCallback(async (data: RepairType) => {
+        setIsGlobalLoading(true);
+        try {
+            const { error } = await supabase
+                .from('repairs')
+                .update(data)
+                .eq('id', data.id);
+
+            if (error) throw error;
+            setRepairs(prev => prev.map(r => r.id === data.id ? data : r));
+            showToast('Repair record updated', 'success');
+            fetchPendingRepairsCount();
+        } catch (error: any) {
+            showToast(`Update failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast, fetchPendingRepairsCount]);
+
+    const handleDeleteRepair = useCallback(async (id: string) => {
+        setIsGlobalLoading(true);
+        try {
+            const { error } = await supabase.from('repairs').delete().eq('id', id);
+            if (error) throw error;
+            setRepairs(prev => prev.filter(r => r.id !== id));
+            showToast('Repair record deleted', 'success');
+            fetchPendingRepairsCount();
+        } catch (error: any) {
+            showToast(`Delete failed: ${error.message}`, 'error');
+        } finally {
+            setIsGlobalLoading(false);
+        }
+    }, [showToast, fetchPendingRepairsCount]);
 
     /* =========================
        STOCK TRANSFER HANDLER
@@ -1370,10 +1438,11 @@ const App: React.FC = () => {
             console.error('Failed to fetch initial data:', error);
         }
         fetchPendingTransfersCount(); // Fetch pending count after initial data
+        fetchPendingRepairsCount(); // Fetch pending repairs count
     };
 
     fetchInitialData();
-}, [fetchPendingTransfersCount]);
+}, [fetchPendingTransfersCount, fetchPendingRepairsCount]);
 
     /**
      * Refreshes the product variants list from the database.
@@ -1461,6 +1530,13 @@ const App: React.FC = () => {
     const pageProps = useMemo((): Partial<
         Record<Page, object>
     > => ({
+        [Page.Dashboard]: {
+            repairs,
+            products,
+            sales,
+            stockTransfers,
+        },
+
         [Page.ProductAttributes]: {
             productTypes,
             categories,
@@ -1578,9 +1654,14 @@ const App: React.FC = () => {
         },
 
         [Page.RepairCenter]: {
+            repairs,
             products,
             setProducts,
             branches,
+            onRefreshCount: fetchPendingRepairsCount,
+            onAddRepair: handleAddRepair,
+            onUpdateRepair: handleUpdateRepair,
+            onDeleteRepair: handleDeleteRepair,
             onNavigate:
                 setCurrentPage,
         },
@@ -1596,10 +1677,11 @@ const App: React.FC = () => {
         handleUpdateProductType, handleDeleteProductType, handleAddCategory,
         handleUpdateCategory, handleDeleteCategory, handleAddSubCategory,
         handleUpdateSubCategory, handleDeleteSubCategory, handleAddBrand,
-        handleUpdateBrand, handleDeleteBrand, refreshVariants, handleUpdateLogo,
+        handleUpdateBrand, handleDeleteBrand, handleUpdateRepair, handleDeleteRepair, refreshVariants, handleUpdateLogo,
         handleUpdateCompanyInfo, handleUpdateSignature,
         errorLogs, handleDeleteLog, fetchErrorLogs, confirmClearAllLogs,
-        signatureUrl
+        signatureUrl,
+        repairs, handleAddRepair, handleUpdateBrand, handleDeleteBrand, setRepairs
     ]);
 
     return (
@@ -1691,12 +1773,12 @@ const App: React.FC = () => {
                 <ConfirmationModal
                     title="Confirm Stock Transfer"
                     message={pendingStockTransfer.status === 'Pending' 
-                        ? `Create a transfer request for ${pendingStockTransfer.quantity} unit(s) from ${
+                        ? `Create a transfer request for ${pendingStockTransfer.items?.length || 0} item(s) from ${
                             branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
                         } to ${
                             branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
                         }?`
-                        : `Move ${pendingStockTransfer.quantity} unit(s) from ${
+                        : `Move ${pendingStockTransfer.items?.length || 0} item(s) from ${
                             branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
                         } to ${
                             branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
@@ -1726,7 +1808,12 @@ const App: React.FC = () => {
                     setCurrentPage(page);
                     setInitialSearchTerm(''); // Clear search when user navigates manually
                 }}
+                handleNavigation={(page: Page) => {
+                    setCurrentPage(page);
+                    setInitialSearchTerm('');
+                }}
                 pendingTransfersCount={pendingTransfersCount} // Pass to Sidebar
+                pendingRepairsCount={pendingRepairsCount}
                 isOpen={isSidebarOpen}
                 setIsOpen={setSidebarOpen}
             />

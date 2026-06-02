@@ -8,14 +8,39 @@ interface SidebarProps {
     setCurrentPage: (page: Page) => void;
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
+    pendingTransfersCount?: number;
+    pendingRepairsCount?: number;
+    handleNavigation: (page: Page) => void;
+    children?: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+    ariaLabel?: string;
+    ariaExpanded?: boolean;
+    ariaControls?: string;
+    ariaHasPopup?: boolean;
+    onClick?: () => void;
+    onKeyDown?: (event: React.KeyboardEvent) => void;
+    onKeyUp?: (event: React.KeyboardEvent) => void;
+    onKeyPress?: (event: React.KeyboardEvent) => void;
+    onToggle?: () => void;
+    onOpen?: () => void;
+    onClose?: () => void;
+    role?: string;
+    tabIndex?: number;
+    'data-testid'?: string;
+    'aria-label'?: string;
+    'aria-expanded'?: boolean;
+    'aria-controls'?: string;
+    'aria-haspopup'?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen, pendingTransfersCount = 0, pendingRepairsCount = 0 }) => {
     
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
         if (window.innerWidth < 768) { // md breakpoint
             setIsOpen(false);
+            window.scrollTo(0, 0);
         }
     };
     
@@ -40,14 +65,28 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
                                     <li key={item.page}>
                                         <button
                                             onClick={() => handleNavigation(item.page)}
-                                            className={`w-full text-left flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                                            className={`w-full text-left flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                                                 currentPage === item.page
                                                     ? 'bg-sky-600 text-white'
                                                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                                             }`}
                                         >
-                                            {item.icon}
-                                            {item.label}
+                                            <div className="flex items-center">
+                                                {item.icon}
+                                                {item.label}
+                                            </div>
+                                            
+                                            {item.page === Page.StockTransfer && pendingTransfersCount > 0 && (
+                                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-gray-800 animate-pulse">
+                                                    {pendingTransfersCount > 99 ? '9+' : pendingTransfersCount}
+                                                </span>
+                                            )}
+
+                                            {item.page === Page.RepairCenter && pendingRepairsCount > 0 && (
+                                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white ring-2 ring-gray-800 animate-pulse">
+                                                    {pendingRepairsCount > 99 ? '9+' : pendingRepairsCount}
+                                                </span>
+                                            )}
                                         </button>
                                     </li>
                                 ))}

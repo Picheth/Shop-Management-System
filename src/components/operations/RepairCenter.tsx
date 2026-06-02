@@ -1,69 +1,33 @@
 import React, {
     useMemo,
     useState,
+    useEffect,
 } from 'react';
 import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
+import InlineFormInput from '../ui/InlineFormInput';
+import InlineFormSelect from '../ui/InlineFormSelect';
 import { useFormValidation } from '../settings/useFormValidation';
-import { DataProduct, Branch, StockTransfer, Page, RepairStatus } from '../../types';
-
-interface RepairItem {
-    id: string;
-    customer: string;
-    phone: string;
-    device: string;
-    serialNumber: string;
-    issue: string;
-    technician: string;
-    branch: string;
-    entryDate: string;
-    estimatedCost: number;
-    status: RepairStatus;
-}
-
-const initialRepairs: RepairItem[] = [
-    {
-        id: 'REP-001',
-        customer: 'Dara Sok',
-        phone: '012345678',
-        device: 'iPhone 14 Pro',
-        serialNumber: 'IP14-001',
-        issue: 'Screen broken',
-        technician: 'Nika',
-        branch: 'Main Branch',
-        entryDate: '2026-05-20',
-        estimatedCost: 120,
-        status: 'Pending',
-    },
-    {
-        id: 'REP-002',
-        customer: 'Chan Pheak',
-        phone: '098888888',
-        device: 'Samsung S24',
-        serialNumber: 'SS24-009',
-        issue: 'Battery issue',
-        technician: 'Vanna',
-        branch: 'TK Branch',
-        entryDate: '2026-05-21',
-        estimatedCost: 80,
-        status: 'In Progress',
-    },
-];
+import { DataProduct, Branch, StockTransfer, Page, RepairStatus, Repair as RepairType, LineItem } from '../../types';
 
 interface RepairCenterProps {
+    repairs: RepairType[];
     products: DataProduct[];
     setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
     branches: Branch[];
     onNavigate: (page: Page) => void;
+    onRefreshCount?: () => void;
+    onAddRepair?: (data: Omit<RepairType, 'id'>) => Promise<void>;
+    onUpdateRepair?: (data: RepairType) => Promise<void>;
+    onDeleteRepair?: (id: string) => Promise<void>;
     stockTransfers: StockTransfer[];
     setStockTransfers: React.Dispatch<React.SetStateAction<StockTransfer[]>>;
 }
 
 const RepairCenter: React.FC<RepairCenterProps> =
-    ({ products, setProducts, branches, onNavigate, stockTransfers, setStockTransfers }) => {
-        const [repairs, setRepairs] = useState<RepairItem[]>(initialRepairs);
+    ({ repairs, products, setProducts, branches, onNavigate, onRefreshCount, onAddRepair, onUpdateRepair, onDeleteRepair }) => {
 
         const [
             search,
@@ -87,11 +51,10 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
         const [
             selectedRepair,
-            setSelectedRepair,
-        ] =
-            useState<RepairItem | null>(
-                null
-            );
+            setSelectedRepair
+        ] = useState<RepairType | null>(null);
+
+        const [repairItems, setRepairItems] = useState<LineItem[]>([]);
 
         const [form, setForm] =
             useState({
@@ -101,27 +64,61 @@ const RepairCenter: React.FC<RepairCenterProps> =
                 serialNumber: '',
                 issue: '',
                 technician: '',
-                branch: '',
+                branchId: '',
                 entryDate: '',
+                laborRate: '',
+                hoursWorked: '',
+                commissionType: 'Percentage' as 'Percentage' | 'Fixed',
+                commissionRate: '',
+                isManualCost: false,
                 estimatedCost: '',
                 status:
                     'Pending' as RepairStatus,
             });
 
         const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-            required: ['customer', 'phone', 'device', 'branch', 'entryDate', 'estimatedCost', 'issue'],
+            required: ['customer', 'phone', 'device', 'branchId', 'entryDate', 'estimatedCost', 'issue'],
             phone: ['phone'],
             minMax: { estimatedCost: { min: 0 } },
             labels: {
                 customer: 'Customer Name',
                 phone: 'Phone Number',
                 device: 'Device',
-                branch: 'Branch',
+                branchId: 'Branch',
                 entryDate: 'Entry Date',
                 estimatedCost: 'Estimated Cost',
-                issue: 'Issue Description'
+                issue: 'Issue Description',
+                laborRate: 'Labor Rate',
+                hoursWorked: 'Hours Worked',
+                commissionType: 'Commission Type',
+                commissionRate: 'Commission Rate'
             }
         });
+
+        const partsSubtotal = useMemo(() => 
+            repairItems.reduce((sum, i) => sum + (i.quantity * i.price), 0), 
+        [repairItems]);
+
+        const liveTotal = useMemo(() => 
+            (parseFloat(form.estimatedCost) || 0) + partsSubtotal, 
+        [form.estimatedCost, partsSubtotal]);
+
+        const liveCommission = useMemo(() => {
+            const val = parseFloat(form.commissionRate) || 0;
+            return form.commissionType === 'Percentage' 
+                ? (liveTotal * (val / 100)).toFixed(2)
+                : val.toFixed(2);
+        }, [liveTotal, form.commissionRate, form.commissionType]);
+
+        // Automatically calculate estimated labor cost
+        useEffect(() => {
+            if (!form.isManualCost) {
+                const rate = parseFloat(form.laborRate) || 0;
+                const hours = parseFloat(form.hoursWorked) || 0;
+                const calculatedLabor = (rate * hours).toFixed(2);
+                setForm(prev => ({ ...prev, estimatedCost: calculatedLabor }));
+            }
+        }, [form.laborRate, form.hoursWorked, form.isManualCost]);
 
         const filteredRepairs =
             useMemo(() => {
@@ -156,13 +153,31 @@ const RepairCenter: React.FC<RepairCenterProps> =
                                     .includes(
                                         term
                                     ) ||
-                                item.device
-                                    .toLowerCase()
+                                (item.device || '').toLowerCase()
                                     .includes(
                                         term
                                     ) ||
-                                item.phone
-                                    .toLowerCase()
+                                (item.technician || '').toLowerCase()
+                                    .includes(
+                                        term
+                                    ) ||
+                                (item.technician || '').toLowerCase()
+                                    .includes(
+                                        term
+                                    ) ||
+                                (item.phone || '').toLowerCase()
+                                    .includes(
+                                        term
+                                    ) ||
+                                (item.issue || '').toLowerCase()
+                                    .includes(
+                                        term
+                                    ) ||
+                                (item.status || '').toLowerCase()
+                                    .includes(
+                                        term
+                                    ) ||
+                                (item.entryDate || '').toLowerCase()
                                     .includes(
                                         term
                                     )
@@ -220,169 +235,169 @@ const RepairCenter: React.FC<RepairCenterProps> =
                     serialNumber:
                         '',
                     issue: '',
-                    technician:
-                        '',
-                    branch: '',
+                    technician: '',
+                    branchId: '',
                     entryDate:
                         '',
+                    laborRate: '',
+                    hoursWorked: '',
+                    commissionType: 'Percentage' as 'Percentage' | 'Fixed',
+                    commissionRate: '',
+                    isManualCost: false,
                     estimatedCost:
                         '',
-                    status:
-                        'Pending',
+                    status: 'Pending' as RepairStatus,
                 });
             };
 
-        const handleSubmit = (
+        const handleSubmit = async (
             e: React.FormEvent
         ) => {
             e.preventDefault();
+            if (isInvalid) return;
 
-            const repairData: RepairItem =
-                {
-                    id:
-                        editingId ||
-                        `REP-${String(
-                            repairs.length +
-                                1
-                        ).padStart(
-                            3,
-                            '0'
-                        )}`,
+            // Validation: Check stock if marking as Completed
+            if (form.status === 'Completed') {
+                const stockCheck = checkStockAvailability(repairItems, form.branchId);
+                if (!stockCheck.valid) {
+                    alert(stockCheck.error);
+                    return;
+                }
+            }
+
+            const repairData = {
                     customer:
                         form.customer,
-                    phone:
-                        form.phone,
-                    device:
-                        form.device,
-                    serialNumber:
-                        form.serialNumber,
-                    issue:
-                        form.issue,
-                    technician:
-                        form.technician,
-                    branch:
-                        form.branch,
-                    entryDate:
-                        form.entryDate,
-                    estimatedCost:
-                        Number(
-                            form.estimatedCost
-                        ),
-                    status:
-                        form.status,
-                };
+                    phone: form.phone,
+                    device: form.device,
+                    serialNumber: form.serialNumber,
+                    issue: form.issue,
+                    technician: form.technician,
+                    branchId: form.branchId,
+                    entryDate: form.entryDate,
+                    laborRate: Number(form.laborRate),
+                    hoursWorked: Number(form.hoursWorked),
+                    commissionType: form.commissionType,
+                    commissionRate: Number(form.commissionRate),
+                    commissionAmount: Number(liveCommission),
+                    estimatedCost: Number(form.estimatedCost),
+                    items: repairItems,
+                    status: form.status,
+                    // Total = Labor (Estimated Cost) + Sum of Parts
+                    total: liveTotal
+            };
 
-            if (
-                editingId
-            ) {
-                setRepairs(
-                    prev =>
-                        prev.map(
-                            item =>
-                                item.id ===
-                                editingId
-                                    ? repairData
-                                    : item
-                        )
-                );
+            if (editingId) {
+                await onUpdateRepair?.({ id: editingId, ...repairData } as RepairType);
             } else {
-                setRepairs(
-                    prev => [
-                        repairData,
-                        ...prev,
-                    ]
-                );
+                await onAddRepair?.(repairData);
             }
 
             resetForm();
         };
 
-        const handleEdit = (
-            item: RepairItem
-        ) => {
-            setEditingId(
-                item.id
-            );
-
+        const handleEdit = (item: RepairType) => {
+            setEditingId(item.id);
             setForm({
-                customer:
-                    item.customer,
-                phone:
-                    item.phone,
-                device:
-                    item.device,
-                serialNumber:
-                    item.serialNumber,
-                issue:
-                    item.issue,
-                technician:
-                    item.technician,
-                branch:
-                    item.branch,
-                entryDate:
-                    item.entryDate,
-                estimatedCost:
-                    item.estimatedCost.toString(),
-                status:
-                    item.status,
+                customer: item.customer,
+                phone: item.phone || '',
+                device: item.device || '',
+                serialNumber: item.serialNumber || '',
+                issue: item.issue,
+                technician: item.technician || '',
+                branchId: item.branchId,
+                entryDate: item.entryDate,
+                laborRate: item.laborRate?.toString() || '',
+                hoursWorked: item.hoursWorked?.toString() || '',
+                commissionType: item.commissionType || 'Percentage',
+                commissionRate: item.commissionRate?.toString() || '',
+                isManualCost: false, // Default to auto-calc mode on edit
+                estimatedCost: item.estimatedCost?.toString() || '0',
+                status: item.status,
             });
+            setRepairItems(item.items || []);
         };
 
-        const handleDelete = (
-            id: string
-        ) => {
-            const confirmed =
-                window.confirm(
-                    'Delete this repair record?'
-                );
-
-            if (
-                !confirmed
-            )
-                return;
-
-            setRepairs(
-                prev =>
-                    prev.filter(
-                        item =>
-                            item.id !==
-                            id
-                    )
-            );
+        const handleDelete = async (id: string) => {
+            if (window.confirm('Delete this repair record?')) {
+                await onDeleteRepair?.(id);
+            }
         };
 
-        const updateStatus =
-            (
-                id: string,
-                status: RepairStatus
-            ) => {
-                setRepairs(
-                    prev =>
-                        prev.map(
-                            item =>
-                                item.id ===
-                                id
-                                    ? {
-                                          ...item,
-                                          status,
-                                      }
-                                    : item
-                        )
-                );
-
-                if (
-                    selectedRepair &&
-                    selectedRepair.id ===
-                        id
-                ) {
-                    setSelectedRepair(
-                        {
-                            ...selectedRepair,
-                            status,
-                        }
-                    );
+        const updateStatus = async (id: string, status: RepairStatus) => {
+            const repair = repairs.find(r => r.id === id);
+            if (repair) {
+                if (status === 'Completed' && repair.items) {
+                    const stockCheck = checkStockAvailability(repair.items, repair.branchId);
+                    if (!stockCheck.valid) {
+                        alert(stockCheck.error);
+                        return;
+                    }
                 }
+                await onUpdateRepair?.({ ...repair, status });
+            }
+        };
+const handleAddPart = () => {
+    const firstProduct = products[0];
+
+    setRepairItems(prev => [
+        ...prev,
+        {
+            productId: firstProduct?.id || '',
+            productName: firstProduct?.name || '',
+            quantity: 1,
+            price: 0,
+        }
+    ]);
+};
+
+const handlePartChange = (
+    index: number,
+    field: keyof LineItem,
+    value: any
+) => {
+    setRepairItems(prev =>
+        prev.map((item, i) => {
+            if (i !== index) return item;
+
+            const updated = { ...item, [field]: value };
+
+            if (field === 'productId') {
+                const product = products.find(p => p.id === value);
+
+                updated.productName = product?.name || '';
+                updated.price = product?.price || 0;
+            }
+            return updated;
+        })
+    );
+};
+
+const handleRemovePart = (index: number) => {
+    setRepairItems(prev => prev.filter((_, i) => i !== index));
+};
+
+const checkStockAvailability = (
+    items: LineItem[],
+    branchId: string
+) => {
+    for (const item of items) {
+        const product = products.find(p => p.id === item.productId);
+
+        if (!product) {
+            return { valid: false, error: 'Invalid product selected' };
+        }
+
+        if ((product.stock || 0) < item.quantity) {
+            return {
+                valid: false,
+                error: `Not enough stock for ${product.name}`
             };
+        }
+    }
+
+    return { valid: true };
+};
 
         const inputClasses =
             'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
@@ -563,12 +578,12 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
                     <FormSelect
                         label="Branch"
-                            name="branch"
-                        value={form.branch}
+                            name="branchId"
+                        value={form.branchId}
                         onChange={handleChange}
                         placeholder="Select Branch"
-                        options={branches.map(b => ({ value: b.name, label: b.name }))}
-                        error={fieldErrors.branch}
+                        options={branches.map(b => ({ value: b.id, label: b.name }))}
+                        error={fieldErrors.branchId}
                         required
                     />
 
@@ -587,20 +602,89 @@ const RepairCenter: React.FC<RepairCenterProps> =
                     />
 
                     <FormInput
-                        label="Estimated Cost"
+                        label="Labor Rate ($/hr)"
+                        type="number"
+                        name="laborRate"
+                        placeholder="0.00"
+                        value={form.laborRate}
+                        onChange={handleChange}
+                        error={fieldErrors.laborRate}
+                        min="0"
+                        required
+                    />
+
+                    <FormInput
+                        label="Hours Worked"
+                        type="number"
+                        name="hoursWorked"
+                        placeholder="0.0"
+                        value={form.hoursWorked}
+                        onChange={handleChange}
+                        error={fieldErrors.hoursWorked}
+                        min="0"
+                        step="0.1"
+                        required
+                    />
+
+                    <div className="relative">
+                        <div className="absolute right-0 top-0 z-10">
+                            <label className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="isManualCost"
+                                    checked={form.isManualCost}
+                                    onChange={(e) => setForm(prev => ({ ...prev, isManualCost: e.target.checked }))}
+                                    className="h-3 w-3 text-sky-600 rounded border-gray-300 focus:ring-sky-500"
+                                />
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Manual</span>
+                            </label>
+                        </div>
+                        <FormInput
+                            label="Estimated Cost"
                             type="number"
                             name="estimatedCost"
-                        placeholder="0.00"
+                            placeholder="0.00"
                             value={
                                 form.estimatedCost
                             }
                             onChange={
                                 handleChange
                             }
-                        error={fieldErrors.estimatedCost}
+                            error={fieldErrors.estimatedCost}
+                            tooltip={form.isManualCost ? "Manual entry enabled" : "Calculated automatically: Rate × Hours"}
+                            disabled={!form.isManualCost}
                             min="0"
                             required
                         />
+                    </div>
+
+                    <div className="relative">
+                        <div className="absolute right-0 top-0 z-10 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setForm(prev => ({ ...prev, commissionType: prev.commissionType === 'Percentage' ? 'Fixed' : 'Percentage' }))}
+                                className="text-[10px] font-bold text-sky-600 hover:text-sky-700 uppercase tracking-tighter bg-sky-50 dark:bg-sky-900/30 px-1.5 py-0.5 rounded border border-sky-100 dark:border-sky-800"
+                            >
+                                {form.commissionType === 'Percentage' ? '% Percent' : '$ Fixed'}
+                            </button>
+                        </div>
+                         <FormInput
+                            label={form.commissionType === 'Percentage' ? 'Commission (%)' : 'Fixed Commission ($)'}
+                            type="number"
+                            name="commissionRate"
+                            placeholder="0"
+                            value={form.commissionRate}
+                            onChange={handleChange}
+                            error={fieldErrors.commissionRate}
+                            min="0"
+                            max={form.commissionType === 'Percentage' ? "100" : undefined}
+                        />
+                        {parseFloat(form.commissionRate) > 0 && form.commissionType === 'Percentage' && (
+                            <div className="absolute right-0 top-0 pt-1">
+                                <span className="text-[10px] font-bold text-green-600 uppercase tabular-nums">Payout: ${liveCommission}</span>
+                            </div>
+                        )}
+                    </div>
 
                     <FormSelect
                         label="Status"
@@ -637,6 +721,68 @@ const RepairCenter: React.FC<RepairCenterProps> =
                         className="h-24"
                         required
                     />
+                </div>
+
+                {/* Parts & Components Section */}
+                <div className="mt-6 border-t pt-4 dark:border-gray-700">
+                    <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Parts & Components Used</h4>
+                        <button 
+                            type="button" 
+                            onClick={handleAddPart}
+                            className="text-xs font-bold text-sky-600 hover:text-sky-700 uppercase"
+                        >
+                            + Add Part
+                        </button>
+                    </div>
+                    
+                    {repairItems.length > 0 ? (
+                        <div className="space-y-3">
+                            {repairItems.map((item, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded-md border border-gray-100 dark:border-gray-700 shadow-sm">
+                                    <div className="col-span-6">
+                                        <InlineFormSelect 
+                                            value={item.productId}
+                                            onChange={(e) => handlePartChange(index, 'productId', e.target.value)}
+                                            options={products.map(p => ({ value: p.id, label: p.name }))}
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <InlineFormInput 
+                                            type="number"
+                                            placeholder="Qty"
+                                            value={item.quantity}
+                                            onChange={(e: any) => handlePartChange(index, 'quantity', Number(e.target.value))}
+                                            min={1}
+                                        />
+                                    </div>
+                                    <div className="col-span-3">
+                                        <InlineFormInput 
+                                            type="number"
+                                            placeholder="Price"
+                                            value={item.price}
+                                            onChange={(e: any) => handlePartChange(index, 'price', Number(e.target.value))}
+                                            min={0}
+                                        />
+                                    </div>
+                                    <div className="col-span-1 text-center">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => handleRemovePart(index)}
+                                            className="text-red-500 hover:text-red-700 font-bold"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="text-right text-xs font-bold text-gray-500 dark:text-gray-400 pr-2">
+                                Parts Subtotal: ${repairItems.reduce((sum, i) => sum + (i.quantity * i.price), 0).toFixed(2)}
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-gray-500 italic">No parts added to this repair yet.</p>
+                    )}
                 </div>
             </SettingsForm>
 
@@ -720,7 +866,7 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
                                             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                                                 {
-                                                    item.technician
+                                                    item.technician || '-'
                                                 }
                                             </td>
 
@@ -959,8 +1105,26 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
                                     <p className="font-medium text-gray-900 dark:text-white">
                                         {
-                                            selectedRepair.branch
+                                            branches.find(b => b.id === selectedRepair.branchId)?.name || '-'
                                         }
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase mb-1">
+                                        Labor Rate
+                                    </p>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                        ${selectedRepair.laborRate?.toFixed(2) || '0.00'}/hr
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase mb-1">
+                                        Hours Worked
+                                    </p>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                        {selectedRepair.hoursWorked || '0'} hrs
                                     </p>
                                 </div>
 
@@ -972,9 +1136,20 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
                                     <p className="font-semibold text-green-600">
                                         $
-                                        {selectedRepair.estimatedCost.toFixed(
-                                            2
-                                        )}
+                                        {Number(selectedRepair.estimatedCost || 0).toFixed(2)
+                                        }
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase mb-1">
+                                        Technician Commission
+                                    </p>
+                                    <p className="font-bold text-green-600">
+                                        ${selectedRepair.commissionAmount?.toFixed(2) || '0.00'} 
+                                        <span className="text-[10px] font-normal text-gray-400 ml-1">
+                                            ({selectedRepair.commissionType === 'Fixed' ? 'Fixed Fee' : `${selectedRepair.commissionRate || 0}%`})
+                                        </span>
                                     </p>
                                 </div>
 

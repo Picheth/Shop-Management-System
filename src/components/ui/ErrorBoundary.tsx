@@ -39,14 +39,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
     private handleReportIssue = async () => {
         if (!this.state.error) return;
-        interface State {
-  hasError: boolean;
-  error: Error | null;
-  isReporting: boolean;
-  retryCount: number;
-  retryTimer: number;
-  MAX_RETRIES: number;
-}
+        this.setState({ isReporting: true });
         try {
             const { data: { user } } = await supabase.auth.getUser();
 

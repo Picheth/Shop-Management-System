@@ -68,6 +68,42 @@ export interface NavSection {
     style?: React.CSSProperties;
 }
 
+export type NavConfig = NavSection[];
+
+export interface NavContextType {
+    currentPage: Page;
+    setCurrentPage: (page: Page) => void;
+}
+
+export interface SidebarProps {
+    currentPage: Page;
+    setCurrentPage: (page: Page) => void;
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+    handleNavigation?: (page: Page) => void;
+    children?: React.ReactNode;
+    pendingTransfersCount?: number;
+    pendingRepairsCount?: number;
+    className?: string;
+    style?: React.CSSProperties;
+    ariaLabel?: string;
+    ariaExpanded?: boolean;
+    ariaControls?: string;
+    ariaHasPopup?: boolean;
+    onClick?: () => void;
+    onKeyDown?: (event: React.KeyboardEvent) => void;
+    onKeyUp?: (event: React.KeyboardEvent) => void;
+    onKeyPress?: (event: React.KeyboardEvent) => void;
+    onToggle?: () => void;
+    onOpen?: () => void;
+    onClose?: () => void;
+}
+
+/* =========================================================
+   TYPES
+========================================================= */
+export * from './utils/ProductType'; // Re-exporting types from ProductType.ts for easier imports in components
+
 /* =========================================================
    COMMON
 ========================================================= */
@@ -282,6 +318,14 @@ export interface DataProduct extends Product{
     colorId: string;
     conditionId: string;
     isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    price?: number;
+    stockQuantityByLocation?: Record<string, number>;
+    stockHistory?: StockHistoryItem[];
+    stockHistoryByLocation?: Record<string, StockHistoryItem[]>;
+    stockByLocation: Record<string, number>;
+    stock?: number;
 }
 
 /* =========================================================
@@ -509,6 +553,8 @@ export interface StockTransfer {
     createdAt?: string;
     updatedAt?: string;
     purpose?: string;
+    signatureUrl?: string;
+    purposeOptions?: string[];
 
 }
 
@@ -744,6 +790,11 @@ export interface Repair {
     diagnosis?: string;
     solution?: string;
     technician?: string;
+    laborRate?: number;
+    hoursWorked?: number;
+    commissionType?: 'Percentage' | 'Fixed';
+    commissionRate?: number;
+    commissionAmount?: number;
     estimatedCost?: number;
     repairCost?: number;
     entryDate: string;
