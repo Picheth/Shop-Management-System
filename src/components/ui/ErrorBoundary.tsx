@@ -3,12 +3,17 @@ import { supabase } from '../../utils/supabase';
 
 interface Props {
     children: ReactNode;
+    title?: string;
+    skeleton?: ReactNode;
 }
 
 interface State {
     hasError: boolean;
     error: Error | null;
     isReporting: boolean;
+    retryCount: number;
+    retryTimer: any;
+    MAX_RETRIES: number;
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
@@ -16,11 +21,15 @@ class ErrorBoundary extends React.Component<Props, State> {
         hasError: false,
         error: null,
         isReporting: false,
+        retryCount: 0,
+        retryTimer: null,
+        MAX_RETRIES: 3
     };
 
     public static getDerivedStateFromError(error: Error): State {
         // Update state so the next render will show the fallback UI.
-        return { hasError: true, error };
+        return { hasError: true, error, isReporting: false, retryCount: 0, retryTimer: null, MAX_RETRIES: 3 };
+        
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -30,7 +39,14 @@ class ErrorBoundary extends React.Component<Props, State> {
 
     private handleReportIssue = async () => {
         if (!this.state.error) return;
-        this.setState({ isReporting: true });
+        interface State {
+  hasError: boolean;
+  error: Error | null;
+  isReporting: boolean;
+  retryCount: number;
+  retryTimer: number;
+  MAX_RETRIES: number;
+}
         try {
             const { data: { user } } = await supabase.auth.getUser();
 

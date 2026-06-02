@@ -807,3 +807,67 @@ export interface CompanySettings {
     currency: string;
     taxRate: number;
 }
+
+export interface CompanySettingsForm {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    currency: string;
+    taxRate: number;
+}
+
+/* =========================================================
+   CONFIRMATION MODAL
+========================================================= */
+
+export interface ConfirmationModalProps {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+    confirmText?: string;
+    isDanger?: boolean;
+}
+
+/* =========================================================
+   ERROR BOUNDARY
+========================================================= */
+
+export interface ErrorBoundaryProps {
+    children: React.ReactNode;
+    title?: string;
+    skeleton?: React.ReactNode;
+}
+
+export interface ErrorBoundaryState {
+    hasError: boolean;
+    error: Error | null;
+    isReporting: boolean;
+    retryCount: number;
+    retryTimer: any;
+    MAX_RETRIES: number;
+}
+
+/* =========================================================
+   WIDGET ERROR BOUNDARY
+========================================================= */
+
+export interface WidgetErrorBoundaryProps {
+    children: React.ReactNode;
+    title?: string;
+}
+
+export interface WidgetErrorBoundaryState {
+    hasError: boolean;
+    retryCount: number;
+    error: Error | null;
+    isReporting: boolean;
+}
+
+/* =========================================================
+   EXPORTS
+========================================================= */
+
+export * from './utils/ProductType';

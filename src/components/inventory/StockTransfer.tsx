@@ -399,14 +399,21 @@ const StockTransfer: React.FC<StockTransferProps> = ({
         const footer = [['', '', '', '', '', '', '', 'Totals:', totalQuantity, `$${totalValue.toFixed(2)}`, `$${totalProfit.toFixed(2)}`, '']];
 
         autoTable(doc, {
-            startY: 42,
-            margin: { top: 42, bottom: 20 },
+    headStyles: {
+        fillColor: [14, 165, 233],
+        textColor: 255,
+    },
+
+    footStyles: {
+        fillColor: [243, 244, 246],
+        textColor: 0,
+        fontStyle: 'bold',
+    },
+});
+        autoTable(doc, {
             head: headers,
             body: data,
             foot: footer,
-            theme: 'grid',
-            headStyles: { fillStyle: [14, 165, 233], textColor: 255 }, // Sky-600
-            footStyles: { fillStyle: [243, 244, 246], textColor: 0, fontStyle: 'bold' }, // Gray-100
             styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
             columnStyles: {
     0: { cellWidth: 22 }, // Date
@@ -458,13 +465,20 @@ const StockTransfer: React.FC<StockTransferProps> = ({
         });
 
         // Add "Page X of Y" total count to the footer after the table is finished
-        const totalPages = doc.internal.getNumberOfPages();
+        const totalPages = doc.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(150);
-            doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-        }
+    doc.setPage(i);
+
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+
+    doc.text(
+        `Page ${i} of ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+    );
+}
 
         doc.save(`stock_transfers_${new Date().toISOString().split('T')[0]}.pdf`);
     };
