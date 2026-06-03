@@ -155,6 +155,11 @@ const App: React.FC = () => {
     const [initialSearchTerm, setInitialSearchTerm] =
         useState('');
 
+    /* =========================
+       AUTH & ROLES
+    ========================= */
+    const [userRole, setUserRole] = useState<string | null>(null);
+
     const [companyLogoUrl, setCompanyLogoUrl] = useState(
         "https://via.placeholder.com/150x50?text=Your+Logo"
     );
@@ -248,10 +253,31 @@ const App: React.FC = () => {
             setInitialSearchTerm(searchParam || idParam || '');
         }
 
+        // 1. Initial Session Check
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                // Custom claims added via database triggers are stored in app_metadata
+                setUserRole(session.user.app_metadata?.role || 'User');
+            }
+        };
+
+        // 2. Listen for Auth Changes (Login/Logout/Token Refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUserRole(session.user.app_metadata?.role || 'User');
+            } else {
+                setUserRole(null);
+            }
+        });
+
+        checkSession();
+
         // Clean up URL to prevent unwanted re-routing on manual page refreshes later
         if (pageParam || searchParam || idParam) {
             window.history.replaceState({}, '', window.location.pathname);
         }
+        return () => subscription.unsubscribe();
     }, []);
 
     /* =========================
@@ -324,24 +350,32 @@ const App: React.FC = () => {
         showToast('Message copied to clipboard', 'info');
     }, [showToast]);
 
+    /**
+     * Generic helper to handle file uploads to Supabase Storage
+     * and return the resulting public URL.
+     */
+    const uploadFileToStorage = useCallback(async (file: File, bucket: string, folder: string) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${folder}-${Date.now()}.${fileExt}`;
+        const filePath = `${folder}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from(bucket)
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    }, []);
+
     const handleUpdateSignature = useCallback(async (file: File) => {
         setIsGlobalLoading(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `authorized-signature-${Date.now()}.${fileExt}`;
-            const filePath = `branding/${fileName}`;
-
-            // 1. Upload to Supabase Storage (Bucket name: 'settings')
-            const { error: uploadError } = await supabase.storage
-                .from('settings')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            // 2. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('settings')
-                .getPublicUrl(filePath);
+            const publicUrl = await uploadFileToStorage(file, 'settings', 'branding');
 
             // 3. Update state
             setSignatureUrl(publicUrl);
@@ -1840,6 +1874,7 @@ const App: React.FC = () => {
                 }}
                 pendingTransfersCount={pendingTransfersCount} // Pass to Sidebar
                 pendingRepairsCount={pendingRepairsCount}
+                userRole={userRole} // Pass userRole to Sidebar
                 isOpen={isSidebarOpen}
                 setIsOpen={setSidebarOpen}
             />

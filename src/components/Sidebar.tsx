@@ -34,7 +34,7 @@ interface SidebarProps {
     'aria-haspopup'?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen, pendingTransfersCount = 0, pendingRepairsCount = 0 }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen, pendingTransfersCount = 0, pendingRepairsCount = 0, userRole }) => {
     
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
@@ -62,6 +62,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, 
                             <h2 className="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{section.title}</h2>
                             <ul className="mt-2">
                                 {section.items.map((item) => (
+                                    // Conditional rendering based on userRole
+                                    // Example: Only Managers can see Product Attributes
+                                    // You can extend this logic for other roles and pages
+                                    (item.page === Page.ProductAttributes && userRole !== 'Manager') ? null :
+                                    (item.page === Page.Purchase && userRole === 'User') ? null :
+                                    (item.page === Page.Staff && userRole !== 'Manager') ? null :
+                                    (item.page === Page.Payroll && userRole !== 'Manager') ? null :
+                                    
                                     <li key={item.page}>
                                         <button
                                             onClick={() => handleNavigation(item.page)}
