@@ -1,5 +1,7 @@
 import React from 'react';
+import { ProductAttribute } from './Types/ProductSpecs';
 export * from './utils/ProductType'; // Corrected import path
+export type { ProductAttribute } from './Types/ProductSpecs';
  
 /* =========================================================
    ENUMS
@@ -219,21 +221,6 @@ export interface Branch extends BaseEntity {
 /* =========================================================
    PRODUCT
 ========================================================= */
-export interface ProductAttribute {
-    name: string;
-    value: string;
-    description?: string;
-    status?: ProductStatus;
-    stockByLocation?: Record<string, number>;
-    history?: StockHistoryItem[];
-    serialNumbersByLocation?: Record<
-        string,
-        string[]
-    >;
-    imageUrl?: string
-    tags?: string[];
-
-}
 
 // Product and DataProduct interfaces remain here as they are core entities
 // that might aggregate attributes from ProductType.ts
@@ -762,6 +749,12 @@ export interface RepairCenter extends BaseEntity {
     phone?: string;
     email?: string;
     address?: string;
+    note?: string;
+    active: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    history?: StockHistoryItem[];
+    checkStockAvailability?: boolean;
 }
 
 /* =========================================================
@@ -803,6 +796,10 @@ export interface Repair {
     total: number;
     note?: string;
     status: RepairStatus;
+    history?: StockHistoryItem[];
+    createdAt?: string;
+    updatedAt?: string;
+    checkStockAvailability?: boolean;
 }
 
 /* =========================================================

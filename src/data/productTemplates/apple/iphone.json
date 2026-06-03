@@ -1,0 +1,114 @@
+{
+  "templateId": "APPLE_IPHONE_6",
+  "brand": "Apple",
+
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone 6",
+  "shortModel": "IP6",
+
+  "description": "Apple iPhone 6 Smartphone",
+
+  "skuPattern": "{brandCode}-{shortModel}-{storageCode}-{colorCode}-{regionCode}-{conditionCode}",
+
+  "brandCode": "APL",
+
+  "variants": {
+    "storage": {
+      "options": [
+        "16GB",
+        "32GB",
+        "64GB",
+        "128GB"
+      ],
+      "codes": {
+        "16GB": "16",
+        "32GB": "32",
+        "64GB": "64",
+        "128GB": "128"
+      }
+    },
+
+    "color": {
+      "options": [
+        "Space Gray",
+        "Silver",
+        "Gold"
+      ],
+      "codes": {
+        "Space Gray": "SPG",
+        "Silver": "SLV",
+        "Gold": "GLD"
+      }
+    },
+
+    "region": {
+      "options": [
+        "USA",
+        "Hong Kong",
+        "Australia",
+        "Singapore",
+        "China"
+      ],
+      "codes": {
+        "USA": "LL",
+        "Hong Kong": "ZA",
+        "Australia": "XA",
+        "Singapore": "ZP",
+        "China": "CH"
+      }
+    },
+
+    "condition": {
+      "options": [
+        "NEW",
+        "USED",
+        "GRADE_A"
+      ],
+      "codes": {
+        "NEW": "N",
+        "USED": "U",
+        "GRADE_A": "A"
+      }
+    }
+  },
+
+  "tracking": {
+    "isSerialized": true,
+    "trackIMEI": true,
+    "trackSerialNumber": true
+  },
+
+  "pricing": {
+    "allowPurchasePrice": true,
+    "allowSellingPrice": true,
+    "allowWholesalePrice": true
+  },
+
+  "inventory": {
+    "manageStock": true,
+    "allowNegativeStock": false,
+    "lowStockAlert": 3
+  },
+
+  "status": "ACTIVE",
+
+  "tags": [
+    "Apple",
+    "iPhone",
+    "iPhone 6",
+    "Smartphone",
+    "iOS"
+  ],
+
+  "metadata": {
+    "releaseYear": 2014,
+    "operatingSystem": "iOS",
+    "productLine": "iPhone"
+  },
+
+  "createdAt": "2026-06-03T00:00:00.000Z",
+  "updatedAt": "2026-06-03T00:00:00.000Z"
+}

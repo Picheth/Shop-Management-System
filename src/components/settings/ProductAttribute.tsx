@@ -7,7 +7,7 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import ProductVariantManager from '../inventory/ProductVariant';
+import ProductVariantManager from '../inventory/VariantManager';
 
 import {
   ProductType as ProductTypeInterface,

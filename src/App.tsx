@@ -27,6 +27,7 @@ import {
 } from './types';
 
 import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
+import { findDuplicateAttributeIndices } from './Types/ProductSpecs';
 import { supabase } from './utils/supabase';
 import ConfirmationModal from './components/ui/ConfirmationModal';
 
@@ -818,6 +819,13 @@ const App: React.FC = () => {
         async (formData: any) => {
             setIsGlobalLoading(true);
             try {
+                // Validate attributes for duplicate names
+                const duplicateIndices = findDuplicateAttributeIndices(formData.attributes || []);
+                if (duplicateIndices.length > 0) {
+                    showToast('Save failed: Duplicate attribute names detected.', 'error');
+                    return;
+                }
+
                 // Call the atomic RPC function
                 const { data, error } = await supabase.rpc('create_product_with_variant', {
                     p_name: formData.name,
@@ -877,6 +885,13 @@ const App: React.FC = () => {
             setProductToUpdate(null);
             setIsGlobalLoading(true);
             try {
+                // Validate attributes for duplicate names
+                const duplicateIndices = findDuplicateAttributeIndices(updatedProduct.attributes || []);
+                if (duplicateIndices.length > 0) {
+                    showToast('Update failed: Duplicate attribute names detected.', 'error');
+                    return;
+                }
+
                 // Use the isActive field directly instead of deriving it from stock status
                 const isActive = updatedProduct.isActive ?? true;
 
@@ -1366,7 +1381,7 @@ const App: React.FC = () => {
                 supabase.from('sub_categories').select('*'),
                 supabase.from('sales').select('*'),
                 supabase.from('repairs').select('*'),
-                supabase.from('product_variants').select('*').order('createdAt', { ascending: false }),
+                supabase.from('product_variants').select('*').order('created_at', { ascending: false }),
                 supabase.from('processors').select('*'),
                 supabase.from('rams').select('*'),
                 supabase.from('storages').select('*'),
@@ -1376,6 +1391,17 @@ const App: React.FC = () => {
                 supabase.from('settings').select('*').eq('id', 1).single(),
                 supabase.from('error_logs').select('*').order('created_at', { ascending: false }),
             ]);
+            
+            // Audit check for missing tables
+            const responses = { brandsRes, productsRes, productTypesRes, categoriesRes, subCategoriesRes, salesRes, repairsRes, variantsRes, processorsRes, ramsRes, storagesRes, colorsRes, regionsRes, conditionsRes, settingsRes, errorLogsRes };
+            Object.entries(responses).forEach(([name, res]) => {
+                if (res.error) {
+                    console.error(`Resource Fetch Failure [${name}]:`, res.error.message);
+                    if (res.error.code === '42P01') {
+                        showToast(`System Error: Database table for ${name.replace('Res', '')} is missing.`, 'error');
+                    }
+                }
+            });
 
             if (brandsRes.data) {
                 setBrands(brandsRes.data as BrandInterface[]);

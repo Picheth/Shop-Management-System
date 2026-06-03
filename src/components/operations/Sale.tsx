@@ -115,7 +115,7 @@ const Sale: React.FC<SaleProps> = ({
                     count,
                 } = await query
                     .order(
-                        'saleDate',
+                        'created_at',
                         {
                             ascending: false,
                         }

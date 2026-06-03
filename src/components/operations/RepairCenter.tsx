@@ -11,7 +11,7 @@ import InlineFormInput from '../ui/InlineFormInput';
 import InlineFormSelect from '../ui/InlineFormSelect';
 import { useFormValidation } from '../settings/useFormValidation';
 import { DataProduct, Branch, StockTransfer, Page, RepairStatus, Repair as RepairType, LineItem } from '../../types';
-
+import { checkStockAvailability } from '../../utils/stockUtils';
 interface RepairCenterProps {
     repairs: RepairType[];
     products: DataProduct[];
@@ -27,7 +27,7 @@ interface RepairCenterProps {
 }
 
 const RepairCenter: React.FC<RepairCenterProps> =
-    ({ repairs, products, setProducts, branches, onNavigate, onRefreshCount, onAddRepair, onUpdateRepair, onDeleteRepair }) => {
+    ({ repairs, products, branches, onAddRepair, onUpdateRepair, onDeleteRepair }) => {
 
         const [
             search,
@@ -161,10 +161,6 @@ const RepairCenter: React.FC<RepairCenterProps> =
                                     .includes(
                                         term
                                     ) ||
-                                (item.technician || '').toLowerCase()
-                                    .includes(
-                                        term
-                                    ) ||
                                 (item.phone || '').toLowerCase()
                                     .includes(
                                         term
@@ -221,7 +217,39 @@ const RepairCenter: React.FC<RepairCenterProps> =
                     e.target.value,
             }));
         };
+const handleAddPart = () => {
+    setRepairItems(prev => [
+        ...prev,
+        {
+            productId: '',
+            quantity: 1,
+            price: 0,
+        } as LineItem,
+    ]);
+};
 
+const handlePartChange = (
+    index: number,
+    field: keyof LineItem,
+    value: string | number
+) => {
+    setRepairItems(prev =>
+        prev.map((item, i) =>
+            i === index
+                ? {
+                      ...item,
+                      [field]: value,
+                  }
+                : item
+        )
+    );
+};
+
+const handleRemovePart = (index: number) => {
+    setRepairItems(prev =>
+        prev.filter((_, i) => i !== index)
+    );
+};
         const resetForm =
             () => {
                 setEditingId(
@@ -258,7 +286,11 @@ const RepairCenter: React.FC<RepairCenterProps> =
 
             // Validation: Check stock if marking as Completed
             if (form.status === 'Completed') {
-                const stockCheck = checkStockAvailability(repairItems, form.branchId);
+                const stockCheck = checkStockAvailability(
+    repairItems || [],
+    products,
+    form.branchId
+);
                 if (!stockCheck.valid) {
                     alert(stockCheck.error);
                     return;
@@ -328,79 +360,25 @@ const RepairCenter: React.FC<RepairCenterProps> =
             const repair = repairs.find(r => r.id === id);
             if (repair) {
                 if (status === 'Completed' && repair.items) {
-                    const stockCheck = checkStockAvailability(repair.items, repair.branchId);
+                    const stockCheck = checkStockAvailability(
+    repair.items || [],
+    products,
+    repair.branchId
+);
                     if (!stockCheck.valid) {
                         alert(stockCheck.error);
                         return;
                     }
                 }
                 await onUpdateRepair?.({ ...repair, status });
+                
+                // If the item being updated is the one in the detail view, update that state too
+                if (selectedRepair?.id === id) {
+                    setSelectedRepair({ ...repair, status });
+                }
             }
         };
-const handleAddPart = () => {
-    const firstProduct = products[0];
 
-    setRepairItems(prev => [
-        ...prev,
-        {
-            productId: firstProduct?.id || '',
-            productName: firstProduct?.name || '',
-            quantity: 1,
-            price: 0,
-        }
-    ]);
-};
-
-const handlePartChange = (
-    index: number,
-    field: keyof LineItem,
-    value: any
-) => {
-    setRepairItems(prev =>
-        prev.map((item, i) => {
-            if (i !== index) return item;
-
-            const updated = { ...item, [field]: value };
-
-            if (field === 'productId') {
-                const product = products.find(p => p.id === value);
-
-                updated.productName = product?.name || '';
-                updated.price = product?.price || 0;
-            }
-            return updated;
-        })
-    );
-};
-
-const handleRemovePart = (index: number) => {
-    setRepairItems(prev => prev.filter((_, i) => i !== index));
-};
-
-const checkStockAvailability = (
-    items: LineItem[],
-    branchId: string
-) => {
-    for (const item of items) {
-        const product = products.find(p => p.id === item.productId);
-
-        if (!product) {
-            return { valid: false, error: 'Invalid product selected' };
-        }
-
-        if ((product.stock || 0) < item.quantity) {
-            return {
-                valid: false,
-                error: `Not enough stock for ${product.name}`
-            };
-        }
-    }
-
-    return { valid: true };
-};
-
-        const inputClasses =
-            'w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500';
 
         return (
             <Placeholder title="Repair Center">
