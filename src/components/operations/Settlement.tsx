@@ -6,7 +6,7 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { useFormValidation } from '../settings/useFormValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 type SettlementStatus =
     | 'Pending'

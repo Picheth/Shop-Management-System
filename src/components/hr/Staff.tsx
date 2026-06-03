@@ -3,8 +3,8 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { useDuplicateValidation } from '../settings/useDuplicateValidation';
-import { useFormValidation } from '../settings/useFormValidation';
+import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 import { Staff as StaffType } from '../../types';
 
 const initialStaff: StaffType[] = [

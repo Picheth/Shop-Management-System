@@ -10,7 +10,7 @@ import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
 import PurchaseForm from './PurchaseForm';
 import StatusBadge from '../ui/StatusBadge';
-import { useProductHistory } from '../inventory/useProductHistory';
+import { useProductHistory } from '../../hooks/useProductHistory';
 import { supabase } from '../../utils/supabase';
 
 interface PurchaseProps {

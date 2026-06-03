@@ -3,7 +3,7 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { useDuplicateValidation } from '../settings/useDuplicateValidation';
+import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
 
 interface PayrollItem {
     id: string;

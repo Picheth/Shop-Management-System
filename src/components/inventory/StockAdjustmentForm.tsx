@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DataProduct, Branch } from '../../types';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { useFormValidation } from '../settings/useFormValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface StockAdjustmentFormProps {
     product: DataProduct;

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PHONE_REGEX, EMAIL_REGEX } from '../ui/FormInput';
+import { PHONE_REGEX, EMAIL_REGEX } from '../components/ui/FormInput';
 
 interface ValidationConfig {
     required?: string[];

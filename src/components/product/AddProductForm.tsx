@@ -38,8 +38,8 @@ import { supabase } from '../../utils/supabase';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 
-import { useDuplicateValidation } from '../settings/useDuplicateValidation';
-import { useFormValidation } from '../settings/useFormValidation';
+import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 type AddProductFormData = {
   name: string;
@@ -132,6 +132,23 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [showSkuHistory, setShowSkuHistory] = useState(false);
   const [clearedHistoryCategories, setClearedHistoryCategories] = useState<Set<string>>(new Set());
   const [clearedDynamicSuggestions, setClearedDynamicSuggestions] = useState<Set<string>>(new Set());
+  
+  const DYNAMIC_SUGGESTIONS_KEY = 'disableDynamicSuggestions';
+  const [disableDynamicSuggestions, setDisableDynamicSuggestions] = useState(() => {
+    try {
+      const storedValue = localStorage.getItem(DYNAMIC_SUGGESTIONS_KEY);
+      return storedValue ? JSON.parse(storedValue) : false;
+    } catch (error) {
+      console.error("Failed to parse disableDynamicSuggestions from localStorage", error);
+      return false;
+    }
+  });
+
+  // Effect to persist disableDynamicSuggestions to localStorage
+  useEffect(() => {
+    localStorage.setItem(DYNAMIC_SUGGESTIONS_KEY, JSON.stringify(disableDynamicSuggestions));
+  }, [disableDynamicSuggestions]);
+
   const historyRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState<AddProductFormData>({
@@ -318,10 +335,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
    * Merges hardcoded common values with dynamic "most used" values from the database.
    */
   const mergedAttributeValues = useMemo(() => {
-    const dynamicSuggestions = getMostUsedAttributeValues(products);
+    const dynamicSuggestions = disableDynamicSuggestions ? {} : getMostUsedAttributeValues(products);
     const merged: Record<string, string[]> = { ...COMMON_ATTRIBUTE_VALUES };
 
-    Object.entries(dynamicSuggestions).forEach(([name, values]) => {
+    const suggestionsToMerge = dynamicSuggestions as Record<string, string[]>;
+    Object.entries(suggestionsToMerge).forEach(([name, values]) => {
       // Only merge dynamic suggestions if they haven't been cleared for this attribute name
       if (clearedDynamicSuggestions.has(name)) return;
 
@@ -334,7 +352,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     });
 
     return merged;
-  }, [products, clearedDynamicSuggestions]);
+  }, [products, clearedDynamicSuggestions, disableDynamicSuggestions]);
 
   const currentCategory = useMemo(() => 
     existingCategories.find((c) => c.id === form.categoryId),
@@ -1098,6 +1116,15 @@ const inputType =
             </h3>
 
             <div className="flex gap-2">
+              <label className="flex items-center gap-2 cursor-pointer bg-sky-50 dark:bg-sky-900/30 px-3 py-1 rounded-md border border-sky-100 dark:border-sky-800 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={!disableDynamicSuggestions}
+                  onChange={(e) => setDisableDynamicSuggestions(!e.target.checked)}
+                  className="h-3 w-3 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
+                />
+                <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-tight">Enable Suggestions</span>
+              </label>
               {currentCategory && CATEGORY_ATTRIBUTE_TEMPLATES[currentCategory.name] && (
                 <button
                   type="button"
@@ -1198,7 +1225,7 @@ const inputType =
                     }
                   />
                   {/* Clear Suggestions Button - Visible if dynamic suggestions are active for this name */}
-                  {attr.name.trim() && !clearedDynamicSuggestions.has(attr.name.trim()) && getMostUsedAttributeValues(products)[attr.name.trim()] && (
+                  {attr.name.trim() && !disableDynamicSuggestions && !clearedDynamicSuggestions.has(attr.name.trim()) && getMostUsedAttributeValues(products)[attr.name.trim()] && (
                     <button
                       type="button"
                       onClick={() => handleClearSuggestions(attr.name)}

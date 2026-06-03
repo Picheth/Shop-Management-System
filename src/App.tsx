@@ -27,73 +27,46 @@ import {
 } from './types';
 
 import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
-import { findDuplicateAttributeIndices } from './Types/ProductSpecs';
+import { findDuplicateAttributeIndices } from './Types/ProductSpecs'; //
 import { supabase } from './utils/supabase';
 import ConfirmationModal from './components/ui/ConfirmationModal';
 
-/* =========================
-   CORE
-========================= */
+import LoadingSpinner from './components/ui/LoadingSpinner';
 
-import Dashboard from './components/core/Dashboard';
+/* =========================================================
+   PAGES (Entry Points)
+========================================================= */
+const Dashboard = React.lazy(() => import('./page/Dashboard'));
+const ProductPage = React.lazy(() => import('./page/ProductPage'));
+const ProductAttributes = React.lazy(() => import('./page/ProductAttributes'));
+const PurchaseOrder = React.lazy(() => import('./page/PurchaseOrder'));
+const Purchase = React.lazy(() => import('./page/Purchase'));
+const Sale = React.lazy(() => import('./page/Sale'));
+const RepairCenter = React.lazy(() => import('./page/RepairCenter'));
+const Settlement = React.lazy(() => import('./page/Settlement'));
+const Inventory = React.lazy(() => import('./page/Inventory'));
+const BranchLocation = React.lazy(() => import('./page/BranchLocation'));
+const StockTransfer = React.lazy(() => import('./page/StockTransfer'));
+const AccountsPayable = React.lazy(() => import('./page/AccountsPayable'));
+const AccountsReceivable = React.lazy(() => import('./page/AccountsReceivable'));
+const CashFlow = React.lazy(() => import('./page/CashFlow'));
+const Expense = React.lazy(() => import('./page/Expense'));
+const TaxPayment = React.lazy(() => import('./page/TaxPayment'));
+const SummaryReport = React.lazy(() => import('./page/SummaryReport'));
+const BalanceSheet = React.lazy(() => import('./page/BalanceSheet'));
+const IncomeStatement = React.lazy(() => import('./page/IncomeStatement'));
+const ProfitAndLoss = React.lazy(() => import('./page/ProfitAndLoss'));
+const Report = React.lazy(() => import('./page/Report'));
+const ErrorDashboard = React.lazy(() => import('./page/ErrorDashboard'));
+const ChartOfAccount = React.lazy(() => import('./page/ChartOfAccount'));
+const Supplier = React.lazy(() => import('./page/Supplier'));
+const Contact = React.lazy(() => import('./page/Contact'));
+const ExpenseCategory = React.lazy(() => import('./page/ExpenseCategory'));
+const CompanySettings = React.lazy(() => import('./page/CompanySettings'));
+const Staff = React.lazy(() => import('./page/Staff'));
+const Payroll = React.lazy(() => import('./page/Payroll'));
 
-/* =========================
-   OPERATIONS
-========================= */
-
-import PurchaseOrder from './components/operations/PurchaseOrder';
-import Purchase from './components/operations/Purchase';
-import Sale from './components/operations/Sale';
-import RepairCenter from './components/operations/RepairCenter';
-import Settlement from './components/operations/Settlement';
-
-/* =========================
-   INVENTORY
-========================= */
-
-import Inventory from './components/inventory/Inventory';
-import Product from './components/inventory/Product';
-import ProductAttributes from './components/settings/ProductAttribute';
-import BranchLocation from './components/inventory/BranchLocation';
-import StockTransfer from './components/inventory/StockTransfer';
-
-/* =========================
-   FINANCE
-========================= */
-
-import AccountsPayable from './components/finance/AccountsPayable';
-import AccountsReceivable from './components/finance/AccountsReceivable';
-import CashFlow from './components/finance/CashFlow';
-import Expense from './components/finance/Expense';
-import TaxPayment from './components/finance/TaxPayment';
-
-/* =========================
-   REPORTS
-========================= */
-
-import SummaryReport from './components/reports/SummaryReport';
-import BalanceSheet from './components/reports/BalanceSheet';
-import IncomeStatement from './components/reports/IncomeStatement';
-import ProfitAndLoss from './components/reports/ProfitAndLoss';
-import Report from './components/reports/Report';
-import ErrorDashboard from './components/reports/ErrorDashboard';
-
-/* =========================
-   SETTINGS
-========================= */
-
-import ChartOfAccount from './components/settings/ChartOfAccount';
-import Supplier from './components/settings/Supplier';
-import Contact from './components/settings/Contact';
-import ExpenseCategory from './components/settings/ExpenseCategory';
-import CompanySettings from './components/settings/CompanySettings';
-
-/* =========================
-   HR
-========================= */
-
-import Staff from './components/hr/Staff';
-import Payroll from './components/hr/Payroll';
+import { inventoryService } from './service/inventoryService';
 
 /* =========================
    PAGE COMPONENTS
@@ -104,7 +77,7 @@ const pageComponents: Partial<
 > = {
     [Page.Dashboard]: Dashboard,
 
-    [Page.Product]: Product,
+    [Page.Product]: ProductPage,
     [Page.ProductAttributes]: ProductAttributes,
     [Page.PurchaseOrder]: PurchaseOrder,
     [Page.Purchase]: Purchase,
@@ -853,53 +826,17 @@ const App: React.FC = () => {
         async (formData: any) => {
             setIsGlobalLoading(true);
             try {
-                // Validate attributes for duplicate names
-                const duplicateIndices = findDuplicateAttributeIndices(formData.attributes || []);
+                // Validate attributes for duplicate names (still done here as it's a pre-RPC check)
+                const duplicateIndices = findDuplicateAttributeIndices(formData.attributes || []); //
                 if (duplicateIndices.length > 0) {
-                    showToast('Save failed: Duplicate attribute names detected.', 'error');
+                    showToast('Save failed: Duplicate attribute names detected.', 'error'); //
                     return;
                 }
 
-                // Call the atomic RPC function
-                const { data, error } = await supabase.rpc('create_product_with_variant', {
-                    p_name: formData.name,
-                    p_brand_id: formData.brandId,
-                    p_type_id: formData.typeId,
-                    p_category_id: formData.categoryId,
-                    p_sub_category_id: formData.subCategoryId || null,
-                    p_model: formData.model || null,
-                    p_display_size: formData.displaySize || null,
-                    p_sku: formData.sku,
-                    p_stock: Number(formData.initialStock),
-                    p_cost_price: Number(formData.costPrice),
-                    p_sale_price: Number(formData.salePrice),
-                    p_storage_id: formData.storageId || null,
-                    p_ram_id: formData.ramId || null,
-                    p_color_id: formData.colorId || null,
-                    p_condition_id: formData.conditionId || null,
-                    p_description: formData.description || null,
-                    p_has_serial_number: !!formData.hasSerialNumber,
-                    p_has_imei: !!formData.hasIMEI,
-                    p_image_url: formData.imageUrl || null,
-                    p_attributes: formData.attributes || [],
-                    p_is_active: formData.isActive ?? true
-                });
+                // Use the inventory service to create the product
+                const newProduct = await inventoryService.createProduct(formData); //
 
-                if (error) throw error;
-
-                // Construct local state object from the returned JSON
-                const newProductEntry: DataProduct = {
-                    ...data,
-                    stockByLocation: formData.stockByLocation,
-                    status: formData.status || 'In Stock',
-                    hasSerialNumber: formData.hasSerialNumber,
-                    hasIMEI: formData.hasIMEI,
-                    imageUrl: formData.imageUrl,
-                    description: formData.description,
-                    attributes: formData.attributes
-                } as DataProduct;
-
-                setProducts(prev => [newProductEntry, ...prev]);
+                setProducts(prev => [newProduct, ...prev]);
                 showToast('Product added successfully', 'success');
 
             } catch (error: any) {
@@ -909,7 +846,7 @@ const App: React.FC = () => {
                 setIsGlobalLoading(false);
             }
         },
-        [showToast]
+        [showToast] //
     );
 
     const confirmUpdateProduct = useCallback(
@@ -1891,11 +1828,13 @@ const App: React.FC = () => {
                 />
 
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-800 p-4 sm:p-6">
-                    <CurrentPageComponent
-                        {...(pageProps[
-                            currentPage
-                        ] || {})}
-                    />
+                    <React.Suspense fallback={<LoadingSpinner />}>
+                        <CurrentPageComponent
+                            {...(pageProps[
+                                currentPage
+                            ] || {})}
+                        />
+                    </React.Suspense>
                 </main>
             </div>
         </div>

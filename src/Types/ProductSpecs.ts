@@ -199,10 +199,12 @@ export const getMostUsedAttributeValues = (products: any[]): Record<string, stri
     const valueCounts: Record<string, Record<string, number>> = {};
 
     products.forEach(p => {
-        p.attributes?.forEach((attr: ProductAttribute) => {
-            const name = attr.name.trim();
-            const value = attr.value.trim();
-            if (!name || !value) return;
+        if (!Array.isArray(p.attributes)) return;
+
+        p.attributes.forEach((attr: ProductAttribute) => {
+            const name = attr.name?.trim();
+            const value = attr.value?.trim();
+            if (!name || !value) return; // Ignore empty values
 
             if (!valueCounts[name]) valueCounts[name] = {};
             valueCounts[name][value] = (valueCounts[name][value] || 0) + 1;

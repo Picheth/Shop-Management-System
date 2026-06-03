@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { DataProduct, StockAction, ProductStatus } from '../../types';
-import { supabase } from '../../utils/supabase';
+import { DataProduct, StockAction, ProductStatus } from '../types';
+import { supabase } from '../utils/supabase';
 
 export const useProductHistory = (
     products: DataProduct[],

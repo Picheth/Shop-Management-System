@@ -5,6 +5,8 @@ export interface ProductType extends BaseEntity {
     name: string;
     description?: string;
     active: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface Category extends BaseEntity {
@@ -13,6 +15,8 @@ export interface Category extends BaseEntity {
     name: string;
     description?: string;
     active: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface SubCategory extends BaseEntity {
@@ -21,6 +25,8 @@ export interface SubCategory extends BaseEntity {
     name: string;
     description?: string;
     active: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface Brand extends BaseEntity {
@@ -28,18 +34,25 @@ export interface Brand extends BaseEntity {
     name: string;
     shortName?: string;
     country?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface Variation extends BaseEntity {
     name: string;
     type: string;
     value: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface ProductSpecs extends BaseEntity {
     label: string;
     value: string;
     unit?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    active?: boolean;
 }
 
 export interface ProductAttributeSet {
@@ -49,6 +62,12 @@ export interface ProductAttributeSet {
     brand?: Brand;
     variations?: Variation[];
     specs?: ProductSpecs[];
+    createdAt?: string;
+    updatedAt?: string;
+    active?: boolean;
+    id?: string;
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
 }
 
 export interface ProductTemplate extends ProductAttributeSet {
@@ -58,6 +77,10 @@ export interface ProductTemplate extends ProductAttributeSet {
     productCodePattern?: string;
     status: string;
     isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
 }
 
 export interface Product extends ProductAttributeSet {
@@ -69,6 +92,16 @@ export interface Product extends ProductAttributeSet {
     isActive?: boolean;
     createdAt?: string;
     updatedAt?: string;
+    stockByLocation: Record<string, number>;
+    serialNumbersByLocation?: Record<string, string[]>;
+    stockQuantityByLocation?: Record<string, number>;
+    stock?: number;
+    history?: StockHistoryItem[];
+    historyByLocation?: Record<string, StockHistoryItem[]>;
+    stockHistory?: StockHistoryItem[];
+    stockHistoryByLocation?: Record<string, StockHistoryItem[]>;
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
 }
 
 export interface ProductVariant extends ProductAttributeSet {
@@ -195,6 +228,15 @@ export interface StockHistoryItem {
     newStock: number;
     branch: string;
     reason?: string;
+    note?: string;
+    createdBy?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    active?: boolean;
+    id?: string;
+    history?: StockHistoryItem[];
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
 }
 
 export interface Branch extends BaseEntity {

@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { ProductVariant as ProductVariantType, MasterAttribute, DataProduct } from '../../types';
 import { generateSku } from '../../Types/ProductSpecs';
-import BulkGenerator from './BulkGenerator';
-import VariantTable from '../inventory/VariantTable';
+import BulkGenerator from '../inventory/BulkGenerator';
+import VariantTable from './VariantTable';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 

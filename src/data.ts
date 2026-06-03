@@ -3,10 +3,6 @@ import {
     Page,
     Branch,
     DataProduct,
-    Category,
-    SubCategory,
-    Brand,
-    ProductType,
     Supplier,
     Staff,
     ExpenseCategory,
@@ -14,8 +10,6 @@ import {
     Sale,
     StockTransfer,
     Repair,
-    LineItem,
-    StockHistoryItem,
     NavSection,
 } from './types';
 import { 

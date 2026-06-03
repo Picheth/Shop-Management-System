@@ -18,7 +18,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 
 import { supabase } from '../../utils/supabase';
 
-import { useProductHistory } from '../inventory/useProductHistory';
+import { useProductHistory } from '../../hooks/useProductHistory';
 
 import { mockSales } from '../../data';
 

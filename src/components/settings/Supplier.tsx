@@ -3,8 +3,8 @@ import Placeholder from '../ui/Placeholder';
 import SettingsForm from '../ui/SettingsForm';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { useDuplicateValidation } from './useDuplicateValidation';
-import { useFormValidation } from './useFormValidation';
+import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface SupplierItem {
     id: string;

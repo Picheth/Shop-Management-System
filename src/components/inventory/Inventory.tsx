@@ -3,7 +3,7 @@ import { DataProduct, Branch } from '../../types';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
 import StockAdjustmentForm from './StockAdjustmentForm';
-import { useProductHistory } from './useProductHistory';
+import { useProductHistory } from '../../hooks/useProductHistory';
 
 interface InventoryProps {
     products: DataProduct[];

@@ -398,6 +398,10 @@ export interface StockHistory {
     note?: string;
 
     createdBy?: string;
+    updatedBy?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    history?: StockHistoryItem[];
 }
 
 /* =========================================================
@@ -456,6 +460,7 @@ export interface Purchase extends BaseEntity {
     status?: PurchaseStatus;
     history?: StockHistoryItem[];
     note?: string;
+    signatureUrl?: string;
 }
 
 /* =========================================================
@@ -797,6 +802,8 @@ export interface Repair {
     note?: string;
     status: RepairStatus;
     history?: StockHistoryItem[];
+    itemsPerPage?: number;
+    itemsPerPageOptions?: number[];
     createdAt?: string;
     updatedAt?: string;
     checkStockAvailability?: boolean;

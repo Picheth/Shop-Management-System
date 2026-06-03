@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
     DataProduct,
     Branch,
@@ -8,7 +9,9 @@ import {
     Brand as BrandInterface,
     MasterAttribute,
 } from '../../types';
+
 import { useProducts } from '../../hooks/useProducts';
+
 import ProductTable from './ProductTable';
 import ProductFilters from './ProductFilters';
 import ProductToolbar from './ProductToolbar';
@@ -16,23 +19,26 @@ import ProductPagination from './ProductPagination';
 
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
-import ConfirmationModal from '../ui/ConfirmationModal';
 import ProductDetail from './ProductDetail';
 import AddProductForm from './AddProductForm';
 
 interface ProductProps {
     products: DataProduct[];
     branches: Branch[];
+
     allCategories: CategoryInterface[];
     allSubCategories: SubCategoryInterface[];
     allBrands: BrandInterface[];
     allProductTypes: ProductTypeInterface[];
+
     onAdd: (product: any) => Promise<void>;
     onAddBrand: (brand: any) => Promise<BrandInterface>;
     onAddCategory: (category: any) => Promise<CategoryInterface>;
+
     onUpdate: (product: DataProduct) => Promise<void>;
     onDeleteVariant: (id: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
+
     processors: MasterAttribute[];
     rams: MasterAttribute[];
     storages: MasterAttribute[];
@@ -42,33 +48,80 @@ interface ProductProps {
 }
 
 const Product: React.FC<ProductProps> = ({
-    products, branches, allCategories, allSubCategories, allBrands, allProductTypes,
-    onAdd, onAddBrand, onAddCategory, onUpdate, onDeleteVariant, onDelete,
-    processors, rams, storages, colors, regions, conditions
+    products,
+    branches,
+    allCategories,
+    allSubCategories,
+    allBrands,
+    allProductTypes,
+
+    onAdd,
+    onAddBrand,
+    onAddCategory,
+
+    onUpdate,
+    onDeleteVariant,
+    onDelete,
+
+    processors,
+    rams,
+    storages,
+    colors,
+    regions,
+    conditions,
 }) => {
+
     const {
-        searchTerm, setSearchTerm,
-        categoryFilter, setCategoryFilter,
-        statusFilter, setStatusFilter,
-        currentPage, setCurrentPage,
-        sortConfig, requestSort,
-        paginatedItems, totalPages, totalCount
+        searchTerm,
+        setSearchTerm,
+
+        categoryFilter,
+        setCategoryFilter,
+
+        statusFilter,
+        setStatusFilter,
+
+        currentPage,
+        setCurrentPage,
+
+        sortConfig,
+        requestSort,
+
+        paginatedItems,
+        totalPages,
+        totalCount,
     } = useProducts({
-        products, allCategories, allProductTypes,
-        processors, rams, storages, colors, regions
+        products,
+        allCategories,
+        allProductTypes,
+        processors,
+        rams,
+        storages,
+        colors,
+        regions,
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<DataProduct | null>(null);
-    const [productToDelete, setProductToDelete] = useState<DataProduct | null>(null);
-    const [selectedProduct, setSelectedProduct] = useState<DataProduct | null>(null);
+
+    const [editingProduct, setEditingProduct] =
+        useState<DataProduct | null>(null);
+
+    const [productToDelete, setProductToDelete] =
+        useState<DataProduct | null>(null);
+
+    const [selectedProduct, setSelectedProduct] =
+        useState<DataProduct | null>(null);
 
     const handleFormSave = async (formData: any) => {
         if (editingProduct) {
-            await onUpdate({ ...editingProduct, ...formData });
+            await onUpdate({
+                ...editingProduct,
+                ...formData,
+            });
         } else {
             await onAdd(formData);
         }
+
         setEditingProduct(null);
         setIsModalOpen(false);
     };
@@ -99,12 +152,13 @@ const Product: React.FC<ProductProps> = ({
 
     return (
         <Placeholder title="Product Catalog">
-            <ProductToolbar 
-                onAddProduct={() => setIsModalOpen(true)} 
-                totalCount={totalCount} 
+
+            <ProductToolbar
+                onAddProduct={() => setIsModalOpen(true)}
+                totalCount={totalCount}
             />
-            
-            <ProductFilters 
+
+            <ProductFilters
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 categoryFilter={categoryFilter}
@@ -114,46 +168,76 @@ const Product: React.FC<ProductProps> = ({
                 categories={allCategories}
             />
 
-            <ProductTable 
+            <ProductTable
                 products={paginatedItems}
                 sortConfig={sortConfig}
                 requestSort={requestSort}
+
                 allProductTypes={allProductTypes}
                 allCategories={allCategories}
                 allBrands={allBrands}
+
                 processors={processors}
                 rams={rams}
                 storages={storages}
                 colors={colors}
                 regions={regions}
+
                 onView={setSelectedProduct}
-                onEdit={(p) => { setEditingProduct(p); setIsModalOpen(true); }}
+
+                onEdit={(p) => {
+                    setEditingProduct(p);
+                    setIsModalOpen(true);
+                }}
+
                 onDeleteVariant={onDeleteVariant}
                 onDeleteProduct={setProductToDelete}
             />
 
-            <ProductPagination 
+            <ProductPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                totalCount={totalCount}
-                itemsPerPage={10}
-            />
+                totalCount={totalCount} itemsPerPage={0}            />
 
             {isModalOpen && (
-                <Modal title={editingProduct ? "Edit Product" : "Add Product"} onClose={() => { setIsModalOpen(false); setEditingProduct(null); }}>
+                <Modal
+                    title={editingProduct ? 'Edit Product' : 'Add Product'}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingProduct(null);
+                    }}
+                >
                     <AddProductForm
                         initialData={editingProduct || undefined}
                         onSubmit={handleFormSave}
-                        onCancel={() => { setIsModalOpen(false); setEditingProduct(null); }}
+                        onCancel={() => {
+                            setIsModalOpen(false);
+                            setEditingProduct(null);
+                        }}
+
                         products={products}
                         branches={branches}
-                        processors={processors} rams={rams} storages={storages} colors={colors} regions={regions} conditions={conditions}
-                        existingCategories={allCategories} existingSubCategories={allSubCategories} existingBrands={allBrands}
-                        onQuickAddBrand={onAddBrand} onQuickAddCategory={onAddCategory} existingProductTypes={allProductTypes}
+
+                        processors={processors}
+                        rams={rams}
+                        storages={storages}
+                        colors={colors}
+                        regions={regions}
+                        conditions={conditions}
+
+                        existingCategories={allCategories}
+                        existingSubCategories={allSubCategories}
+                        existingBrands={allBrands}
+
+                        onQuickAddBrand={onAddBrand}
+                        onQuickAddCategory={onAddCategory}
+
+                        existingProductTypes={allProductTypes}
                     />
                 </Modal>
             )}
+
         </Placeholder>
     );
 };
