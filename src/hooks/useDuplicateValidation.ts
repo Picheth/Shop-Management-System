@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabase/client';
 
 /**
  * A reusable hook to check for duplicate field values in the database.

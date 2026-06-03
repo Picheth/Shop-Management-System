@@ -28,7 +28,7 @@ import {
 
 import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
 import { findDuplicateAttributeIndices } from './Types/ProductSpecs'; //
-import { supabase } from './utils/supabase';
+import { supabase } from './supabase/client';
 import ConfirmationModal from './components/ui/ConfirmationModal';
 
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -863,38 +863,7 @@ const App: React.FC = () => {
                     return;
                 }
 
-                // Use the isActive field directly instead of deriving it from stock status
-                const isActive = updatedProduct.isActive ?? true;
-
-                const { data, error } = await supabase.rpc('update_product_spec_and_variant', {
-                    p_variant_id: updatedProduct.id,
-                    p_spec_id: updatedProduct.productSpecId,
-                    p_name: updatedProduct.name,
-                    p_brand_id: updatedProduct.brandId,
-                    p_type_id: updatedProduct.typeId,
-                    p_category_id: updatedProduct.categoryId,
-                    p_sub_category_id: updatedProduct.subCategoryId || null,
-                    p_model: updatedProduct.model || null,
-                    p_display_size: updatedProduct.displaySize || null,
-                    p_sku: updatedProduct.sku,
-                    p_stock_quantity: Number(updatedProduct.stockQuantity), // Assuming stockQuantity is the source of truth
-                    p_cost_price: Number(updatedProduct.costPrice),
-                    p_sale_price: Number(updatedProduct.salePrice),
-                    p_processor_id: updatedProduct.processorId || null,
-                    p_ram_id: updatedProduct.ramId || null,
-                    p_storage_id: updatedProduct.storageId || null,
-                    p_color_id: updatedProduct.colorId || null,
-                    p_region_id: updatedProduct.regionId || null,
-                    p_condition_id: updatedProduct.conditionId || null,
-                    p_is_active: isActive,
-                    p_description: updatedProduct.description || null,
-                    p_has_serial_number: !!updatedProduct.hasSerialNumber,
-                    p_has_imei: !!updatedProduct.hasIMEI,
-                    p_image_url: updatedProduct.imageUrl || null,
-                    p_attributes: updatedProduct.attributes || []
-                });
-
-                if (error) throw error;
+                const data = await inventoryService.updateProduct(updatedProduct);
 
                 // Merge the updated data from RPC with existing client-side fields
                 const mergedProduct: DataProduct = {
@@ -903,7 +872,7 @@ const App: React.FC = () => {
                     // Ensure stockQuantity is correctly set from the RPC response
                     stockQuantity: data.stockQuantity,
                     // Re-derive status if needed, or ensure RPC returns a compatible status
-                    status: isActive ? (data.stockQuantity > 0 ? 'In Stock' : 'Out of Stock') : 'Out of Stock',
+                    status: (updatedProduct.isActive ?? true) ? (data.stockQuantity > 0 ? 'In Stock' : 'Out of Stock') : 'Out of Stock',
                 } as DataProduct;
 
                 setProducts(prev =>
@@ -930,11 +899,7 @@ const App: React.FC = () => {
     const handleDeleteProduct = useCallback(async (specId: string) => {
         setIsGlobalLoading(true);
         try {
-            const { error } = await supabase.rpc('delete_product_spec_cascade', {
-                p_spec_id: specId
-            });
-
-            if (error) throw error;
+            await inventoryService.deleteProductSpec(specId);
 
             // Filter out all variants that belong to this specification
             setProducts(prev => prev.filter(item => item.productSpecId !== specId));
@@ -950,11 +915,7 @@ const App: React.FC = () => {
     const handleDeleteVariant = useCallback(async (variantId: string) => {
         setIsGlobalLoading(true);
         try {
-            const { error } = await supabase.rpc('delete_specific_variant', {
-                p_variant_id: variantId
-            });
-
-            if (error) throw error;
+            await inventoryService.deleteVariant(variantId);
 
             setProducts(prev => prev.filter(item => item.id !== variantId));
             showToast('Variant deleted successfully', 'success');
@@ -1494,10 +1455,7 @@ const App: React.FC = () => {
     const handleDeleteVariantGlobal = useCallback(async (id: string) => {
         setIsGlobalLoading(true);
         try {
-            const { error } = await supabase.rpc('delete_specific_variant', {
-                p_variant_id: id
-            });
-            if (error) throw error;
+            await inventoryService.deleteVariant(id);
             setVariants(prev => prev.filter(v => v.id !== id));
             showToast('Variant deleted successfully', 'success');
         } catch (error: any) {

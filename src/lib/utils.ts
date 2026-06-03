@@ -27,3 +27,16 @@ export const getStorageItem = <T>(key: string): T | null => {
 export const getTimestamp = (): string => {
     return new Date().toISOString();
 };
+
+/**
+ * Sanitizes a string for CSV export to prevent injection attacks.
+ * Prefixes values starting with '=', '+', '-', or '@' with a single quote.
+ */
+export const sanitizeCSV = (value: string | number | boolean | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    const strValue = String(value);
+    if (strValue.startsWith('=') || strValue.startsWith('+') || strValue.startsWith('-') || strValue.startsWith('@')) {
+        return `'${strValue}`;
+    }
+    return strValue;
+};
