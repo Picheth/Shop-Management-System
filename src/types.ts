@@ -85,7 +85,7 @@ export interface SidebarProps {
     children?: React.ReactNode;
     pendingTransfersCount?: number;
     pendingRepairsCount?: number;
-    userRole?: string | null;
+        userRole?: string;
     className?: string;
     style?: React.CSSProperties;
     ariaLabel?: string;

@@ -1874,11 +1874,10 @@ const App: React.FC = () => {
                 }}
                 pendingTransfersCount={pendingTransfersCount} // Pass to Sidebar
                 pendingRepairsCount={pendingRepairsCount}
-                userRole={userRole} // Pass userRole to Sidebar
                 isOpen={isSidebarOpen}
                 setIsOpen={setSidebarOpen}
             />
-            
+
             <div className="flex flex-1 flex-col overflow-hidden">
                 <Header
                     currentPage={

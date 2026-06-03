@@ -10,6 +10,7 @@ interface SidebarProps {
     setIsOpen: (isOpen: boolean) => void;
     pendingTransfersCount?: number;
     pendingRepairsCount?: number;
+    userRole?: string | null;
     handleNavigation: (page: Page) => void;
     children?: React.ReactNode;
     className?: string;
@@ -35,7 +36,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, isOpen, setIsOpen, pendingTransfersCount = 0, pendingRepairsCount = 0, userRole }) => {
-    
+
     const handleNavigation = (page: Page) => {
         setCurrentPage(page);
         if (window.innerWidth < 768) { // md breakpoint
