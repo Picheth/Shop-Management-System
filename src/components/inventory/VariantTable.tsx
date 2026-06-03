@@ -46,7 +46,7 @@ const VariantTable: React.FC<VariantTableProps> = ({
     const initialVisibleColumns = ['sku', 'productName', 'color', 'storage', 'price', 'stock'];
     const [columnConfigs, setColumnConfigs] = useState(AVAILABLE_COLUMNS);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-    const [visibleColumns, setVisibleColumns] = useState<string[]>(['sku', 'productName', 'color', 'storage', 'price', 'stock']);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>(initialVisibleColumns);
     const [showColumnSelector, setShowColumnSelector] = useState(false);
     const columnSelectorRef = useRef<HTMLDivElement>(null);
 

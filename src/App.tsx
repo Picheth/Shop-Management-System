@@ -1692,22 +1692,22 @@ const App: React.FC = () => {
                 setCurrentPage,
         },
     }), [
-        productTypes, categories, subCategories, brands, variants, products, 
-        processors, rams, storages, colors, regions, conditions,
-        branches, stockTransfers, initialSearchTerm, pendingTransfersCount,
-        companyLogoUrl, companyName, address, showToast, 
-        handleSale, handleStockTransfer, handleCancelStockTransfer, 
-        handleConfirmStockTransfer, handleAddProduct, handleUpdateProduct,
-        handleDeleteProduct, handleDeleteVariant, handleAddVariant,
-        handleBulkAddVariants, handleUpdateVariant, handleDeleteVariantGlobal,
+        repairs, products, setProducts, branches, fetchPendingRepairsCount,
+        handleAddRepair, handleUpdateRepair, handleDeleteRepair, setCurrentPage,
+        productTypes, categories, subCategories, brands, variants, 
+        handleAddVariant, handleBulkAddVariants, handleUpdateVariant, handleDeleteVariantGlobal,
         handleUpdateProductType, handleDeleteProductType, handleAddCategory,
         handleUpdateCategory, handleDeleteCategory, handleAddSubCategory,
         handleUpdateSubCategory, handleDeleteSubCategory, handleAddBrand,
-        handleUpdateBrand, handleDeleteBrand, handleUpdateRepair, handleDeleteRepair, refreshVariants, handleUpdateLogo,
-        handleUpdateCompanyInfo, handleUpdateSignature,
-        errorLogs, handleDeleteLog, fetchErrorLogs, confirmClearAllLogs,
-        signatureUrl,
-        repairs, handleAddRepair, handleUpdateBrand, handleDeleteBrand, setRepairs
+        handleUpdateBrand, handleDeleteBrand,
+        processors, rams, storages, colors, regions, conditions,
+        setIsGlobalLoading, showToast, refreshVariants,
+        handleDeleteVariant, handleUpdateProduct, handleAddProduct,
+        stockTransfers, handleSale, handleStockTransfer, handleCancelStockTransfer,
+        handleConfirmStockTransfer, companyLogoUrl, companyName, address,
+        initialSearchTerm, pendingTransfersCount, signatureUrl,
+        handleUpdateLogo, handleUpdateCompanyInfo, handleUpdateSignature,
+        errorLogs, handleDeleteLog, fetchErrorLogs, confirmClearAllLogs
     ]);
 
     return (

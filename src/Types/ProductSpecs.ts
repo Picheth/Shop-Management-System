@@ -2,6 +2,9 @@ export interface ProductAttribute {
     name: string;
     value: string;
     description?: string;
+    id?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // Auto-generated from productSpecs.json
@@ -42,16 +45,16 @@ createdAt?: string;
 updatedAt?: string;
 }
 
-import productData from './productSpecs.json';
+
 
 const rawTemplates: any[] = [
-  ...((productData as any).MobilePhoneModels ?? []),
-  ...((productData as any).TabletModels ?? []),
-  ...((productData as any).LaptopModels ?? []),
-  ...((productData as any).WatchModels ?? []),
-  ...((productData as any).AccessoryModels ?? []),
-  ...((productData as any).AudioModels ?? []),
-  ...((productData as any).ComputingModels ?? [])
+  ...(([] as any).MobilePhoneModels ?? []),
+  ...(([] as any).TabletModels ?? []),
+  ...(([] as any).LaptopModels ?? []),
+  ...(([] as any).WatchModels ?? []),
+  ...(([] as any).AccessoryModels ?? []),
+  ...(([] as any).AudioModels ?? []),
+  ...(([] as any).ComputingModels ?? [])
 ];
 
 export const productTemplates: ProductTemplate[] = rawTemplates.map((spec) => ({

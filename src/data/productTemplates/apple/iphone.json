@@ -1,4 +1,5 @@
-{
+[
+  {
   "templateId": "APPLE_IPHONE_6",
   "brand": "Apple",
 
@@ -111,4 +112,313 @@
 
   "createdAt": "2026-06-03T00:00:00.000Z",
   "updatedAt": "2026-06-03T00:00:00.000Z"
+},
+
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+  "model": "iPhone 6 Plus",
+  "shortModel": "IP6P",
+  "variants": {
+  "storages": ["16GB", "32GB", "64GB", "128GB"],
+  "storageCodes": {
+    "16GB": "16",
+    "32GB": "32",
+    "64GB": "64",
+    "128GB": "128"
+  },
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }
+},
+  "skuPattern/ProductNumberPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE",
+  "createdAt": "2024-06-01T00:00:00Z",
+  "updatedAt": "2024-06-01T00:00:00Z"
+},
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone 7",
+  "shortModel": "IP7",
+
+  "variants": {
+    "storages": ["32GB", "128GB", "256GB"],
+    "storageCodes": {
+      "32GB": "32",
+      "128GB": "128",
+      "256GB": "256" }
+  },
+
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD" },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  },
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
+},
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone 7 Plus",
+  "shortModel": "IP7P",
+"variants": {
+  "storages": ["32GB", "128GB", "256GB"],
+  "storageCodes": {
+    "32GB": "32",
+    "128GB": "128",
+    "256GB": "256"
+  },
+
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }
+},
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
+},
+
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone 8",
+  "shortModel": "IP8",
+"variants": {
+  "storages": ["64GB", "256GB", "512GB"],
+  "storageCodes": {
+    "64GB": "64",
+    "256GB": "256",
+    "512GB": "512"
+  },
+
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }},
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
+},
+
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone 8 Plus",
+  "shortModel": "IP8P",
+"variants": {
+  "storages": ["64GB", "256GB", "512GB"],
+  "storageCodes": {
+    "64GB": "64",
+    "256GB": "256",
+    "512GB": "512"
+  },
+
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }},
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
+},
+
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone X",
+  "shortModel": "IPX",
+"variants": {
+  "storages": ["64GB", "256GB"],
+  "storageCodes": {
+    "64GB": "64",
+    "256GB": "256"
+  },
+
+  "colors": ["Space Gray", "Silver"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }},
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
+},
+
+{
+  "brand": "Apple",
+  "type": "Goods",
+  "category": "Phone",
+  "subCategory": "Smartphone",
+
+  "model": "iPhone XR",
+  "shortModel": "IPXR",
+"variants": {
+  "storages": ["64GB", "128GB", "256GB"],
+  "storageCodes": {
+    "64GB": "64",
+    "128GB": "128",
+    "256GB": "256"
+  },
+
+  "colors": ["Space Gray", "Silver", "Gold"],
+  "colorCodes": {
+    "Space Gray": "SPG",
+    "Silver": "SLV",
+    "Gold": "GLD"
+  },
+  "regions": ["USA", "Hong Kong", "Australia", "Singapore", "China"],
+  "regionCodes": {
+    "USA": "LL",
+    "Hong Kong": "ZA",
+    "Australia": "XA",
+    "Singapore": "ZP",
+    "China": "CH"
+  },
+  "conditions": ["NEW", "USED_A", "USED_B", "APPLE_PARTS", "Refurbished", "For_Parts"],
+  "conditionCodes": {
+    "NEW": "N",
+    "USED_A": "UA",
+    "USED_B": "UB",
+    "APPLE_PARTS": "AP",
+    "Refurbished": "R",
+    "For_Parts": "FP"
+  }},
+  "skuPattern": "{brand}-{shortModel}-{storage}-{color}-{condition}",
+  "productCodePattern?": "",
+  "status": "ACTIVE"
 }
+]
+

@@ -1,6 +1,5 @@
 import React from 'react';
 import { ProductAttribute } from './Types/ProductSpecs';
-export * from './utils/ProductType'; // Corrected import path
 export type { ProductAttribute } from './Types/ProductSpecs';
  
 /* =========================================================

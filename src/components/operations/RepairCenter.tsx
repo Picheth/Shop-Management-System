@@ -218,12 +218,16 @@ const RepairCenter: React.FC<RepairCenterProps> =
             }));
         };
 const handleAddPart = () => {
+    const firstProduct = products[0];
+    if (!firstProduct) return;
     setRepairItems(prev => [
         ...prev,
         {
-            productId: '',
+            productId: firstProduct.id,
+            productName: firstProduct.name,
+            sku: firstProduct.sku,
             quantity: 1,
-            price: 0,
+            price: firstProduct.salePrice || 0,
         } as LineItem,
     ]);
 };
@@ -234,14 +238,21 @@ const handlePartChange = (
     value: string | number
 ) => {
     setRepairItems(prev =>
-        prev.map((item, i) =>
-            i === index
-                ? {
-                      ...item,
-                      [field]: value,
-                  }
-                : item
-        )
+        prev.map((item, i) => {
+            if (i !== index) return item;
+
+            const updated = { ...item, [field]: value };
+
+            if (field === 'productId') {
+                const product = products.find(p => p.id === value);
+                if (product) {
+                    updated.productName = product.name;
+                    updated.sku = product.sku;
+                    updated.price = product.salePrice || 0;
+                }
+            }
+            return updated;
+        })
     );
 };
 
