@@ -10,12 +10,12 @@ import FormSelect from '../ui/FormSelect';
 import InlineFormInput from '../ui/InlineFormInput';
 import InlineFormSelect from '../ui/InlineFormSelect';
 import { useFormValidation } from '../../hooks/useFormValidation';
-import { DataProduct, Branch, StockTransfer, Page, RepairStatus, Repair as RepairType, LineItem } from '../../types';
+import { Product, Branch, StockTransfer, Page, RepairStatus, Repair as RepairType, LineItem } from '../../types';
 import { checkStockAvailability } from '../../utils/stockUtils';
 interface RepairCenterProps {
     repairs: RepairType[];
-    products: DataProduct[];
-    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    products: Product[];
+    setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
     branches: Branch[];
     onNavigate: (page: Page) => void;
     onRefreshCount?: () => void;
@@ -43,7 +43,7 @@ const RepairCenter: React.FC<RepairCenterProps> =
         >('All');
 
         const [
-            editingId,
+            editing_id,
             setEditingId,
         ] = useState<
             string | null
@@ -61,37 +61,37 @@ const RepairCenter: React.FC<RepairCenterProps> =
                 customer: '',
                 phone: '',
                 device: '',
-                serialNumber: '',
+                serial_number: '',
                 issue: '',
                 technician: '',
-                branchId: '',
-                entryDate: '',
-                laborRate: '',
-                hoursWorked: '',
-                commissionType: 'Percentage' as 'Percentage' | 'Fixed',
-                commissionRate: '',
-                isManualCost: false,
-                estimatedCost: '',
+                branch_id: branches[0]?.id || '',
+                entry_date: '',
+                labor_rate: '',
+                hours_worked: '',
+                commission_type: 'Percentage' as 'Percentage' | 'Fixed',
+                commission_rate: '',
+                is_manual_cost: false,
+                estimated_cost: '',
                 status:
                     'Pending' as RepairStatus,
             });
 
         const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-            required: ['customer', 'phone', 'device', 'branchId', 'entryDate', 'estimatedCost', 'issue'],
+            required: ['customer', 'phone', 'device', 'branch_id', 'entry_date', 'estimated_cost', 'issue'],
             phone: ['phone'],
-            minMax: { estimatedCost: { min: 0 } },
+            minMax: { estimated_cost: { min: 0 } },
             labels: {
                 customer: 'Customer Name',
                 phone: 'Phone Number',
                 device: 'Device',
-                branchId: 'Branch',
-                entryDate: 'Entry Date',
-                estimatedCost: 'Estimated Cost',
+                branch_id: 'Branch',
+                entry_date: 'Entry Date',
+                estimated_cost: 'Estimated Cost',
                 issue: 'Issue Description',
-                laborRate: 'Labor Rate',
-                hoursWorked: 'Hours Worked',
-                commissionType: 'Commission Type',
-                commissionRate: 'Commission Rate'
+                labor_rate: 'Labor Rate',
+                hours_worked: 'Hours Worked',
+                commission_type: 'Commission Type',
+                commission_rate: 'Commission Rate'
             }
         });
 
@@ -100,25 +100,25 @@ const RepairCenter: React.FC<RepairCenterProps> =
         [repairItems]);
 
         const liveTotal = useMemo(() => 
-            (parseFloat(form.estimatedCost) || 0) + partsSubtotal, 
-        [form.estimatedCost, partsSubtotal]);
+            (parseFloat(form.estimated_cost) || 0) + partsSubtotal,
+        [form.estimated_cost, partsSubtotal]);
 
         const liveCommission = useMemo(() => {
-            const val = parseFloat(form.commissionRate) || 0;
-            return form.commissionType === 'Percentage' 
+            const val = parseFloat(form.commission_rate || '0') || 0;
+            return form.commission_type === 'Percentage'
                 ? (liveTotal * (val / 100)).toFixed(2)
                 : val.toFixed(2);
-        }, [liveTotal, form.commissionRate, form.commissionType]);
+        }, [liveTotal, form.commission_rate, form.commission_type]);
 
         // Automatically calculate estimated labor cost
         useEffect(() => {
-            if (!form.isManualCost) {
-                const rate = parseFloat(form.laborRate) || 0;
-                const hours = parseFloat(form.hoursWorked) || 0;
+            if (!form.is_manual_cost) {
+                const rate = parseFloat(form.labor_rate) || 0;
+                const hours = parseFloat(form.hours_worked) || 0;
                 const calculatedLabor = (rate * hours).toFixed(2);
-                setForm(prev => ({ ...prev, estimatedCost: calculatedLabor }));
+                setForm(prev => ({ ...prev, estimatedCost: calculatedLabor })); // estimatedCost is still camelCase in form state
             }
-        }, [form.laborRate, form.hoursWorked, form.isManualCost]);
+        }, [form.labor_rate, form.hours_worked, form.is_manual_cost]);
 
         const filteredRepairs =
             useMemo(() => {
@@ -173,7 +173,7 @@ const RepairCenter: React.FC<RepairCenterProps> =
                                     .includes(
                                         term
                                     ) ||
-                                (item.entryDate || '').toLowerCase()
+                                (item.entry_date || '').toLowerCase()
                                     .includes(
                                         term
                                     )
@@ -223,11 +223,11 @@ const handleAddPart = () => {
     setRepairItems(prev => [
         ...prev,
         {
-            productId: firstProduct.id,
-            productName: firstProduct.name,
+            product_id: firstProduct.id,
+            product_name: firstProduct.name,
             sku: firstProduct.sku,
             quantity: 1,
-            price: firstProduct.salePrice || 0,
+            price: firstProduct.sale_price || 0,
         } as LineItem,
     ]);
 };
@@ -243,12 +243,12 @@ const handlePartChange = (
 
             const updated = { ...item, [field]: value };
 
-            if (field === 'productId') {
+            if (field === 'product_id') {
                 const product = products.find(p => p.id === value);
                 if (product) {
-                    updated.productName = product.name;
+                    updated.product_name = product.name;
                     updated.sku = product.sku;
-                    updated.price = product.salePrice || 0;
+                    updated.price = product.sale_price || 0;
                 }
             }
             return updated;
@@ -271,19 +271,19 @@ const handleRemovePart = (index: number) => {
                     customer: '',
                     phone: '',
                     device: '',
-                    serialNumber:
+                serial_number:
                         '',
                     issue: '',
                     technician: '',
-                    branchId: '',
-                    entryDate:
+                    branch_id: '',
+                    entry_date:
                         '',
-                    laborRate: '',
-                    hoursWorked: '',
-                    commissionType: 'Percentage' as 'Percentage' | 'Fixed',
-                    commissionRate: '',
-                    isManualCost: false,
-                    estimatedCost:
+                    labor_rate: '',
+                    hours_worked: '',
+                    commission_type: 'Percentage' as 'Percentage' | 'Fixed',
+                    commission_rate: '',
+                    is_manual_cost: false,
+                    estimated_cost:
                         '',
                     status: 'Pending' as RepairStatus,
                 });
@@ -300,7 +300,7 @@ const handleRemovePart = (index: number) => {
                 const stockCheck = checkStockAvailability(
     repairItems || [],
     products,
-    form.branchId
+    form.branch_id
 );
                 if (!stockCheck.valid) {
                     alert(stockCheck.error);
@@ -308,32 +308,32 @@ const handleRemovePart = (index: number) => {
                 }
             }
 
-            const repairData = {
+            const repair_data = {
                     customer:
                         form.customer,
                     phone: form.phone,
                     device: form.device,
-                    serialNumber: form.serialNumber,
+                    serial_number: form.serial_number,
                     issue: form.issue,
                     technician: form.technician,
-                    branchId: form.branchId,
-                    entryDate: form.entryDate,
-                    laborRate: Number(form.laborRate),
-                    hoursWorked: Number(form.hoursWorked),
-                    commissionType: form.commissionType,
-                    commissionRate: Number(form.commissionRate),
-                    commissionAmount: Number(liveCommission),
-                    estimatedCost: Number(form.estimatedCost),
+                    branch_id: form.branch_id,
+                    entry_date: form.entry_date,
+                    labor_rate: Number(form.labor_rate),
+                    hours_worked: Number(form.hours_worked),
+                    commission_type: form.commission_type,
+                    commission_rate: Number(form.commission_rate),
+                    commission_amount: Number(liveCommission),
+                    estimated_cost: Number(form.estimated_cost),
                     items: repairItems,
                     status: form.status,
                     // Total = Labor (Estimated Cost) + Sum of Parts
                     total: liveTotal
             };
 
-            if (editingId) {
-                await onUpdateRepair?.({ id: editingId, ...repairData } as RepairType);
+            if (editing_id) {
+                await onUpdateRepair?.({ id: editing_id, ...repair_data } as RepairType);
             } else {
-                await onAddRepair?.(repairData);
+                await onAddRepair?.(repair_data);
             }
 
             resetForm();
@@ -345,17 +345,17 @@ const handleRemovePart = (index: number) => {
                 customer: item.customer,
                 phone: item.phone || '',
                 device: item.device || '',
-                serialNumber: item.serialNumber || '',
+                serial_number: item.serial_number || '',
                 issue: item.issue,
                 technician: item.technician || '',
-                branchId: item.branchId,
-                entryDate: item.entryDate,
-                laborRate: item.laborRate?.toString() || '',
-                hoursWorked: item.hoursWorked?.toString() || '',
-                commissionType: item.commissionType || 'Percentage',
-                commissionRate: item.commissionRate?.toString() || '',
-                isManualCost: false, // Default to auto-calc mode on edit
-                estimatedCost: item.estimatedCost?.toString() || '0',
+                branch_id: item.branch_id,
+                entry_date: item.entry_date,
+                labor_rate: item.labor_rate?.toString() || '',
+                hours_worked: item.hours_worked?.toString() || '',
+                commission_type: item.commission_type || 'Percentage',
+                commission_rate: item.commission_rate?.toString() || '',
+                is_manual_cost: false, // Default to auto-calc mode on edit
+                estimated_cost: item.estimated_cost?.toString() || '0',
                 status: item.status,
             });
             setRepairItems(item.items || []);
@@ -374,7 +374,7 @@ const handleRemovePart = (index: number) => {
                     const stockCheck = checkStockAvailability(
     repair.items || [],
     products,
-    repair.branchId
+    repair.branch_id
 );
                     if (!stockCheck.valid) {
                         alert(stockCheck.error);
@@ -490,12 +490,12 @@ const handleRemovePart = (index: number) => {
 
                 {/* Form */}
             <SettingsForm
-                title={editingId ? 'Edit Repair' : 'Add New Repair'}
-                isEditing={!!editingId}
+                title={editing_id ? 'Edit Repair' : 'Add New Repair'}
+                isEditing={!!editing_id}
                 onCancel={resetForm}
                 onSubmit={handleSubmit}
                 isDisabled={isInvalid}
-                submitLabel={editingId ? 'Update Repair' : 'Add Repair'}
+                submitLabel={editing_id ? 'Update Repair' : 'Add Repair'}
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <FormInput
@@ -543,10 +543,10 @@ const handleRemovePart = (index: number) => {
 
                     <FormInput
                         label="Serial Number"
-                            name="serialNumber"
+                            name="serial_number"
                         placeholder="Device serial or IMEI"
                             value={
-                                form.serialNumber
+                                form.serial_number
                             }
                             onChange={
                                 handleChange
@@ -567,37 +567,37 @@ const handleRemovePart = (index: number) => {
 
                     <FormSelect
                         label="Branch"
-                            name="branchId"
-                        value={form.branchId}
+                            name="branch_id"
+                        value={form.branch_id}
                         onChange={handleChange}
                         placeholder="Select Branch"
                         options={branches.map(b => ({ value: b.id, label: b.name }))}
-                        error={fieldErrors.branchId}
+                        error={fieldErrors.branch_id}
                         required
                     />
 
                     <FormInput
                         label="Entry Date"
-                            type="date"
-                            name="entryDate"
+                        type="date"
+                            name="entry_date"
                             value={
-                                form.entryDate
+                                form.entry_date
                             }
                             onChange={
                                 handleChange
                             }
-                        error={fieldErrors.entryDate}
+                        error={fieldErrors.entry_date}
                         required
                     />
 
                     <FormInput
                         label="Labor Rate ($/hr)"
                         type="number"
-                        name="laborRate"
-                        placeholder="0.00"
-                        value={form.laborRate}
+                        name="labor_rate"
+                        placeholder="0.00" // This is already snake_case
+                        value={form.labor_rate}
                         onChange={handleChange}
-                        error={fieldErrors.laborRate}
+                        error={fieldErrors.labor_rate}
                         min="0"
                         required
                     />
@@ -605,9 +605,9 @@ const handleRemovePart = (index: number) => {
                     <FormInput
                         label="Hours Worked"
                         type="number"
-                        name="hoursWorked"
+                        name="hours_worked"
                         placeholder="0.0"
-                        value={form.hoursWorked}
+                        value={form.hours_worked}
                         onChange={handleChange}
                         error={fieldErrors.hoursWorked}
                         min="0"
@@ -621,7 +621,7 @@ const handleRemovePart = (index: number) => {
                                 <input
                                     type="checkbox"
                                     name="isManualCost"
-                                    checked={form.isManualCost}
+                                    checked={form.is_manual_cost}
                                     onChange={(e) => setForm(prev => ({ ...prev, isManualCost: e.target.checked }))}
                                     className="h-3 w-3 text-sky-600 rounded border-gray-300 focus:ring-sky-500"
                                 />
@@ -631,17 +631,17 @@ const handleRemovePart = (index: number) => {
                         <FormInput
                             label="Estimated Cost"
                             type="number"
-                            name="estimatedCost"
+                            name="estimated_cost"
                             placeholder="0.00"
                             value={
-                                form.estimatedCost
+                                form.estimated_cost
                             }
                             onChange={
                                 handleChange
                             }
-                            error={fieldErrors.estimatedCost}
-                            tooltip={form.isManualCost ? "Manual entry enabled" : "Calculated automatically: Rate × Hours"}
-                            disabled={!form.isManualCost}
+                            error={fieldErrors.estimated_cost}
+                            tooltip={form.is_manual_cost ? "Manual entry enabled" : "Calculated automatically: Rate × Hours"} // This is still camelCase in form state
+                            disabled={!form.is_manual_cost} // This is still camelCase in form state
                             min="0"
                             required
                         />
@@ -651,24 +651,24 @@ const handleRemovePart = (index: number) => {
                         <div className="absolute right-0 top-0 z-10 flex gap-2">
                             <button
                                 type="button"
-                                onClick={() => setForm(prev => ({ ...prev, commissionType: prev.commissionType === 'Percentage' ? 'Fixed' : 'Percentage' }))}
+                                onClick={() => setForm(prev => ({ ...prev, commissionType: prev.commission_type === 'Percentage' ? 'Fixed' : 'Percentage' }))}
                                 className="text-[10px] font-bold text-sky-600 hover:text-sky-700 uppercase tracking-tighter bg-sky-50 dark:bg-sky-900/30 px-1.5 py-0.5 rounded border border-sky-100 dark:border-sky-800"
                             >
-                                {form.commissionType === 'Percentage' ? '% Percent' : '$ Fixed'}
+                                {form.commission_type === 'Percentage' ? '% Percent' : '$ Fixed'}
                             </button>
                         </div>
                          <FormInput
-                            label={form.commissionType === 'Percentage' ? 'Commission (%)' : 'Fixed Commission ($)'}
+                            label={form.commission_type === 'Percentage' ? 'Commission (%)' : 'Fixed Commission ($)'}
                             type="number"
                             name="commissionRate"
                             placeholder="0"
-                            value={form.commissionRate}
+                            value={form.commission_rate}
                             onChange={handleChange}
                             error={fieldErrors.commissionRate}
                             min="0"
-                            max={form.commissionType === 'Percentage' ? "100" : undefined}
+                            max={form.commission_type === 'Percentage' ? "100" : undefined} // This is still camelCase in form state
                         />
-                        {parseFloat(form.commissionRate) > 0 && form.commissionType === 'Percentage' && (
+                        {parseFloat(form.commission_rate) > 0 && form.commission_type === 'Percentage' && (
                             <div className="absolute right-0 top-0 pt-1">
                                 <span className="text-[10px] font-bold text-green-600 uppercase tabular-nums">Payout: ${liveCommission}</span>
                             </div>
@@ -731,8 +731,8 @@ const handleRemovePart = (index: number) => {
                                 <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded-md border border-gray-100 dark:border-gray-700 shadow-sm">
                                     <div className="col-span-6">
                                         <InlineFormSelect 
-                                            value={item.productId}
-                                            onChange={(e) => handlePartChange(index, 'productId', e.target.value)}
+                                            value={item.product_id}
+                                            onChange={(e) => handlePartChange(index, 'product_id', e.target.value)}
                                             options={products.map(p => ({ value: p.id, label: p.name }))}
                                         />
                                     </div>
@@ -828,7 +828,7 @@ const handleRemovePart = (index: number) => {
 
                                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                                     {
-                                                        item.entryDate
+                                                        item.entry_date
                                                     }
                                                 </div>
                                             </td>
@@ -1070,7 +1070,7 @@ const handleRemovePart = (index: number) => {
 
                                     <p className="font-medium text-gray-900 dark:text-white">
                                         {
-                                            selectedRepair.serialNumber
+                                            selectedRepair.serial_number
                                         }
                                     </p>
                                 </div>
@@ -1094,7 +1094,7 @@ const handleRemovePart = (index: number) => {
 
                                     <p className="font-medium text-gray-900 dark:text-white">
                                         {
-                                            branches.find(b => b.id === selectedRepair.branchId)?.name || '-'
+                                            branches.find(b => b.id === selectedRepair.branch_id)?.name || '-'
                                         }
                                     </p>
                                 </div>
@@ -1104,7 +1104,7 @@ const handleRemovePart = (index: number) => {
                                         Labor Rate
                                     </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
-                                        ${selectedRepair.laborRate?.toFixed(2) || '0.00'}/hr
+                                        ${selectedRepair.labor_rate?.toFixed(2) || '0.00'}/hr
                                     </p>
                                 </div>
 
@@ -1113,7 +1113,7 @@ const handleRemovePart = (index: number) => {
                                         Hours Worked
                                     </p>
                                     <p className="font-medium text-gray-900 dark:text-white">
-                                        {selectedRepair.hoursWorked || '0'} hrs
+                                        {selectedRepair.hours_worked || '0'} hrs
                                     </p>
                                 </div>
 
@@ -1125,7 +1125,7 @@ const handleRemovePart = (index: number) => {
 
                                     <p className="font-semibold text-green-600">
                                         $
-                                        {Number(selectedRepair.estimatedCost || 0).toFixed(2)
+                                        {Number(selectedRepair.estimated_cost || 0).toFixed(2)
                                         }
                                     </p>
                                 </div>
@@ -1135,9 +1135,9 @@ const handleRemovePart = (index: number) => {
                                         Technician Commission
                                     </p>
                                     <p className="font-bold text-green-600">
-                                        ${selectedRepair.commissionAmount?.toFixed(2) || '0.00'} 
+                                        ${selectedRepair.commission_amount?.toFixed(2) || '0.00'} 
                                         <span className="text-[10px] font-normal text-gray-400 ml-1">
-                                            ({selectedRepair.commissionType === 'Fixed' ? 'Fixed Fee' : `${selectedRepair.commissionRate || 0}%`})
+                                            ({selectedRepair.commission_type === 'Fixed' ? 'Fixed Fee' : `${selectedRepair.commission_rate || 0}%`})
                                         </span>
                                     </p>
                                 </div>
@@ -1149,7 +1149,7 @@ const handleRemovePart = (index: number) => {
 
                                     <p className="font-medium text-gray-900 dark:text-white">
                                         {
-                                            selectedRepair.entryDate
+                                            selectedRepair.entry_date
                                         }
                                     </p>
                                 </div>

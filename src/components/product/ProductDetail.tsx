@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import {
-    DataProduct,
+    Product,
     Branch,
     ProductType as ProductTypeInterface,
     Category as CategoryInterface,
@@ -20,7 +20,7 @@ import {
 } from '../ui/Icons';
 
 interface ProductDetailProps {
-    product: DataProduct;
+    product: Product;
 
     branches: Branch[];
 
@@ -81,13 +81,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     const totalStock = useMemo(() => {
 
         return Object.values(
-            product.stockByLocation || {}
+            product.stock_by_location || {}
         ).reduce(
             (sum, qty) => sum + qty,
             0
         );
 
-    }, [product.stockByLocation]);
+    }, [product.stock_by_location]);
 
     const computedStatus = useMemo(() => {
 
@@ -314,27 +314,27 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                             <DetailItem
                                 label="Type"
-                                value={getTypeName(product.typeId)}
+                                value={getTypeName(product.type_id)}
                             />
 
                             <DetailItem
                                 label="Category"
-                                value={getCategoryName(product.categoryId)}
+                                value={getCategoryName(product.category_id)}
                             />
 
-                            {product.subCategoryId && (
+                            {product.sub_category_id && (
 
                                 <DetailItem
                                     label="Sub-Category"
-                                    value={getSubCategoryName(product.subCategoryId)}
+                                    value={getSubCategoryName(product.sub_category_id)}
                                 />
                             )}
 
-                            {product.brandId && (
+                            {product.brand_id && (
 
                                 <DetailItem
                                     label="Brand"
-                                    value={getBrandName(product.brandId)}
+                                    value={getBrandName(product.brand_id)}
                                 />
                             )}
 
@@ -342,7 +342,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                                 <DetailItem
                                     label="Model"
-                                    value={product.model}
+                                    value={product.model} // This is already snake_case
                                 />
                             )}
 
@@ -360,12 +360,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                                 product.ram ||
                                 product.size ||
                                 product.model ||
-                                product.colorId ||
-                                product.storageId ||
-                                product.ramId ||
-                                product.processorId ||
-                                product.regionId ||
-                                product.conditionId
+                                product.color_id ||
+                                product.storage_id ||
+                                product.ram_id ||
+                                product.processor_id ||
+                                product.region_id ||
+                                product.condition_id
                             ) && (
 
     <div className="mt-6">
@@ -387,35 +387,35 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                 </div>
             )}
 
-            {(product.color || product.colorId) && (
+            {(product.color || product.color_id) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Color
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.color || getColorName(product.colorId)}
+                        {product.color || getColorName(product.color_id)}
                     </p>
                 </div>
             )}
 
-            {(product.storage || product.storageId) && (
+            {(product.storage || product.storage_id) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Storage
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.storage || getStorageName(product.storageId)}
+                        {product.storage || getStorageName(product.storage_id)}
                     </p>
                 </div>
             )}
 
-            {(product.ram || product.ramId) && (
+            {(product.ram || product.ram_id) && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         RAM
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {product.ram || getRamName(product.ramId)}
+                        {product.ram || getRamName(product.ram_id)}
                     </p>
                 </div>
             )}
@@ -431,35 +431,35 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                 </div>
             )}
 
-            {product.processorId && (
+            {product.processor_id && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Processor
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {getProcessorName(product.processorId)}
+                        {getProcessorName(product.processor_id)}
                     </p>
                 </div>
             )}
 
-            {product.regionId && (
+            {product.region_id && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Region
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {getRegionName(product.regionId)}
+                        {getRegionName(product.region_id)}
                     </p>
                 </div>
             )}
 
-            {product.conditionId && (
+            {product.condition_id && (
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         Condition
                     </p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {getConditionName(product.conditionId)}
+                        {getConditionName(product.condition_id)}
                     </p>
                 </div>
             )}
@@ -499,19 +499,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                             <DetailItem
                                 label="Sale Price"
-                                value={`$${product.salePrice.toFixed(2)}`}
+                                value={`$${product.sale_price.toFixed(2)}`}
                             />
 
                             <DetailItem
                                 label="Cost Price"
-                                value={`$${product.costPrice.toFixed(2)}`}
+                                value={`$${product.cost_price.toFixed(2)}`}
                             />
 
-                            {product.wholesalePrice && (
+                            {product.wholesale_price && (
 
                                 <DetailItem
                                     label="Wholesale Price"
-                                    value={`$${product.wholesalePrice.toFixed(2)}`}
+                                    value={`$${product.wholesale_price.toFixed(2)}`}
                                 />
                             )}
 
@@ -532,7 +532,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                             <DetailItem
                                 label="Serial Number Tracking"
                                 value={
-                                    product.hasSerialNumber
+                                    product.has_serial_number
                                         ? 'Enabled'
                                         : 'Disabled'
                                 }
@@ -541,7 +541,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                             <DetailItem
                                 label="IMEI Tracking"
                                 value={
-                                    product.hasIMEI
+                                    product.has_ime_i
                                         ? 'Enabled'
                                         : 'Disabled'
                                 }
@@ -630,7 +630,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                                     </td>
 
                                     <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
-                                        {product.stockByLocation?.[branch.id] || 0}
+                                        {product.stock_by_location?.[branch.id] || 0}
                                     </td>
                                 </tr>
                             ))}

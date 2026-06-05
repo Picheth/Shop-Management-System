@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { DataProduct, Branch } from '../../types';
+import { Product, Branch } from '../../types';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface StockAdjustmentFormProps {
-    product: DataProduct;
+    product: Product;
     branches: Branch[];
     onAdjust: (productId: string, branchId: string, newQuantity: number, reason: string, note?: string) => void;
     onCancel: () => void;
@@ -30,7 +30,7 @@ const StockAdjustmentForm: React.FC<StockAdjustmentFormProps> = ({ product, bran
     });
 
     const currentStock = useMemo(() => {
-        return product.stockByLocation[form.branchId] || 0;
+        return product.stock_by_location[form.branchId] || 0;
     }, [product, form.branchId]);
 
     useEffect(() => {

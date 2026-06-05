@@ -5,53 +5,53 @@ export interface ProductType extends BaseEntity {
     name: string;
     description?: string;
     active: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Category extends BaseEntity {
     code: string;
-    typeId: string;
+    type_id: string;
     name: string;
     description?: string;
     active: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface SubCategory extends BaseEntity {
     code: string;
-    categoryId: string;
+    category_id: string;
     name: string;
     description?: string;
     active: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Brand extends BaseEntity {
     code: string;
     name: string;
-    shortName?: string;
+    short_name?: string;
     country?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Variation extends BaseEntity {
     name: string;
     type: string;
     value: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface ProductSpecs extends BaseEntity {
     label: string;
     value: string;
     unit?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     active?: boolean;
 }
 
@@ -62,23 +62,23 @@ export interface ProductAttributeSet {
     brand?: Brand;
     variations?: Variation[];
     specs?: ProductSpecs[];
-    createdAt?: string;
-    updatedAt?: string;
-    active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    is_active?: boolean;
     id?: string;
     itemsPerPage: number;
     itemsPerPageOptions: number[];
 }
 
 export interface ProductTemplate extends ProductAttributeSet {
-    templateId: string;
+    template_id: string;
     name: string;
-    skuPattern?: string;
-    productCodePattern?: string;
+    sku_pattern?: string;
+    product_code_pattern?: string;
     status: string;
-    isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
     itemsPerPage: number;
     itemsPerPageOptions: number[];
 }
@@ -87,19 +87,19 @@ export interface Product extends ProductAttributeSet {
     id: string;
     name: string;
     sku: string;
-    productCode: string;
+    product_ode: string;
     status: string;
     isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-    stockByLocation: Record<string, number>;
-    serialNumbersByLocation?: Record<string, string[]>;
-    stockQuantityByLocation?: Record<string, number>;
+    created_at?: string;
+    updated_at?: string;
+    stock_by_location: Record<string, number>;
+    serial_numbers_by_location?: Record<string, string[]>;
+    stock_quantity_by_location?: Record<string, number>;
     stock?: number;
     history?: StockHistoryItem[];
-    historyByLocation?: Record<string, StockHistoryItem[]>;
-    stockHistory?: StockHistoryItem[];
-    stockHistoryByLocation?: Record<string, StockHistoryItem[]>;
+    history_by_location?: Record<string, StockHistoryItem[]>;
+    stock_history?: StockHistoryItem[];
+    stock_history_by_location?: Record<string, StockHistoryItem[]>;
     itemsPerPage: number;
     itemsPerPageOptions: number[];
 }
@@ -108,20 +108,20 @@ export interface ProductVariant extends ProductAttributeSet {
     id: string;
     name: string;
     sku: string;
-    productCode: string;
+    product_code: string;
     status: string;
-    isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface ProductTypeSummary {
     type: ProductType;
-    categoryCount: number;
-    subCategoryCount: number;
-    brandCount: number;
-    variationCount: number;
-    specCount: number;
+    category_count: number;
+    sub_category_count: number;
+    brand_count: number;
+    variation_count: number;
+    spec_count: number;
 }
 
 export interface ProductSummary {
@@ -257,7 +257,7 @@ export interface ProductTypeFormData {
 
 export interface CategoryFormData {
     code: string;
-    typeId: string;
+    type_id: string;
     name: string;
     description?: string;
     active: boolean;
@@ -265,7 +265,7 @@ export interface CategoryFormData {
 
 export interface SubCategoryFormData {
     code: string;
-    categoryId: string;
+    category_id: string;
     name: string;
     description?: string;
     active: boolean;
@@ -291,66 +291,84 @@ export interface ProductSpecsFormData {
 }
 
 export interface ProductTemplateFormData extends ProductAttributeSet {
-    templateId: string;
+    template_id: string;
     name: string;
-    skuPattern?: string;
-    productCodePattern?: string;
+    sku_pattern?: string;
+    product_code_pattern?: string;
     status: string;
-    isActive?: boolean;
+    is_active?: boolean;
 }
 
 export interface ProductFormData extends ProductAttributeSet {
     id: string;
     name: string;
     sku: string;
-    productCode: string;
+    product_code: string;
     status: string;
-    isActive?: boolean;
+    is_active?: boolean;
 }
 
 export interface ProductVariantFormData extends ProductAttributeSet {
     id: string;
     name: string;
     sku: string;
-    productCode: string;
+    product_code: string;
     status: string;
-    isActive?: boolean;
+    is_active?: boolean;
 }
 
 export interface ProductTypeEditFormData extends ProductTypeFormData {
     id: string;
+    active: boolean;
+    created_at?: string;
+    updated_at?: string;
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
+    history?: StockHistoryItem[];
+    history_by_location?: Record<string, StockHistoryItem[]>;
 }
 
 export interface CategoryEditFormData extends CategoryFormData {
     id: string;
+    active: boolean;
+    created_at?: string;
+    updated_at?: string;
+
 }
 
 export interface SubCategoryEditFormData extends SubCategoryFormData {
     id: string;
+
 }
 
 export interface BrandEditFormData extends BrandFormData {
     id: string;
+
 }
 
 export interface VariationEditFormData extends VariationFormData {
     id: string;
+
 }
 
 export interface ProductSpecsEditFormData extends ProductSpecsFormData {
     id: string;
+
 }
 
 export interface ProductTemplateEditFormData extends ProductTemplateFormData {
     id: string;
+
 }
 
 export interface ProductEditFormData extends ProductFormData {
     id: string;
+
 }
 
 export interface ProductVariantEditFormData extends ProductVariantFormData {
     id: string;
+
 }
 
 export interface ProductTypeSummary {
@@ -360,6 +378,7 @@ export interface ProductTypeSummary {
     brandCount: number;
     variationCount: number;
     specCount: number;
+
 }
 
 export interface ProductSummary {
@@ -370,6 +389,7 @@ export interface ProductSummary {
     brand: Brand;
     variations: Variation[];
     specs: ProductSpecs[];
+
 }
 
 export interface ProductVariantSummary {
@@ -380,6 +400,7 @@ export interface ProductVariantSummary {
     brand: Brand;
     variations: Variation[];
     specs: ProductSpecs[];
+
 }
 
 export interface ProductTypeContextType {
@@ -458,9 +479,9 @@ export interface ProductVariantProviderProps {
 export type ProductUnitStatus = 'In Stock' | 'Sold' | 'Repair' | 'Returned' | 'Reserved' | 'Damaged';
 
 export interface ProductUnit {
-    productId: string;
-    branchId: string;
-    serialNumber?: string;
+    product_id: string;
+    branch_id: string;
+    serial_number?: string;
     imei?: string;
     barcode?: string;
     qrCode?: string;
@@ -471,76 +492,85 @@ export interface ProductUnit {
     ram?: string;
     costPrice: number;
     salePrice?: number;
-    purchaseId?: string;
-    saleId?: string;
-    supplierId?: string;
-    customerId?: string;
-    repairId?: string;
+    purchase_id?: string;
+    sale_id?: string;
+    supplier_id?: string;
+    customer_id?: string;
+    repair_id?: string;
     status: ProductUnitStatus;
 }
 
 export interface StockHistory {
     date: string;
-    productId: string;
-    branchId: string;
+    product_id: string;
+    branch_id: string;
     action: StockAction;
     change: number;
-    previousStock?: number;
-    newStock: number;
+    previous_stock?: number;
+    new_stock: number;
     branch: string;
-    referenceId?: string;
+    reference_id?: string;
     reason?: string;
     note?: string;
-    createdBy?: string;
+    created_by?: string;
 }
 
 export interface InventoryStock {
-    productId: string;
-    branchId: string;
+    product_id: string;
+    branch_id: string;
     quantity: number;
+    created_at?: string;
+    updated_at?: string;
+    active?: boolean;
+    id?: string;
+    itemsPerPage: number;
+    itemsPerPageOptions: number[];
 }
 
 export interface LineItem {
     sku?: string;
-    productId: string;
-    productName: string;
+    product_id: string;
+    product_name: string;
     quantity: number;
     price: number;
     discount?: number;
     total?: number;
-    serialNumbers?: string[];
+    serial_numbers?: string[];
     dimensions?: string;
     imeis?: string[];
+    created_at?: string;
+    updated_at?: string;
+    active?: boolean;
 }
 
 export type PurchaseStatus = 'Pending' | 'Ordered' | 'Received' | 'Cancelled';
 
 export interface Purchase {
-    purchaseNumber?: string;
+    purchase_umber?: string;
     id: string;
     supplier: string;
-    branchId: string;
-    purchaseDate: string;
-    expectedDate?: string;
+    branch_id: string;
+    purchase_date: string;
+    expected_date?: string;
     items: LineItem[];
     total: number;
     status?: PurchaseStatus;
     history?: StockHistoryItem[];
     note?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     active?: boolean;
 }
 
 export type PurchaseOrderStatus = 'Pending' | 'Ordered' | 'Received' | 'Cancelled';
 
 export interface PurchaseOrder {
-    poNumber?: string;
+    po_number?: string;
     id: string;
     supplier: string;
-    branchId: string;
-    orderDate: string;
-    expectedDate: string;
+    branch_id: string;
+    order_date: string;
+    expected_date: string;
     items: LineItem[];
     total: number;
     status: PurchaseOrderStatus;
@@ -549,53 +579,53 @@ export interface PurchaseOrder {
 export type SaleStatus = 'Pending' | 'Completed' | 'Cancelled';
 
 export interface Sale {
-    saleNumber?: string;
+    sale_number?: string;
     id: string;
     customer: string;
-    branchId: string;
-    saleDate: string;
+    branch_id: string;
+    sale_date: string;
     items: LineItem[];
     total: number;
     status?: SaleStatus;
 }
 
 export interface Settlement {
-    settlementNumber?: string;
-    branchId: string;
+    settlement_number?: string;
+    branch_id: string;
     date: string;
-    totalIn: number;
-    totalOut: number;
+    total_in: number;
+    total_out: number;
     note?: string;
     id: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     active?: boolean;
 }
 
 export type StockTransferStatus = 'Pending' | 'Completed' | 'Cancelled';
 
 export interface StockTransfer {
-    transferNumber?: string;
-    fromBranchId: string;
-    toBranchId: string;
-    transferDate: string;
+    transfer_number?: string;
+    fromBranch_id: string;
+    toBranch_id: string;
+    transfer_date: string;
     id: string;
-    shortCode?: string;
+    short_code?: string;
     items: LineItem[];
     total: number;
     note?: string;
     status: StockTransferStatus;
     quantity?: number;
     history?: StockHistoryItem[];
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     purpose?: string;
-    signatureUrl?: string;
+    signature_url?: string;
     purposeOptions?: string[];
 }
 
 export interface BranchLocation {
-    branchId: string;
+    branch_id: string;
     name: string;
     address?: string;
     phone?: string;
@@ -604,13 +634,13 @@ export interface BranchLocation {
 export interface Supplier {
     code: string;
     name: string;
-    contactPerson?: string;
+    contact_person?: string;
     phone?: string;
     email?: string;
     address?: string;
     id: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     active?: boolean;
 }
 

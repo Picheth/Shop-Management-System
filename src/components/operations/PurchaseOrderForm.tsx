@@ -3,7 +3,7 @@ import FormInput from '../ui/FormInput';
 import InlineFormInput from '../ui/InlineFormInput';
 import InlineFormSelect from '../ui/InlineFormSelect';
 import {
-    DataProduct,
+    Product,
     LineItem,
     PurchaseOrder,
 } from '../../types';
@@ -14,7 +14,7 @@ type PurchaseOrderFormData = Omit<
 >;
 
 interface PurchaseOrderFormProps {
-    products: DataProduct[];
+    products: Product[];
     onAdd: (
         data: PurchaseOrderFormData
     ) => void;
@@ -31,13 +31,13 @@ const PurchaseOrderForm: React.FC<
     const [supplier, setSupplier] =
         useState('');
 
-    const [orderDate] = useState(
+    const [order_date] = useState(
         new Date()
             .toISOString()
             .split('T')[0]
     );
 
-    const [expectedDate, setExpectedDate] =
+    const [expected_date, setExpectedDate] =
         useState(
             new Date()
                 .toISOString()
@@ -60,11 +60,11 @@ const PurchaseOrderForm: React.FC<
         const firstProduct = products[0];
 
         const newItem: LineItem = {
-            productId: firstProduct.id,
-            productName: firstProduct.name,
+            product_id: firstProduct.id,
+            product_name: firstProduct.name,
             sku: firstProduct.sku,
             quantity: 1,
-            price: firstProduct.salePrice,
+            price: firstProduct.sale_price,
         };
 
         setItems(prev => [...prev, newItem]);
@@ -82,24 +82,24 @@ const PurchaseOrderForm: React.FC<
                 ...updated[index],
             };
 
-            if (field === 'productId') {
+            if (field === 'product_id') {
                 const product =
                     products.find(
                         p => p.id === value
                     );
 
                 if (product) {
-                    item.productId =
+                    item.product_id =
                         product.id;
 
-                    item.productName =
+                    item.product_name =
                         product.name;
 
                     item.sku =
                         product.sku;
 
                     item.price =
-                        product.salePrice;
+                        product.sale_price;
                 }
             } else {
                 (item as any)[field] =
@@ -156,7 +156,7 @@ const PurchaseOrderForm: React.FC<
 
         const currentStock =
             Object.values(
-                product.stockByLocation
+                product.stock_by_location
             ).reduce(
                 (sum, count) =>
                     sum + count,
@@ -210,11 +210,11 @@ const PurchaseOrderForm: React.FC<
         setError('');
 
 onAdd({
-    poNumber: `PO-${Date.now()}`,
-    branchId: 'MAIN',
+    po_number: `PO-${Date.now()}`,
+    branch_id: 'MAIN',
     supplier,
-    orderDate,
-    expectedDate,
+    order_date,
+    expected_date,
     items,
     status: 'Pending',
 });
@@ -242,8 +242,8 @@ onAdd({
                 <FormInput
                     label="Expected Delivery"
                     type="date"
-                    name="expectedDate"
-                    value={expectedDate}
+                    name="expected_date"
+                    value={expected_date}
                     onChange={e => setExpectedDate(e.target.value)}
                     required
                 />
@@ -266,7 +266,7 @@ onAdd({
                     (item, index) => {
                         const stats =
                             getReorderSuggestion(
-                                item.productId
+                                item.product_id
                             );
 
                         return (
@@ -279,10 +279,10 @@ onAdd({
                                     {/* Product */}
                                     <div className="col-span-5">
                                         <InlineFormSelect
-                                            value={item.productId}
-                                            onChange={e => handleItemChange(index, 'productId', e.target.value)}
+                                            value={item.product_id}
+                                            onChange={e => handleItemChange(index, 'product_id', e.target.value)}
                                             options={products.map(p => {
-                                                const totalStock = Object.values(p.stockByLocation).reduce((sum, count) => sum + count, 0);
+                                                const totalStock = Object.values(p.stock_by_location).reduce((sum, count) => sum + count, 0);
                                                 return {
                                                     value: p.id,
                                                     label: `${p.name} (${p.sku}) - Stock: ${totalStock}`

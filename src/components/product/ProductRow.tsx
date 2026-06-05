@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-    DataProduct, 
+    Product, 
     MasterAttribute, 
     Category, 
     ProductType, 
@@ -11,7 +11,7 @@ import StatusBadge from '../ui/StatusBadge';
 import { EditIcon, TrashIcon, MultiDeleteIcon } from '../ui/Icons';
 
 interface ProductRowProps {
-    product: DataProduct;
+    product: Product;
     allProductTypes: ProductType[];
     allCategories: Category[];
     allBrands: Brand[];
@@ -20,10 +20,10 @@ interface ProductRowProps {
     storages: MasterAttribute[];
     colors: MasterAttribute[];
     regions: MasterAttribute[];
-    onView: (product: DataProduct) => void;
-    onEdit: (product: DataProduct) => void;
+    onView: (product: Product) => void;
+    onEdit: (product: Product) => void;
     onDeleteVariant: (id: string) => void;
-    onDeleteProduct: (product: DataProduct) => void;
+    onDeleteProduct: (product: Product) => void;
 }
 
 const ProductRow: React.FC<ProductRowProps> = React.memo(({
@@ -47,20 +47,20 @@ const ProductRow: React.FC<ProductRowProps> = React.memo(({
                 {product.sku}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                {getAttrName(allProductTypes, product.typeId)}
+                {getAttrName(allProductTypes, product.type_id)}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                {getAttrName(allBrands, product.brandId)}
+                {getAttrName(allBrands, product.brand_id)}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                {getAttrName(allCategories, product.categoryId)}
+                {getAttrName(allCategories, product.category_id)}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm italic text-gray-400">
                 {config}
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-black tabular-nums">
-                {product.stockByLocation
-                    ? Object.values(product.stockByLocation).reduce(
+                {product.stock_by_location
+                    ? Object.values(product.stock_by_location).reduce(
                           (sum, qty) => sum + qty,
                           0
                       )

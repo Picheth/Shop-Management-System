@@ -38,7 +38,7 @@ const ProductSaleHistory: React.FC<ProductSaleHistoryProps> = ({ productId }) =>
         sales.forEach(sale => {
             const customer = sale.customer || 'Walk-in Customer';
             const items = (sale.items as any[]) || [];
-            const item = items.find(i => i.productId === productId);
+            const item = items.find(i => i.product_id === productId);
             const qty = item?.quantity || 0;
 
             if (!aggregation[customer]) {
@@ -62,7 +62,7 @@ const ProductSaleHistory: React.FC<ProductSaleHistoryProps> = ({ productId }) =>
         const headers = ['Sale ID', 'Date', 'Customer', 'Quantity', 'Unit Price', 'Total Amount'];
         const rows = sales.map(sale => {
             const items = (sale.items as any[]) || [];
-            const item = items.find(i => i.productId === productId);
+            const item = items.find(i => i.product_id === productId);
             const quantity = item?.quantity || 0;
             const unitPrice = item?.price || 0;
             const totalAmount = quantity * unitPrice;
@@ -145,7 +145,7 @@ const ProductSaleHistory: React.FC<ProductSaleHistoryProps> = ({ productId }) =>
                         {sales.length > 0 ? sales.map((sale) => {
                             // Parse the specific item data for this product from the items array
                             const items = (sale.items as any[]) || [];
-                            const item = items.find(i => i.productId === productId);
+                            const item = items.find(i => i.product_id === productId);
                             
                             return (
                                 <tr key={sale.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">

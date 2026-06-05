@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { DataProduct, StockAction, ProductStatus } from '../types';
+import { Product, StockAction, ProductStatus } from '../types';
 import { supabase } from '../supabase/client';
 
 export const useProductHistory = (
-    products: DataProduct[],
-    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>
+    products: Product[],
+    setProducts: React.Dispatch<React.SetStateAction<Product[]>>
 ) => {
     const getStockStatus = (total: number): ProductStatus => {
         if (total > 10) return 'In Stock';
@@ -13,22 +13,22 @@ export const useProductHistory = (
     };
 
     const recordStockChange = useCallback(async (
-        productId: string,
-        branchId: string,
-        branchName: string,
+        product_id: string,
+        branch_id: string,
+        branch_name: string,
         change: number,
         action: StockAction,
         reason?: string
     ) => {
-        const product = products.find(p => p.id === productId);
+        const product = products.find(p => p.id === product_id);
         if (!product) return;
 
-        const currentBranchStock = product.stockByLocation[branchId] || 0;
+        const currentBranchStock = product.stock_by_location[branch_id] || 0;
         const newBranchStock = currentBranchStock + change;
-
+ 
         const updatedStockByLocation = {
-            ...product.stockByLocation,
-            [branchId]: newBranchStock,
+            ...product.stock_by_location,
+            [branch_id]: newBranchStock,
         };
 
         // Recalculate total stock across all branches for status update
@@ -44,30 +44,27 @@ export const useProductHistory = (
             action,
             change,
             newStock: newBranchStock,
-            branch: branchName,
+            branch: branch_name,
             reason,
         };
 
         const updatedHistory = [...(product.history || []), historyEntry];
 
-        // 1. Persist change to Supabase
-        const { error } = await supabase
-            .from('products')
-            .update({
-                stockByLocation: updatedStockByLocation,
-                status: newStatus,
-                history: updatedHistory
-            })
-            .eq('id', productId);
+        const updates = {
+    name: product.name,
+    price: product.price,
+    stock: product.stock,
+};
 
-        if (error) {
-            console.error('Failed to update product in database:', error.message);
-            return;
-        }
+const { error } = await supabase
+    .from('products')
+    .update(updates)
+    .eq('id', product_id);
+
 
         // 2. Update Local State
         setProducts(prev =>
-            prev.map(p => p.id === productId ? {
+            prev.map(p => p.id === product_id ? {
                 ...p,
                 stockByLocation: updatedStockByLocation,
                 status: newStatus,

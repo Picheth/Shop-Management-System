@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
     Purchase as PurchaseType,
-    DataProduct,
+    Product,
     Branch,
     LineItem,
 } from '../../types';
@@ -12,10 +12,11 @@ import PurchaseForm from './PurchaseForm';
 import StatusBadge from '../ui/StatusBadge';
 import { useProductHistory } from '../../hooks/useProductHistory';
 import { supabase } from '../../utils/supabase';
+import { inventoryService } from '../../service/inventoryService';
 
 interface PurchaseProps {
-    products: DataProduct[];
-    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    products: Product[];
+    setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
     branches: Branch[];
 }
 
@@ -109,7 +110,7 @@ const Purchase: React.FC<PurchaseProps> = ({
     ) => {
         setIsSaving(true);
         const total = data.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-        const branchName = branches.find(b => b.id === data.branchId)?.name || 'Unknown';
+        const branch_name = branches.find(b => b.id === data.branch_id)?.name || 'Unknown';
 
         const newPurchase: PurchaseType = {
             ...data,
@@ -119,22 +120,7 @@ const Purchase: React.FC<PurchaseProps> = ({
 
         try {
             // 1. Execute Atomic Transaction via Supabase RPC
-            const { error } = await supabase.rpc('create_purchase_and_update_stock', {
-                p_purchase_id: newPurchase.id,
-                p_supplier: newPurchase.supplier,
-                p_branch_id: newPurchase.branchId,
-                p_branch_name: branchName,
-                p_purchase_date: newPurchase.purchaseDate,
-                p_status: newPurchase.status,
-                p_total: newPurchase.total,
-                p_items: newPurchase.items // Passed as JSONB
-            });
-
-            if (error) {
-                console.error('Transaction failed:', error.message);
-                alert('Critical Error: Failed to record purchase and update stock.');
-                return;
-            }
+            await inventoryService.recordPurchase(newPurchase);
 
             // 2. Refresh the list from the server to ensure consistency
             await fetchPurchases();
@@ -145,12 +131,12 @@ const Purchase: React.FC<PurchaseProps> = ({
     };
 
     const handleReceivePurchase = async (purchase: PurchaseType) => {
-        const branchName = branches.find(b => b.id === purchase.branchId)?.name || 'Unknown';
+        const branchName = branches.find(b => b.id === purchase.branch_id)?.name || 'Unknown';
 
         for (const item of purchase.items) {
             await recordStockChange(
-                item.productId,
-                purchase.branchId,
+                item.product_id,
+                purchase.branch_id,
                 branchName,
                 item.quantity,
                 'Purchase',
@@ -168,11 +154,11 @@ const Purchase: React.FC<PurchaseProps> = ({
 
         // 1. If it was already received, reverse the stock change via the history hook
         if (purchase.status === 'Received') {
-            const branchName = branches.find(b => b.id === purchase.branchId)?.name || 'Unknown';
+            const branchName = branches.find(b => b.id === purchase.branch_id)?.name || 'Unknown';
             for (const item of purchase.items) {
                 await recordStockChange(
-                    item.productId,
-                    purchase.branchId,
+                    item.product_id,
+                    purchase.branch_id,
                     branchName,
                     -item.quantity, // Negative value to reverse the addition
                     'Adjustment',
@@ -210,11 +196,11 @@ const Purchase: React.FC<PurchaseProps> = ({
         for (const purchase of activeSelected) {
             // 1. If it was already received, reverse the stock change via the history hook
             if (purchase.status === 'Received') {
-                const branchName = branches.find(b => b.id === purchase.branchId)?.name || 'Unknown';
+                const branchName = branches.find(b => b.id === purchase.branch_id)?.name || 'Unknown';
                 for (const item of purchase.items) {
                     await recordStockChange(
-                        item.productId,
-                        purchase.branchId,
+                        item.product_id,
+                        purchase.branch_id,
                         branchName,
                         -item.quantity, // Negative value to reverse the addition
                         'Adjustment',
@@ -323,19 +309,19 @@ const Purchase: React.FC<PurchaseProps> = ({
                                             onChange={() => toggleSelectOne(p.id)}
                                         />
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.purchaseDate}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.purchase_date}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{p.id}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                        {branches.find(b => b.id === p.branchId)?.name || 'Unknown'}
+                                        {branches.find(b => b.id === p.branch_id)?.name || 'Unknown'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.supplier}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{p.supplier_id}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
-                                        {p.items.map(i => i.productName).join(', ')}
+                                        {p.items.map(i => i.product_name).join(', ')}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
-                                        {p.items.flatMap(i => i.serialNumbers || []).length > 0
+                                        {p.items.flatMap(i => i.serial_numbers || []).length > 0
                                             ? p.items
-                                                  .flatMap(i => i.serialNumbers || [])
+                                                  .flatMap(i => i.serial_numbers || [])
                                                   .join(', ')
                                             : 'N/A'}
                                     </td>

@@ -1,31 +1,46 @@
 import React, { useState, useMemo } from 'react';
-import { DataProduct, Branch } from '../../types';
+import { Product, Branch } from '../../types';
 import Placeholder from '../ui/Placeholder';
 import Modal from '../ui/Modal';
 import StockAdjustmentForm from './StockAdjustmentForm';
 import { useProductHistory } from '../../hooks/useProductHistory';
+import { supabase } from '../../supabase/supabase';
+
 
 interface InventoryProps {
-    products: DataProduct[];
-    setProducts: React.Dispatch<React.SetStateAction<DataProduct[]>>;
+    products: Product[];
+    setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
     branches: Branch[];
 }
 
+const handleLoadInventory = async () => {
+    const { data: inventory, error } = await supabase
+        .from('inventory')
+        .select('*');
+
+    if (error) {
+        console.error(error.message);
+        return; // ✅ Valid
+    }
+
+    console.log(inventory);
+};
+
 const Inventory: React.FC<InventoryProps> = ({ products, setProducts, branches }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [productToAdjust, setProductToAdjust] = useState<DataProduct | null>(null);
+    const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
 
     const { recordStockChange } = useProductHistory(products, setProducts);
 
-    const getTotalStock = (p: DataProduct) =>
-        Object.values(p.stockByLocation || {}).reduce((a, b) => a + b, 0);
+    const getTotalStock = (p: Product) =>
+        Object.values(p.stock_by_location || {}).reduce((a, b) => a + b, 0);
 
-    const getBranchStock = (p: DataProduct) =>
+    const getBranchStock = (p: Product) =>
         selectedBranchId === 'all'
             ? getTotalStock(p)
-            : p.stockByLocation?.[selectedBranchId] || 0;
+            : p.stock_by_location?.[selectedBranchId] || 0;
 
     const processedProducts = useMemo(() => {
         return products.map(p => ({
@@ -49,7 +64,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, setProducts, branches }
     ) => {
         const branchName = branches.find(b => b.id === branchId)?.name || 'Unknown';
 
-        const currentStock = productToAdjust?.stockByLocation[branchId] || 0;
+        const currentStock = productToAdjust?.stock_by_location[branchId] || 0;
         const change = newQuantity - currentStock;
 
         const finalReason = note ? `${reason} (${note})` : reason;

@@ -16,7 +16,7 @@ const initialStaff: StaffType[] = [
         phone: '012345678',
         email: 'admin@store.com',
         address: 'Phnom Penh',
-        active: true,
+        is_active: true,
     },
     {
         id: '2',
@@ -26,7 +26,7 @@ const initialStaff: StaffType[] = [
         phone: '098765432',
         email: 'dara@store.com',
         address: 'Siem Reap',
-        active: true,
+        is_active: true,
     },
 ];
 
@@ -43,7 +43,7 @@ const Staff: React.FC = () => {
         phone: '',
         email: '',
         address: '',
-        active: true,
+        is_active: true,
     });
 
     // Real-time duplication check for staff code
@@ -66,7 +66,7 @@ const Staff: React.FC = () => {
 
         if (statusFilter !== 'All') {
             const isActive = statusFilter === 'Active';
-            filtered = filtered.filter(s => s.active === isActive);
+            filtered = filtered.filter(s => s.is_active === isActive);
         }
 
         if (!search) return filtered;
@@ -99,7 +99,7 @@ const Staff: React.FC = () => {
             phone: '',
             email: '',
             address: '',
-            active: true,
+            is_active: true,
         });
         setEditingId(null);
     };
@@ -111,7 +111,7 @@ const Staff: React.FC = () => {
             setStaffList(prev =>
                 prev.map(item =>
                     item.id === editingId
-                        ? { ...item, ...form, updatedAt: new Date().toISOString() }
+                        ? { ...item, ...form, updated_at: new Date().toISOString() }
                         : item
                 )
             );
@@ -119,7 +119,7 @@ const Staff: React.FC = () => {
             const newStaff: StaffType = {
                 id: Date.now().toString(),
                 ...form,
-                createdAt: new Date().toISOString(),
+                created_at: new Date().toISOString(),
             };
             setStaffList(prev => [newStaff, ...prev]);
         }
@@ -136,7 +136,7 @@ const Staff: React.FC = () => {
             phone: staff.phone || '',
             email: staff.email || '',
             address: staff.address || '',
-            active: staff.active ?? true,
+            is_active: staff.is_active ?? true,
         });
     };
 
@@ -148,7 +148,7 @@ const Staff: React.FC = () => {
     const toggleStatus = (id: string) => {
         setStaffList(prev =>
             prev.map(item =>
-                item.id === id ? { ...item, active: !item.active } : item
+                item.id === id ? { ...item, is_active: !item.is_active } : item
             )
         );
     };
@@ -240,8 +240,8 @@ const Staff: React.FC = () => {
 
                     <FormSelect
                         label="Status"
-                        name="active"
-                        value={form.active.toString()}
+                        name="is_active"
+                        value={form.is_active.toString()}
                         onChange={handleChange}
                         options={[
                             { value: 'true', label: 'Active' },
@@ -292,8 +292,8 @@ const Staff: React.FC = () => {
                                         <div className="text-xs text-gray-500">{staff.email}</div>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${staff.active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                            {staff.active ? 'Active' : 'Inactive'}
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${staff.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                            {staff.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">

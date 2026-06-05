@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { DataProduct, Branch, StockTransfer, LineItem } from '../../types';
+import { Product, Branch, StockTransfer, LineItem } from '../../types';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import InlineFormInput from '../ui/InlineFormInput';
@@ -7,7 +7,7 @@ import InlineFormInput from '../ui/InlineFormInput';
 type StockTransferFormData = Omit<StockTransfer, 'id' | 'total'>;
 
 interface StockTransferFormProps {
-    products: DataProduct[];
+    products: Product[];
     branches: Branch[];
     stockTransfers: StockTransfer[];
     onAdd: (data: StockTransferFormData) => void;
@@ -20,8 +20,8 @@ interface StockTransferFormProps {
 }
 
 interface DraftData {
-    fromBranchId: string;
-    toBranchId: string;
+    from_branch_id: string;
+    to_branch_id: string;
     items: LineItem[];
     purpose: string;
     customPurpose: string;
@@ -29,8 +29,8 @@ interface DraftData {
 }
 
 const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branches, stockTransfers, onAdd, onCancel, note: initialNote }) => {
-    const [fromBranchId, setFromBranchId] = useState(branches[0]?.id || '');
-    const [toBranchId, setToBranchId] = useState(branches[1]?.id || '');
+    const [from_branch_id, setFrom_branch_id] = useState(branches[0]?.id || '');
+    const [to_branch_id, setTo_branch_id] = useState(branches[1]?.id || '');
     const [items, setItems] = useState<LineItem[]>([]);
     const [purpose, setPurpose] = useState('');
     const [customPurpose, setCustomPurpose] = useState('');
@@ -42,10 +42,10 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
     const [lastAutoSavedAt, setLastAutoSavedAt] = useState<string | null>(null);
 
     const scanInputRef = useRef<HTMLInputElement>(null);
-    const autoSaveRef = useRef<DraftData>({ fromBranchId, toBranchId, items, purpose, customPurpose, note });
+    const autoSaveRef = useRef<DraftData>({ from_branch_id, to_branch_id, items, purpose, customPurpose, note });
 
     // Keep the autoSaveRef synchronized with the latest state
-    autoSaveRef.current = { fromBranchId, toBranchId, items, purpose, customPurpose, note };
+    autoSaveRef.current = { from_branch_id, to_branch_id, items, purpose, customPurpose, note };
 
     const DRAFT_STORAGE_KEY = 'stockTransferDraft';
 
@@ -58,7 +58,7 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             if (storedDraft) {
                 const draft: DraftData = JSON.parse(storedDraft);
                 // Only auto-load if the form is currently empty
-                if (items.length === 0 && !fromBranchId && !toBranchId && !purpose && !note) {
+                if (items.length === 0 && !from_branch_id && !to_branch_id && !purpose && !note) {
                     loadDraftData(draft);
                     setError('Draft automatically recovered.');
                 }
@@ -90,8 +90,8 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
     // Helper function to load draft data into state
     const loadDraftData = (draft: DraftData) => {
-        setFromBranchId(draft.fromBranchId);
-        setToBranchId(draft.toBranchId);
+        setFrom_branch_id(draft.from_branch_id);
+        setTo_branch_id(draft.to_branch_id);
         setItems(draft.items);
         setPurpose(draft.purpose);
         setCustomPurpose(draft.customPurpose);
@@ -123,7 +123,7 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
     };
 
     const saveDraft = () => {
-        const draft: DraftData = { fromBranchId, toBranchId, items, purpose, customPurpose, note };
+        const draft: DraftData = { from_branch_id, to_branch_id, items, purpose, customPurpose, note };
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
         setHasDraft(true);
         setLastAutoSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -138,9 +138,9 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
     };
 
     const availableProducts = useMemo(() => {
-        if (!fromBranchId) return [];
-        return products.filter(p => (p.stockByLocation[fromBranchId] || 0) > 0);
-    }, [products, fromBranchId]);
+        if (!from_branch_id) return [];
+        return products.filter(p => (p.stock_by_location[from_branch_id] || 0) > 0);
+    }, [products, from_branch_id]);
 
     const handleScan = () => {
         const barcode = scanValue.trim();
@@ -148,36 +148,36 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
         // 1. Search for a product that has this serial in the source branch
         const productWithSerial = products.find(p => 
-            p.serialNumbersByLocation?.[fromBranchId]?.includes(barcode)
+            p.serial_numbers_by_location?.[from_branch_id]?.includes(barcode)
         );
 
         if (productWithSerial) {
             // Handle serial number scan
-            const isDuplicate = items.some(item => item.serialNumbers?.includes(barcode));
+            const isDuplicate = items.some(item => item.serial_numbers?.includes(barcode));
             if (isDuplicate) {
                 setError(`Serial "${barcode}" has already been added.`);
                 setScanValue('');
                 return;
             }
 
-            const existingIndex = items.findIndex(item => item.productId === productWithSerial.id);
+            const existingIndex = items.findIndex(item => item.product_id === productWithSerial.id);
             if (existingIndex > -1) {
                 const updated = [...items];
                 updated[existingIndex] = {
                     ...updated[existingIndex],
                     quantity: updated[existingIndex].quantity + 1,
-                    serialNumbers: [...(updated[existingIndex].serialNumbers || []), barcode]
+                    serial_numbers: [...(updated[existingIndex].serial_numbers || []), barcode]
                 };
                 setItems(updated);
             } else {
                 setItems([...items, {
-                    productId: productWithSerial.id,
-                    productName: productWithSerial.name,
+                    product_id: productWithSerial.id,
+                    product_name: productWithSerial.name,
                     sku: productWithSerial.sku,
                     quantity: 1,
-                    price: productWithSerial.costPrice || 0,
+                    price: productWithSerial.cost_price || 0,
                     dimensions: productWithSerial.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value || '',
-                    serialNumbers: [barcode]
+                    serial_numbers: [barcode]
                 }]);
             }
             setScanValue('');
@@ -196,7 +196,7 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             return;
         }
 
-        const existingIndex = items.findIndex(item => item.productId === product.id);
+        const existingIndex = items.findIndex(item => item.product_id === product.id);
 
         if (existingIndex > -1) {
             const updated = [...items];
@@ -207,13 +207,13 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             setItems(updated);
         } else {
             setItems([...items, {
-                productId: product.id,
-                productName: product.name,
+                product_id: product.id,
+                product_name: product.name,
                 sku: product.sku,
                 quantity: 1,
-                price: product.costPrice || 0,
+                price: product.cost_price || 0,
                 dimensions: product.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value || '',
-                serialNumbers: []
+                serial_numbers: []
             }]);
         }
 
@@ -232,7 +232,7 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             return;
         }
 
-        if (fromBranchId === toBranchId) {
+        if (from_branch_id === to_branch_id) {
             setError('Source and destination branches cannot be the same.');
             return;
         }
@@ -243,23 +243,23 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
         // Validate quantities against available stock
         for (const item of items) {
-            const product = products.find(p => p.id === item.productId);
-            const stockAvailable = product?.stockByLocation[fromBranchId] || 0;
+            const product = products.find(p => p.id === item.product_id);
+            const stockAvailable = product?.stock_by_location[from_branch_id] || 0;
 
             if (item.quantity <= 0) {
-                setError(`Quantity for ${item.productName} must be greater than zero.`);
+                setError(`Quantity for ${item.product_name} must be greater than zero.`);
                 return;
             }
             if (item.quantity > stockAvailable) {
-                setError(`Insufficient stock for ${item.productName}. Available: ${stockAvailable}`);
+                setError(`Insufficient stock for ${item.product_name}. Available: ${stockAvailable}`);
                 return;
             }
 
             // Serial validation
-            if (product?.hasSerialNumber) {
-                const serialCount = item.serialNumbers?.length || 0;
+            if (product?.has_serial_number) {
+                const serialCount = item.serial_numbers?.length || 0;
                 if (serialCount !== item.quantity) {
-                    setError(`Product "${item.productName}" expects ${item.quantity} serial number(s), but ${serialCount} were selected.`);
+                    setError(`Product "${item.product_name}" expects ${item.quantity} serial number(s), but ${serialCount} were selected.`);
                     return;
                 }
             }
@@ -268,19 +268,19 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
         const finalPurpose = purpose === 'Other' ? customPurpose.trim() : purpose;
 
         // Ensure unique shortCode by checking against existing transfers
-        const existingCodes = new Set(stockTransfers.map(t => t.shortCode).filter(Boolean));
-        let shortCode = '';
+        const existingCodes = new Set(stockTransfers.map(t => t.short_code).filter(Boolean));
+        let short_code = '';
         do {
-            shortCode = Math.floor(100000 + Math.random() * 900000).toString();
-        } while (existingCodes.has(shortCode));
+            short_code = Math.floor(100000 + Math.random() * 900000).toString();
+        } while (existingCodes.has(short_code));
 
         onAdd({
-            fromBranchId,
-            toBranchId,
+            from_branch_id,
+            to_branch_id,
             items,
             note,
-            shortCode,
-            transferDate: new Date().toISOString().split('T')[0],
+            short_code,
+            transfer_date: new Date().toISOString().split('T')[0],
             status: 'Pending'
         });
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -292,13 +292,13 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
         const firstProduct = availableProducts[0] || products[0];
         if (!firstProduct) return;
         setItems([...items, {
-            productId: firstProduct.id,
-            productName: firstProduct.name,
+            product_id: firstProduct.id,
+            product_name: firstProduct.name,
             sku: firstProduct.sku,
             quantity: 1,
-            price: firstProduct.costPrice || 0,
+            price: firstProduct.cost_price || 0,
             dimensions: firstProduct.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value || '',
-            serialNumbers: []
+            serial_numbers: []
         }]);
         setError('');
     };
@@ -307,22 +307,22 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
         const newItems = [...items];
         const currentItem = newItems[index];
 
-        if (field === 'productId') {
+        if (field === 'product_id') {
             const product = products.find(p => p.id === value);
             if (product) {
-                currentItem.productId = product.id;
-                currentItem.productName = product.name;
+                currentItem.product_id = product.id;
+                currentItem.product_name = product.name;
                 currentItem.sku = product.sku;
-                currentItem.price = product.costPrice || 0;
-                currentItem.serialNumbers = [];
+                currentItem.price = product.cost_price || 0;
+                currentItem.serial_numbers = [];
                 currentItem.dimensions = product.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value || '';
             }
         } else if (field === 'quantity') {
             const newQuantity = Number(value);
             currentItem.quantity = newQuantity;
             // Truncate selected serials if quantity decreases
-            if (currentItem.serialNumbers && currentItem.serialNumbers.length > newQuantity) {
-                currentItem.serialNumbers = currentItem.serialNumbers.slice(0, newQuantity);
+            if (currentItem.serial_numbers && currentItem.serial_numbers.length > newQuantity) {
+                currentItem.serial_numbers = currentItem.serial_numbers.slice(0, newQuantity);
             }
         } else {
             (currentItem as any)[field] = value;
@@ -332,7 +332,7 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
     };
 
     const handleRemoveItem = (index: number) => {
-        const itemName = items[index]?.productName || 'this item';
+        const itemName = items[index]?.product_name || 'this item';
         if (window.confirm(`Are you sure you want to remove ${itemName} from the transfer list?`)) {
             setItems(items.filter((_, i) => i !== index));
             setError('');
@@ -409,14 +409,14 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
                 <FormSelect
                     label="From Branch"
-                    name="fromBranchId"
-                    value={fromBranchId}
+                    name="from_branch_id"
+                    value={from_branch_id}
                     onChange={(e) => { 
                         const val = e.target.value;
-                        setFromBranchId(val); 
+                        setFrom_branch_id(val); 
                         setItems([]); 
                         setError(''); 
-                        if (toBranchId === val) setToBranchId('');
+                        if (to_branch_id === val) setTo_branch_id('');
                     }}
                     options={branches.map(branch => ({ value: branch.id, label: branch.name }))}
                     required
@@ -424,11 +424,11 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
 
                 <FormSelect
                     label="To Branch"
-                    name="toBranchId"
-                    value={toBranchId}
-                    onChange={(e) => setToBranchId(e.target.value)}
+                    name="to_branch_id"
+                    value={to_branch_id}
+                    onChange={(e) => setTo_branch_id(e.target.value)}
                     options={branches
-                        .filter(b => b.id !== fromBranchId)
+                        .filter(b => b.id !== from_branch_id)
                         .map(branch => ({ value: branch.id, label: branch.name }))
                     }
                     placeholder="Select destination"
@@ -491,21 +491,21 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
             </div>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mb-2">
                 {items.map((item, index) => {
-                    const product = products.find(p => p.id === item.productId);
-                    const stockAvailable = product?.stockByLocation[fromBranchId] || 0;
-                    const availableSerials = product?.serialNumbersByLocation?.[fromBranchId] || [];
+                    const product = products.find(p => p.id === item.product_id);
+                    const stockAvailable = product?.stock_by_location[from_branch_id] || 0;
+                    const availableSerials = product?.serial_numbers_by_location?.[from_branch_id] || [];
 
                     return (
                         <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-md">
                             <div className="grid grid-cols-12 gap-2 items-center">
                                 <select
-                                    value={item.productId}
-                                    onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                    value={item.product_id}
+                                    onChange={(e) => handleItemChange(index, 'product_id', e.target.value)}
                                     className={`${inputClasses} col-span-5`}
                                 >
                                     {availableProducts.map(p => (
                                         <option key={p.id} value={p.id}>
-                                            {p.name} (Avail: {p.stockByLocation[fromBranchId] || 0})
+                                            {p.name} (Avail: {p.stock_by_location[from_branch_id] || 0})
                                         </option>
                                     ))}
                                 </select>
@@ -534,19 +534,19 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
                                 </button>
                             </div>
 
-                            {product?.hasSerialNumber && availableSerials.length > 0 && (
+                            {product?.has_serial_number && availableSerials.length > 0 && (
                                 <div className="mt-2">
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Serial Numbers ({item.serialNumbers?.length || 0}/{item.quantity})</label>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Serial Numbers ({item.serial_numbers?.length || 0}/{item.quantity})</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-24 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700">
                                         {availableSerials.map(serial => (
                                             <label key={serial} className="flex items-center text-xs text-gray-900 dark:text-gray-200">
                                                 <input
                                                     type="checkbox"
                                                     value={serial}
-                                                    checked={item.serialNumbers?.includes(serial) || false}
+                                                    checked={item.serial_numbers?.includes(serial) || false}
                                                     onChange={(e) => {
                                                         const isChecked = e.target.checked;
-                                                        const currentSerials = item.serialNumbers ? [...item.serialNumbers] : [];
+                                                        const currentSerials = item.serial_numbers ? [...item.serial_numbers] : [];
                                                         let updatedSerials: string[];
 
                                                         if (isChecked) {
@@ -556,24 +556,24 @@ const StockTransferForm: React.FC<StockTransferFormProps> = ({ products, branche
                                                         }
 
                                                         if (updatedSerials.length > item.quantity) {
-                                                            setError(`You can only select ${item.quantity} serial number(s) for ${item.productName}.`);
+                                                            setError(`You can only select ${item.quantity} serial number(s) for ${item.product_name}.`);
                                                             return;
                                                         }
-                                                        handleItemChange(index, 'serialNumbers', updatedSerials);
+                                                        handleItemChange(index, 'serial_numbers', updatedSerials);
                                                     }}
                                                     className="h-3 w-3 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
-                                                    disabled={!item.serialNumbers?.includes(serial) && (item.serialNumbers?.length || 0) >= item.quantity}
+                                                    disabled={!item.serial_numbers?.includes(serial) && (item.serial_numbers?.length || 0) >= item.quantity}
                                                 />
                                                 <span className="ml-1.5 truncate" title={serial}>{serial}</span>
                                             </label>
                                         ))}
                                     </div>
-                                    {item.serialNumbers?.length !== item.quantity && (
+                                    {item.serial_numbers?.length !== item.quantity && (
                                         <p className="text-[10px] text-amber-600 mt-1">Please select {item.quantity} serial number(s).</p>
                                     )}
                                 </div>
                             )}
-                            {product?.hasSerialNumber && availableSerials.length === 0 && (
+                            {product?.has_serial_number && availableSerials.length === 0 && (
                                 <p className="text-[10px] text-red-500 mt-1 italic">
                                     No serial numbers found in stock at this location.
                                 </p>

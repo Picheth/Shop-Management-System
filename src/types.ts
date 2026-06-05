@@ -1,7 +1,7 @@
 import React from 'react';
 import { ProductAttribute } from './Types/ProductSpecs';
 export type { ProductAttribute } from './Types/ProductSpecs';
- 
+
 /* =========================================================
    ENUMS
 ========================================================= */
@@ -112,9 +112,9 @@ export * from './utils/ProductType'; // Re-exporting types from ProductType.ts f
 
 export interface BaseEntity {
     id: string;
-    createdAt?: string;
-    updatedAt?: string;
-    active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    is_active?: boolean;
 }
 
 /* =========================================================
@@ -124,6 +124,11 @@ export interface BaseEntity {
 export interface MasterAttribute extends BaseEntity {
     name: string;
     code?: string;
+    description?: string;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+
 }
 
 /* =========================================================
@@ -132,13 +137,13 @@ export interface MasterAttribute extends BaseEntity {
 
 export interface ProductSpec extends BaseEntity {
     name: string;
-    brandId: string;
-    typeId: string;
-    categoryId: string;
-    subCategoryId?: string;
-    shortModel?: string;
+    brand_id: string;
+    type_id: string;
+    category_id: string;
+    sub_category_id?: string;
+    short_model?: string;
     model?: string;
-    displaySize?: string;
+    display_size?: string;
     status: 'active' | 'inactive';
 }
 
@@ -157,24 +162,24 @@ export interface AddProductFormProps {
 }
 
 export interface ProductVariant {
-  id: string;
-  productId: string;
-  sku: string;
-  name?: string; // optional display name (e.g. "128GB Black USA NEW")
-  price?: number;
-  cost?: number;
-  stockQuantity?: number;
-  barcode?: string;
-  // Optional references (for master data relations)
-  processorId?: string;
-  ramId?: string;
-  storageId?: string;
-  colorId?: string;
-  regionId?: string;
-  conditionId?: string;
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+    id: string;
+    product_id: string;
+    sku: string;
+    name?: string;
+    price?: number;
+    cost?: number;
+    stock_quantity?: number;
+    barcode?: string;
+    processor_id?: string;
+    ram_id?: string;
+    storage_id?: string;
+    color_id?: string;
+    region_id?: string;
+    condition_id?: string;
+    is_active?: boolean; // This is already snake_case
+    created_at?: string;
+    updated_at?: string;
+    
 }
 
 
@@ -222,51 +227,61 @@ export interface Branch extends BaseEntity {
    PRODUCT
 ========================================================= */
 
-// Product and DataProduct interfaces remain here as they are core entities
+
 // that might aggregate attributes from ProductType.ts
-// If Product and DataProduct also move to ProductType.ts, they would need to be re-exported from there.
+
 // For now, they stay here as they are not just "attributes".
 
 export interface Product extends BaseEntity {
-    productNumber: string;
+    [x: string]: any;
+    product_number: string;
     sku: string;
     barcode?: string;
-    shortName?: string;
+    short_name?: string;
     name: string;
     description?: string;
-    typeId?: string;
-    categoryId: string;
-    subCategoryId?: string;
-    brandId?: string;
+    type_id?: string;
+    category_id: string;
+    sub_category_id?: string;
+    brand_id?: string;
     brand?: string;
     model?: string;
-    productSpecId?: string;
-    processorId?: string;
-    ramId?: string;
-    storageId?: string;
-    colorId?: string;
-    regionId?: string;
-    conditionId?: string;
+    product_spec_id?: string;
+    processor_id?: string;
+    ram_id?: string;
+    storage_id?: string;
+    color_id?: string;
+    region_id?: string;
+    condition_id?: string;
     variation?: string;
     color?: string;
-    size?: string;
+    display_size?: string;
     storage?: string;
     ram?: string;
-    costPrice: number;
-    salePrice: number;
-    wholesalePrice?: number;
-    reorderLevel?: number;
-    hasSerialNumber: boolean;
-    hasIMEI: boolean;
-    warrantyDays?: number;
-    imageUrl?: string;
+    cost_price: number;
+    sale_price: number;
+    wholesale_price?: number;
+    reorder_level?: number;
+    has_serial_number: boolean;
+    has_imei: boolean;
+    warranty_days?: number;
+    image_url?: string;
     tags?: string[];
     attributes?: ProductAttribute[];
-    stockByLocation: Record<string, number>;
-    serialNumbersByLocation?: Record<
+    initial_stock: number; // This is already snake_case
+    stock_quantity?: number;
+    stock_by_location: Record<string, number>;
+    serial_numbers_by_location?: Record<
         string,
         string[]
     >;
+    short_model?: string;
+    processor_codes?: { [key: string]: string };
+    ram_codes?: { [key: string]: string };
+    storage_codes?: { [key: string]: string };
+    color_codes?: { [key: string]: string };
+    region_codes?: { [key: string]: string };
+    condition_codes?: { [key: string]: string };
     status: ProductStatus;
     history?: StockHistoryItem[];
 }
@@ -274,46 +289,18 @@ export interface Product extends BaseEntity {
 export type ProductForm = Omit<
     Product,
     | 'id'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'stockByLocation'
+    | 'created_at'
+    | 'updated_at'
+    | 'stock_by_location'
     | 'status'
     | 'history'
+    | 'stock_quantity'
+    | 'serial_numbers_by_location'
+    | 'product_spec_id'
+    | 'product_number'
+
 >;
 
-export interface DataProduct extends Product{
-    stockQuantity: number;
-    shortModel: string;
-    displaySize: string; // only for tablet and laptop
-    brand: string;
-    model: string;
-    color: string;
-    storage: string;
-    ram: string;
-    ondelete: string;
-    onupdate: string;
-    initialStock: number;
-    branchId: string;
-    skuSeparator: string;
-    skuExcludeSegments: string[];
-    processorCodes?: { [key: string]: string };
-    ramCodes?: { [key: string]: string };
-    storageCodes?: { [key: string]: string };
-    colorCodes?: { [key: string]: string };
-    regionCodes?: { [key: string]: string };
-    conditionCodes?: { [key: string]: string };
-    colorId: string;
-    conditionId: string;
-    isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-    price?: number;
-    stockQuantityByLocation?: Record<string, number>;
-    stockHistory?: StockHistoryItem[];
-    stockHistoryByLocation?: Record<string, StockHistoryItem[]>;
-    stockByLocation: Record<string, number>;
-    stock?: number;
-}
 
 /* =========================================================
    PRODUCT UNIT
@@ -328,10 +315,10 @@ export type ProductUnitStatus =
     | 'Damaged';
 
 export interface ProductUnit {
-    productId: string;
-    branchId: string;
+    product_id: string;
+    branch_id: string;
 
-    serialNumber?: string;
+    serial_number?: string;
     imei?: string;
 
     barcode?: string;
@@ -348,25 +335,22 @@ export interface ProductUnit {
     storage?: string;
     ram?: string;
 
-    costPrice: number;
-    salePrice?: number;
+    cost_price: number;
+    sale_price?: number;
 
-    purchaseId?: string;
+    purchase_id?: string;
     saleId?: string;
 
-    supplierId?: string;
-    customerId?: string;
+    supplier_d?: string;
+    customer_id?: string;
 
-    repairId?: string;
+    repair_id?: string;
 
     status: ProductUnitStatus;
 }
 
 export type ProductUnitForm = Omit<
     ProductUnit,
-    | 'id'
-    | 'createdAt'
-    | 'updatedAt'
     | 'status'
 >;
 
@@ -378,9 +362,9 @@ export type ProductUnitForm = Omit<
 export interface StockHistory {
     date: string;
 
-    productId: string;
+    product_id: string;
 
-    branchId: string;
+    branch_id: string;
 
     action: StockAction;
 
@@ -392,15 +376,15 @@ export interface StockHistory {
 
     branch: string;
 
-    referenceId?: string;
+    reference_id?: string;
 
     reason?: string;
     note?: string;
 
-    createdBy?: string;
-    updatedBy?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_by?: string;
+    updated_by?: string;
+    created_at?: string;
+    updated_at?: string;
     history?: StockHistoryItem[];
 }
 
@@ -409,8 +393,8 @@ export interface StockHistory {
 ========================================================= */
 
 export interface InventoryStock {
-    productId: string;
-    branchId: string;
+    product_id: string;
+    branch_id: string;
     quantity: number;
 }
 
@@ -421,9 +405,9 @@ export interface InventoryStock {
 export interface LineItem {
     sku?: string;
 
-    productId: string;
+    product_id: string;
 
-    productName: string;
+    product_name: string;
 
     quantity: number;
 
@@ -433,7 +417,7 @@ export interface LineItem {
 
     total?: number;
 
-    serialNumbers?: string[];
+    serial_numbers?: string[];
     dimensions?: string;
     imeis?: string[];
 }
@@ -449,18 +433,18 @@ export type PurchaseStatus =
     | 'Cancelled';
 
 export interface Purchase extends BaseEntity {
-    purchaseNumber?: string;
+    purchase_number?: string;
     id: string;
-    supplier: string;
-    branchId: string;
-    purchaseDate: string;
-    expectedDate?: string;
+    supplier_id: string;
+    branch_id: string;
+    purchase_date: string;
+    expected_date?: string;
     items: LineItem[];
     total: number;
     status?: PurchaseStatus;
     history?: StockHistoryItem[];
     note?: string;
-    signatureUrl?: string;
+    signature_url?: string;
 }
 
 /* =========================================================
@@ -474,12 +458,12 @@ export type PurchaseOrderStatus =
     | 'Cancelled';
 
 export interface PurchaseOrder {
-    poNumber?: string;
+    po_number?: string;
     id: string;
     supplier: string;
-    branchId: string;
-    orderDate: string;
-    expectedDate: string;
+    branch_id: string;
+    order_date: string;
+    expected_date: string;
     items: LineItem[];
     total: number;
     status: PurchaseOrderStatus;
@@ -492,11 +476,11 @@ export interface PurchaseOrder {
 export type SaleStatus = 'Pending' | 'Completed' | 'Cancelled';
 
 export interface Sale {
-    saleNumber?: string;
+    sale_number?: string;
     id: string;
     customer: string;
-    branchId: string;
-    saleDate: string;
+    branch_id: string;
+    sale_date: string;
     items: LineItem[];
     total: number;
     status?: SaleStatus;
@@ -507,15 +491,15 @@ export interface Sale {
 ========================================================= */
 
 export interface Settlement extends BaseEntity {
-    settlementNumber?: string;
+    settlement_number?: string;
 
-    branchId: string;
+    branch_id: string;
 
     date: string;
 
-    totalIn: number;
+    total_in: number;
 
-    totalOut: number;
+    total_out: number;
 
     note?: string;
 }
@@ -530,23 +514,23 @@ export type StockTransferStatus =
     | 'Cancelled';
 
 export interface StockTransfer {
-    transferNumber?: string;
-    fromBranchId: string;
-    toBranchId: string;
-    transferDate: string;
+    transfer_number?: string;
+    from_branch_id: string;
+    to_branch_id: string;
+    transfer_date: string;
     id: string;
-    shortCode?: string;
+    short_code?: string;
     items: LineItem[];
     total: number;
     note?: string;
     status: StockTransferStatus;
     quantity?: number;
     history?: StockHistoryItem[];
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     purpose?: string;
-    signatureUrl?: string;
-    purposeOptions?: string[];
+    signature_url?: string;
+    purpose_options?: string[];
 
 }
 
@@ -555,7 +539,7 @@ export interface StockTransfer {
 ========================================================= */
 
 export interface BranchLocation {
-    branchId: string;
+    branch_id: string;
 
     name: string;
 
@@ -573,7 +557,7 @@ export interface Supplier extends BaseEntity {
 
     name: string;
 
-    contactPerson?: string;
+    contact_person?: string;
 
     phone?: string;
 
@@ -613,9 +597,9 @@ export interface ExpenseCategory extends BaseEntity {
 ========================================================= */
 
 export interface Expense extends BaseEntity {
-    expenseNumber?: string;
+    expense_number?: string;
 
-    categoryId: string;
+    category_id: string;
 
     amount: number;
 
@@ -647,14 +631,14 @@ export interface Staff extends BaseEntity {
 ========================================================= */
 
 export interface Payroll extends BaseEntity {
-    payrollNumber?: string;
-    staffId: string;
+    payroll_number?: string;
+    staff_id: string;
     month: string;
-    basicSalary: number;
+    basic_salary: number;
     allowances?: number;
     deductions?: number;
-    totalSalary: number;
-    paymentDate: string;
+    total_salary: number;
+    payment_date: string;
     note?: string;
     status: 'Pending' | 'Paid';
 }
@@ -668,7 +652,9 @@ export interface Report {
 
     description?: string;
 
-    generatedAt: string;
+    generated_at?: string;
+
+    generated_by: string;
 }
 
 /* =========================================================
@@ -677,9 +663,9 @@ export interface Report {
 
 export interface SummaryReport
     extends Report {
-    periodStart: string;
+    period_start: string;
 
-    periodEnd: string;
+    period_end: string;
 }
 
 /* =========================================================
@@ -705,11 +691,11 @@ export interface IncomeStatement
 
     costOfGoodsSold: number;
 
-    grossProfit: number;
+    gross_profit: number;
 
-    operatingExpenses: number;
+    operating_expenses: number;
 
-    netIncome: number;
+    net_income: number;
 }
 
 /* =========================================================
@@ -718,11 +704,11 @@ export interface IncomeStatement
 
 export interface ProfitAndLoss
     extends Report {
-    totalRevenue: number;
+    total_revenue: number;
 
-    totalExpenses: number;
+    total_expenses: number;
 
-    netProfit: number;
+    net_profit: number;
 }
 
 /* =========================================================
@@ -750,21 +736,19 @@ export interface RepairCenter extends BaseEntity {
     code: string;
     id: string;
     name: string;
-    contactPerson?: string;
+    contact_person?: string;
     phone?: string;
     email?: string;
     address?: string;
     note?: string;
     active: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
     history?: StockHistoryItem[];
-    checkStockAvailability?: boolean;
+    check_stock_availability?: boolean;
 }
 
-/* =========================================================
-   REPAIR
-========================================================= */
+
 
 export type RepairStatus =
     | 'Pending'
@@ -773,40 +757,44 @@ export type RepairStatus =
     | 'Cancelled';
 
 export interface Repair {
-    repairNumber?: string;
+    repair_number?: string;
     id: string;
-    branchId: string;
-    customerId?: string;
+    branch_id: string;
+    customer_id?: string;
     customer: string;
     phone?: string;
-    productId?: string;
-    productName?: string;
-    serialNumber?: string;
+    product_id?: string;
+    product_name?: string;
+    serial_number?: string;
     imei?: string;
     device?: string;
     issue: string;
     diagnosis?: string;
     solution?: string;
     technician?: string;
-    laborRate?: number;
-    hoursWorked?: number;
-    commissionType?: 'Percentage' | 'Fixed';
-    commissionRate?: number;
-    commissionAmount?: number;
-    estimatedCost?: number;
-    repairCost?: number;
-    entryDate: string;
-    completedDate?: string;
+    labor_rate?: number; // This is already snake_case
+    hours_worked?: number; // This is already snake_case
+    commission_type?: 'Percentage' | 'Fixed';
+    commission_rate?: number;
+    commission_amount?: number;
+    estimated_cost?: number;
+    repair_cost?: number;
+    repair_date?: string; // Made optional as it's not always present in form
+    repair_data?: string; // Made optional as it's not always present in form
+    completion_date?: string; // This is already snake_case
+    editing_id?: string; // Made optional as it's not always present in form
+    entry_date: string; // This is already snake_case
+    completed_date?: string; // This is already snake_case
     items?: LineItem[];
     total: number;
     note?: string;
     status: RepairStatus;
     history?: StockHistoryItem[];
-    itemsPerPage?: number;
-    itemsPerPageOptions?: number[];
-    createdAt?: string;
-    updatedAt?: string;
-    checkStockAvailability?: boolean;
+    items_per_page?: number;
+    items_per_page_options?: number[];
+    created_at?: string;
+    updated_at?: string;
+    check_stock_availability?: boolean;
 }
 
 /* =========================================================

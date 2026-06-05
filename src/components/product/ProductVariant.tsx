@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
-import { ProductVariant as ProductVariantType, MasterAttribute, DataProduct } from '../../types';
+import { ProductVariant as ProductVariantType, MasterAttribute, Product } from '../../types';
 
 interface ProductVariantProps {
     variants: ProductVariantType[];
-    products: DataProduct[];
+    products: Product[];
     processors: MasterAttribute[];
     rams: MasterAttribute[];
     storages: MasterAttribute[];
@@ -45,13 +45,13 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
     const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
 
     const [form, setForm] = useState({
-        productId: '',
-        processorId: '',
-        ramId: '',
-        storageId: '',
-        colorId: '',
-        regionId: '',
-        conditionId: '',
+        product_id: '',
+        processor_id: '',
+        ram_id: '',
+        storage_id: '',
+        color_id: '',
+        region_id: '',
+        condition_id: '',
         sku: '',
         price: '',
         stock: '',
@@ -67,7 +67,7 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
     const getProductName = (id?: string) => {
         if (!id) return '-';
         // Look for the product in the provided specification/product list
-        const product = products.find(p => p.id === id || p.productSpecId === id);
+        const product = products.find(p => p.id === id || p.product_spec_id === id);
         return product?.name || '-';
     };
 
@@ -81,19 +81,19 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
 
             const productName =
                 getProductName(
-                    item.productId
+                    item.product_id
                 ).toLowerCase();
 
             const colorName =
                 getNameById(
                     colors,
-                    item.colorId
+                    item.color_id
                 ).toLowerCase();
 
             const storageName =
                 getNameById(
                     storages,
-                    item.storageId
+                    item.storage_id
                 ).toLowerCase();
 
             return (
@@ -102,22 +102,22 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                 colorName.includes(term) ||
                 storageName.includes(term) ||
                 (item.price || 0).toString().includes(term) ||
-                (item.stockQuantity || 0).toString().includes(term)
+                (item.stock_quantity || 0).toString().includes(term)
             );
         });
 
     }, [search, variants]);
 
     const generateSku = (pId?: string, cId?: string, sId?: string, rId?: string, regId?: string, condId?: string) => {
-        const product = products.find(p => p.id === form.productId);
+        const product = products.find(p => p.id === form.product_id);
         if (!product) return '';
 
-        const processor = processors.find(p => p.id === (pId || form.processorId));
-        const color = colors.find(c => c.id === (cId || form.colorId));
-        const storage = storages.find(s => s.id === (sId || form.storageId));
-        const ram = rams.find(r => r.id === (rId || form.ramId));
-        const region = regions.find(r => r.id === (regId || form.regionId));
-        const condition = conditions.find(c => c.id === (condId || form.conditionId));
+        const processor = processors.find(p => p.id === (pId || form.processor_id));
+        const color = colors.find(c => c.id === (cId || form.color_id));
+        const storage = storages.find(s => s.id === (sId || form.storage_id));
+        const ram = rams.find(r => r.id === (rId || form.ram_id));
+        const region = regions.find(r => r.id === (regId || form.region_id));
+        const condition = conditions.find(c => c.id === (condId || form.condition_id));
 
         // Helper to safely retrieve a code from the product's mapping or default to sanitized segment
         const getAttrCode = (val?: string, codes?: { [key: string]: string }) => {
@@ -127,13 +127,13 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
         };
 
         const segments = [
-            product.shortModel || product.model?.replace(/\s/g, '').substring(0, 5) || product.name.replace(/\s/g, '').substring(0, 5),
-            getAttrCode(processor?.name, product.processorCodes),
-            getAttrCode(ram?.name, product.ramCodes),
-            getAttrCode(storage?.name, product.storageCodes),
-            getAttrCode(color?.name, product.colorCodes),
-            getAttrCode(region?.name, product.regionCodes),
-            getAttrCode(condition?.name, product.conditionCodes)
+            product.short_model || product.model?.replace(/\s/g, '').substring(0, 5) || product.name.replace(/\s/g, '').substring(0, 5),
+            getAttrCode(processor?.name, product.processor_codes),
+            getAttrCode(ram?.name, product.ram_codes),
+            getAttrCode(storage?.name, product.storage_codes),
+            getAttrCode(color?.name, product.color_codes),
+            getAttrCode(region?.name, product.region_codes),
+            getAttrCode(condition?.name, product.condition_codes)
         ].filter(Boolean);
 
         return segments.join('-').toUpperCase();
@@ -159,13 +159,13 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
 
             if (
                 [
-                    'productId',
-                    'processorId',
-                    'ramId',
-                    'colorId',
-                    'storageId',
-                    'regionId',
-                    'conditionId',
+                    'product_id',
+                    'processor_id',
+                    'ram_id',
+                    'color_id',
+                    'storage_id',
+                    'region_id',
+                    'condition_id',
                 ].includes(name)
             ) {
                 updated.sku = generateSku();
@@ -210,11 +210,11 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
 
         try {
             if (isBulkMode) {
-                const procs = selectedProcessors.length > 0 ? selectedProcessors : [form.processorId || undefined];
-                const rms = selectedRams.length > 0 ? selectedRams : [form.ramId || undefined];
-                const clrs = selectedColors.length > 0 ? selectedColors : [form.colorId || undefined];
-                const regs = selectedRegions.length > 0 ? selectedRegions : [form.regionId || undefined];
-                const conds = selectedConditions.length > 0 ? selectedConditions : [form.conditionId || undefined];
+                const procs = selectedProcessors.length > 0 ? selectedProcessors : [form.processor_id || undefined];
+                const rms = selectedRams.length > 0 ? selectedRams : [form.ram_id || undefined];
+                const clrs = selectedColors.length > 0 ? selectedColors : [form.color_id || undefined];
+                const regs = selectedRegions.length > 0 ? selectedRegions : [form.region_id || undefined];
+                const conds = selectedConditions.length > 0 ? selectedConditions : [form.condition_id || undefined];
 
                 const payloads: any[] = [];
 
@@ -230,16 +230,16 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                             regs.forEach(regId => {
                                 conds.forEach(condId => {
                                     payloads.push({
-                                        productId: form.productId,
-                                        processorId: pId,
-                                        ramId: rId,
-                                        storageId: form.storageId,
-                                        colorId: cId,
-                                        regionId: regId,
-                                        conditionId: condId,
-                                        sku: generateSku(pId, cId, form.storageId, rId, regId, condId),
+                                        product_id: form.product_id,
+                                        processor_id: pId,
+                                        ram_id: rId,
+                                        storage_id: form.storage_id,
+                                        color_id: cId,
+                                        region_id: regId,
+                                        condition_id: condId,
+                                        sku: generateSku(pId, cId, form.storage_id, rId, regId, condId),
                                         price: parseFloat(form.price),
-                                        stockQuantity: parseInt(form.stock),
+                                        stock_quantity: parseInt(form.stock),
                                     });
                                 });
                             });
@@ -261,16 +261,17 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                 }
             } else {
                 const payload = {
-                    productId: form.productId,
-                    processorId: form.processorId,
-                    ramId: form.ramId,
-                    storageId: form.storageId,
-                    colorId: form.colorId,
-                    regionId: form.regionId,
-                    conditionId: form.conditionId,
-                    sku: form.sku || generateSku(), // Use generated SKU if not provided
+                    product_id: form.product_id,
+                    processorId: form.processor_id,
+                    ram_id: form.ram_id,
+                    storage_id: form.storage_id,
+                    color_id: form.color_id,
+                    region_id: form.region_id,
+                    condition_id: form.condition_id,
+                    sku: form.sku || generateSku(),
+                    // Use generated SKU if not provided
                     price: parseFloat(form.price),
-                    stockQuantity: parseInt(form.stock),
+                    stock_quantity: parseInt(form.stock),
                 };
                 
                 // Check for duplicate SKU in single mode
@@ -283,13 +284,13 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
             }
 
             setForm({
-                productId: '',
-                processorId: '',
-                ramId: '',
-                storageId: '',
-                colorId: '',
-                regionId: '',
-                conditionId: '',
+                product_id: '',
+                processor_id: '',
+                ram_id: '',
+                storage_id: '',
+                color_id: '',
+                region_id: '',
+                condition_id: '',
                 sku: '',
                 price: '',
                 stock: '',
@@ -313,7 +314,7 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
     ) => {
         await onUpdate({
             ...variant,
-            isActive: !variant.isActive
+            is_active: !variant.is_active
         });
     };
 
@@ -359,8 +360,8 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormSelect
                         label="Product"
-                        name="productId"
-                        value={form.productId}
+                        name="product_id"
+                        value={form.product_id}
                         onChange={handleChange}
                         options={products.map(p => ({
                             value: p.id,
@@ -454,21 +455,21 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                             <FormSelect
                                 label="Processor"
                                 name="processorId"
-                                value={form.processorId}
+                                value={form.processor_id}
                                 onChange={handleChange}
                                 options={processors.map(p => ({ value: p.id, label: p.name }))}
                             />
                             <FormSelect
                                 label="RAM"
                                 name="ramId"
-                                value={form.ramId}
+                                value={form.ram_id}
                                 onChange={handleChange}
                                 options={rams.map(r => ({ value: r.id, label: r.name }))}
                             />
                             <FormSelect
                                 label="Color"
                                 name="colorId"
-                                value={form.colorId}
+                                value={form.color_id}
                                 onChange={handleChange}
                                 options={colors.map(c => ({ value: c.id, label: c.name }))}
                                 required
@@ -478,7 +479,7 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                     <FormSelect
                         label="Storage"
                         name="storageId"
-                        value={form.storageId}
+                        value={form.storage_id}
                         onChange={handleChange}
                         options={storages.map(s => ({ value: s.id, label: s.name }))}
                         required
@@ -486,14 +487,14 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                     <FormSelect
                         label="Region"
                         name="regionId"
-                        value={form.regionId}
+                        value={form.region_id}
                         onChange={handleChange}
                         options={regions.map(r => ({ value: r.id, label: r.name }))}
                     />
                     <FormSelect
                         label="Condition"
                         name="conditionId"
-                        value={form.conditionId}
+                        value={form.condition_id}
                         onChange={handleChange}
                         options={conditions.map(c => ({ value: c.id, label: c.name }))}
                     />
@@ -555,14 +556,14 @@ const ProductVariant: React.FC<ProductVariantProps> = ({
                             filteredVariants.map(item => (
                                 <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td className="px-4 py-3 text-sm font-medium text-sky-600 dark:text-sky-400">{item.sku}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{getProductName(item.productId)}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getNameById(colors, item.colorId)}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getNameById(storages, item.storageId)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{getProductName(item.product_id)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getNameById(colors, item.color_id)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getNameById(storages, item.storage_id)}</td>
                                     <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">${(item.price || 0).toFixed(2)}</td>
-                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">{item.stockQuantity}</td>
+                                    <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">{item.stock_quantity}</td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                            {item.isActive ? 'Active' : 'Inactive'}
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                            {item.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-center">

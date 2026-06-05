@@ -17,13 +17,13 @@ import {
   ProductVariant,
   MasterAttribute,
   ToastType as ToastKind,
-  DataProduct,
+  Product,
 } from '../../types';
 import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
 import { useFormValidation } from '../../hooks/useFormValidation';
 
 interface ProductAttributesProps {
-  products: DataProduct[];
+  products: Product[];
   productTypes: ProductTypeInterface[];
   categories: CategoryInterface[];
   subCategories: SubCategoryInterface[];
@@ -31,7 +31,7 @@ interface ProductAttributesProps {
   variants: ProductVariant[];
 
   onAddProductType: (
-    newType: Omit<ProductTypeInterface, 'id' | 'createdAt' | 'updatedAt'>
+    newType: Omit<ProductTypeInterface, 'id' | 'created_at' | 'updated_at'>
   ) => Promise<void>;
 
   onUpdateProductType: (
@@ -41,7 +41,7 @@ interface ProductAttributesProps {
   onDeleteProductType: (id: string) => Promise<void>;
 
   onAddCategory: (
-    newCategory: Omit<CategoryInterface, 'id' | 'createdAt' | 'updatedAt'>
+    newCategory: Omit<CategoryInterface, 'id' | 'created_at' | 'updated_at'>
   ) => Promise<void>;
 
   onUpdateCategory: (
@@ -53,7 +53,7 @@ interface ProductAttributesProps {
   onAddSubCategory: (
     newSubCategory: Omit<
       SubCategoryInterface,
-      'id' | 'createdAt' | 'updatedAt'
+      'id' | 'created_at' | 'updated_at'
     >
   ) => Promise<void>;
 
@@ -64,7 +64,7 @@ interface ProductAttributesProps {
   onDeleteSubCategory: (id: string) => Promise<void>;
 
   onAddBrand: (
-    newBrand: Omit<BrandInterface, 'id' | 'createdAt' | 'updatedAt'>
+    newBrand: Omit<BrandInterface, 'id' | 'created_at' | 'updated_at'>
   ) => Promise<void>;
 
   onUpdateBrand: (
@@ -76,7 +76,7 @@ interface ProductAttributesProps {
   onAddVariant: (
     newVariant: Omit<
       ProductVariant,
-      'id' | 'createdAt' | 'updatedAt'
+      'id' | 'created_at' | 'updated_at'
     >
   ) => Promise<void>;
 
@@ -204,7 +204,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
         (type) =>
           type.code.toLowerCase().includes(term) ||
           type.name.toLowerCase().includes(term) ||
-          (type.description || '')
+          (type.description || '') // This is already snake_case
             .toLowerCase()
             .includes(term)
       );
@@ -246,7 +246,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           await onUpdateProductType({
             id: editingId,
             ...form,
-            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
         } else {
           await onAddProductType(form);
@@ -353,7 +353,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
                             : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        {type.active
+                        {type.is_active
                           ? 'Active'
                           : 'Inactive'}
                       </span>
@@ -367,9 +367,8 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
                             setForm({
                               code: type.code,
                               name: type.name,
-                              description:
-                                type.description || '',
-                              active: type.active,
+                              description: type.description || '',
+                              is_active: type.is_active,
                             });
                           }}
                           className="px-3 py-1 text-sm bg-amber-500 text-white rounded"
@@ -419,7 +418,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const [form, setForm] = useState({
       code: '',
       name: '',
-      typeId: productTypes[0]?.id || '',
+      type_id: productTypes[0]?.id || '', // This is already snake_case
       description: '',
       active: true,
     });
@@ -427,11 +426,11 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const { isDuplicate, isValidating } = useDuplicateValidation('categories', 'code', form.code, editingId);
 
     const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-      required: ['code', 'name', 'typeId'],
+      required: ['code', 'name', 'type_id'],
       labels: {
         code: 'Category Code',
         name: 'Category Name',
-        typeId: 'Product Type'
+        type_id: 'Product Type'
       }
     });
 
@@ -451,7 +450,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
         (cat) =>
           cat.code.toLowerCase().includes(term) ||
           cat.name.toLowerCase().includes(term) ||
-          (typeMap[cat.typeId] || '').toLowerCase().includes(term)
+          (typeMap[cat.type_id] || '').toLowerCase().includes(term) // This is already snake_case
       );
     }, [search, categories, typeMap]);
 
@@ -471,7 +470,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       setForm({
         code: '',
         name: '',
-        typeId: productTypes[0]?.id || '',
+        type_id: productTypes[0]?.id || '', // This is already snake_case
         description: '',
         active: true,
       });
@@ -486,7 +485,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           await onUpdateCategory({
             id: editingId,
             ...form,
-            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
           showToast('Category updated successfully', 'success');
         } else {
@@ -561,12 +560,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
             />
             <FormSelect
               label="Product Type"
-              name="typeId"
-              value={form.typeId}
+              name="type_id"
+              value={form.type_id}
               onChange={handleChange}
               placeholder="Select Product Type"
               options={productTypes.map(t => ({ value: t.id, label: t.name }))}
-              error={fieldErrors.typeId}
+              error={fieldErrors.type_id}
               required
             />
           </div>
@@ -592,13 +591,13 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
                   <tr key={cat.id}>
                     <td className="px-4 py-3 text-sm">{cat.code}</td>
                     <td className="px-4 py-3 text-sm">{cat.name}</td>
-                    <td className="px-4 py-3 text-sm">{typeMap[cat.typeId] || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm">{typeMap[cat.type_id] || 'N/A'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${cat.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{cat.active ? 'Active' : 'Inactive'}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => { setEditingId(cat.id); setForm({ code: cat.code, name: cat.name, typeId: cat.typeId, description: cat.description || '', active: cat.active }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
+                        <button onClick={() => { setEditingId(cat.id); setForm({ code: cat.code, name: cat.name, type_id: cat.type_id, description: cat.description || '', active: cat.active }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
                         <button onClick={() => handleDelete(cat.id)} className="px-3 py-1 text-sm bg-red-500 text-white rounded">Delete</button>
                       </div>
                     </td>
@@ -625,7 +624,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const [form, setForm] = useState({
       code: '',
       name: '',
-      categoryId: categories[0]?.id || '',
+      category_id: categories[0]?.id || '',
       description: '',
       active: true,
     });
@@ -633,11 +632,11 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const { isDuplicate, isValidating } = useDuplicateValidation('sub_categories', 'code', form.code, editingId);
 
     const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-      required: ['code', 'name', 'categoryId'],
+      required: ['code', 'name', 'category_id'],
       labels: {
         code: 'Subcategory Code',
         name: 'Subcategory Name',
-        categoryId: 'Parent Category'
+        category_id: 'Parent Category'
       }
     });
 
@@ -657,7 +656,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
         (sub) =>
           sub.code.toLowerCase().includes(term) ||
           sub.name.toLowerCase().includes(term) ||
-          (categoryMap[sub.categoryId] || '').toLowerCase().includes(term)
+          (categoryMap[sub.category_id] || '').toLowerCase().includes(term)
       );
     }, [search, subCategories, categoryMap]);
 
@@ -677,7 +676,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       setForm({
         code: '',
         name: '',
-        categoryId: categories[0]?.id || '',
+        category_id: categories[0]?.id || '',
         description: '',
         active: true,
       });
@@ -692,7 +691,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           await onUpdateSubCategory({
             id: editingId,
             ...form,
-            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
           showToast('Subcategory updated successfully', 'success');
         } else {
@@ -767,12 +766,12 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
             />
             <FormSelect
               label="Parent Category"
-              name="categoryId"
-              value={form.categoryId}
+              name="category_id"
+              value={form.category_id}
               onChange={handleChange}
               placeholder="Select Category"
               options={categories.map(c => ({ value: c.id, label: c.name }))}
-              error={fieldErrors.categoryId}
+              error={fieldErrors.category_id}
               required
             />
           </div>
@@ -798,13 +797,13 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
                   <tr key={sub.id}>
                     <td className="px-4 py-3 text-sm">{sub.code}</td>
                     <td className="px-4 py-3 text-sm">{sub.name}</td>
-                    <td className="px-4 py-3 text-sm">{categoryMap[sub.categoryId] || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm">{categoryMap[sub.category_id] || 'N/A'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${sub.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{sub.active ? 'Active' : 'Inactive'}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => { setEditingId(sub.id); setForm({ code: sub.code, name: sub.name, categoryId: sub.categoryId, description: sub.description || '', active: sub.active }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
+                        <button onClick={() => { setEditingId(sub.id); setForm({ code: sub.code, name: sub.name, category_id: sub.category_id, description: sub.description || '', active: sub.active }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
                         <button onClick={() => handleDelete(sub.id)} className="px-3 py-1 text-sm bg-red-500 text-white rounded">Delete</button>
                       </div>
                     </td>
@@ -831,7 +830,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
     const [form, setForm] = useState({
       code: '',
       name: '',
-      shortName: '',
+      short_name: '',
       country: '',
     });
 
@@ -853,7 +852,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
         (b) =>
           b.code.toLowerCase().includes(term) ||
           b.name.toLowerCase().includes(term) ||
-          (b.shortName || '').toLowerCase().includes(term) ||
+          (b.short_name || '').toLowerCase().includes(term) || // This is already snake_case
           (b.country || '').toLowerCase().includes(term)
       );
     }, [search, brands]);
@@ -874,7 +873,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
       setForm({
         code: '',
         name: '',
-        shortName: '',
+        short_name: '',
         country: '',
       });
     };
@@ -888,7 +887,7 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
           await onUpdateBrand({
             id: editingId,
             ...form,
-            updatedAt: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
           showToast('Brand updated successfully', 'success');
         } else {
@@ -963,9 +962,9 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
             />
             <FormInput
               label="Short Name"
-              name="shortName"
+              name="short_name"
               placeholder="e.g. Apple"
-              value={form.shortName}
+              value={form.short_name}
               onChange={handleChange}
             />
             <FormInput
@@ -988,11 +987,11 @@ const ProductAttributes: React.FC<ProductAttributesProps> = ({
                 <tr key={brand.id}>
                   <td className="px-4 py-3 text-sm">{brand.code}</td>
                   <td className="px-4 py-3 text-sm">{brand.name}</td>
-                  <td className="px-4 py-3 text-sm">{brand.shortName || '-'}</td>
+                  <td className="px-4 py-3 text-sm">{brand.short_name || '-'}</td> // This is already snake_case
                   <td className="px-4 py-3 text-sm">{brand.country || '-'}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex justify-center gap-2">
-                      <button onClick={() => { setEditingId(brand.id); setForm({ code: brand.code, name: brand.name, shortName: brand.shortName || '', country: brand.country || '' }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
+                      <button onClick={() => { setEditingId(brand.id); setForm({ code: brand.code, name: brand.name, short_name: brand.short_name || '', country: brand.country || '' }); }} className="px-3 py-1 text-sm bg-amber-500 text-white rounded">Edit</button>
                       <button onClick={() => handleDelete(brand.id)} className="px-3 py-1 text-sm bg-red-500 text-white rounded">Delete</button>
                     </div>
                   </td>

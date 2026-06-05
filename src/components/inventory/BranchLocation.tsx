@@ -5,6 +5,8 @@ import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import { useDuplicateValidation } from '../../hooks/useDuplicateValidation';
 import { useFormValidation } from '../../hooks/useFormValidation';
+import { Branch as BranchType } from '../../types';
+
 
 interface BranchLocationItem {
     id: string;

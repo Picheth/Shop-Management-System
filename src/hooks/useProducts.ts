@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { DataProduct, MasterAttribute, Category, ProductType } from '../types';
-import { getProductConfiguration, getAttrName } from '../utils/productHelpers';
+import { Product, MasterAttribute, Category, ProductType } from '../types';
+import { getProductConfiguration } from '../utils/productHelpers';
 
-export type SortableKeys = 'name' | 'sku' | 'typeId' | 'brandId' | 'categoryId' | 'configuration' | 'totalStock' | 'status';
+export type SortableKeys = 'name' | 'sku' | 'type_id' | 'brand_id' | 'category_id' | 'configuration' | 'stock_quantity' | 'status';
 
 interface UseProductsProps {
-    products: DataProduct[];
+    products: Product[];
     allCategories: Category[];
     allProductTypes: ProductType[];
     processors: MasterAttribute[];
@@ -37,7 +37,7 @@ export const useProducts = ({
     const productsWithStock = useMemo(() => {
         return products.map(p => ({
             ...p,
-            totalStock: Object.values(p.stockByLocation || {}).reduce((a, b) => a + b, 0)
+            stock_quantity: Object.values(p.stock_by_location || {}).reduce((a, b) => a + b, 0)
         }));
     }, [products]);
 
@@ -46,7 +46,7 @@ export const useProducts = ({
         let result = productsWithStock;
 
         if (categoryFilter !== 'All') {
-            result = result.filter(p => p.categoryId === categoryFilter);
+            result = result.filter(p => p.category_id === categoryFilter);
         }
 
         if (statusFilter !== 'All') {
@@ -68,14 +68,28 @@ export const useProducts = ({
         return result;
     }, [productsWithStock, searchTerm, categoryFilter, statusFilter, processors, rams, storages, colors, regions]);
 
+    const getSortableValue = (product: Product, key: SortableKeys) => {
+        switch (key) {
+            case 'name': return product.name;
+            case 'sku': return product.sku;
+            case 'type_id': return product.type_id;
+            case 'brand_id': return product.brand_id;
+            case 'category_id': return product.category_id;
+            case 'configuration': return getProductConfiguration(product, processors, rams, storages, colors, regions);
+            case 'stock_quantity': return product.stock_quantity;
+            case 'status': return product.status;
+            default: return '';
+        }
+    };
+
     // 3. Sort logic
     const sortedProducts = useMemo(() => {
         const items = [...filteredProducts];
         if (!sortConfig) return items;
 
         return items.sort((a, b) => {
-            const aVal = (a as any)[sortConfig.key] || '';
-            const bVal = (b as any)[sortConfig.key] || '';
+            const aVal = getSortableValue(a, sortConfig.key);
+            const bVal = getSortableValue(b, sortConfig.key);
             
             if (sortConfig.direction === 'ascending') {
                 return typeof aVal === 'number' ? aVal - bVal : String(aVal).localeCompare(String(bVal));

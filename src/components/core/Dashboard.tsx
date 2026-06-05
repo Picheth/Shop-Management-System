@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import Placeholder from '../ui/Placeholder';
-import { DataProduct, Repair, Sale } from '../../types';
+import { Product, Repair, Sale } from '../../types';
 import SalesTrendChart from './SalesTrendChart';
 interface DashboardProps {
     sales?: Sale[];
     repairs?: Repair[];
-    products?: DataProduct[];
+    products?: Product[];
 }
 
 const StatCard: React.FC<{
@@ -63,7 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     const lowStockProducts = useMemo(
         () => products.filter(p =>
-            Object.values(p.stockByLocation || {}).some(qty => qty > 0 && qty < 5)
+            Object.values(p.stock_by_location || {}).some(qty => qty > 0 && qty < 5)
         ).length, // Correctly calculate low stock products
         [products]
     );

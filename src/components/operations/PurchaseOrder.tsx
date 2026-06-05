@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
     PurchaseOrder as PurchaseOrderType,
-    DataProduct,
+    Product,
 } from '../../types';
 
 import Placeholder from '../ui/Placeholder';
@@ -15,7 +15,7 @@ type PurchaseOrderFormData = Omit<
 >;
 
 interface PurchaseOrderProps {
-    products: DataProduct[];
+    products: Product[];
 }
 
 const PurchaseOrder: React.FC<PurchaseOrderProps> = ({ products }) => {
@@ -119,7 +119,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({ products }) => {
                                     </td>
 
                                     <td className="px-4 py-2 text-gray-500">
-                                        {po.orderDate}
+                                        {po.order_date}
                                     </td>
 
                                     <td className="px-4 py-2 text-right font-medium">

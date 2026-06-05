@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ProductVariant as ProductVariantType, MasterAttribute, DataProduct } from '../../types';
+import { ProductVariant as ProductVariantType, MasterAttribute, Product } from '../../types';
 import { generateSku } from '../../Types/ProductSpecs';
 import BulkGenerator from '../inventory/BulkGenerator';
 import VariantTable from './VariantTable';
@@ -8,7 +8,7 @@ import FormSelect from '../ui/FormSelect';
 
 interface VariantManagerProps {
     variants: ProductVariantType[];
-    products: DataProduct[];
+    products: Product[];
     processors: MasterAttribute[];
     rams: MasterAttribute[];
     storages: MasterAttribute[];
@@ -25,12 +25,12 @@ const VariantManager: React.FC<VariantManagerProps> = (props) => {
     const [isBulkMode, setIsBulkMode] = useState(false);
     const [search, setSearch] = useState('');
     const [form, setForm] = useState({
-        productId: '', storageId: '', price: '', stock: '', sku: ''
+        product_id: '', storage_id: '', price: '', stock: '', sku: ''
     });
 
     const handleBulkGenerate = async (selections: any) => {
-        const product = props.products.find(p => p.id === form.productId);
-        if (!product || !form.storageId) {
+        const product = props.products.find(p => p.id === form.product_id);
+        if (!product || !form.storage_id) {
             alert("Please select a Product and Base Storage first.");
             return;
         }
@@ -49,17 +49,17 @@ const VariantManager: React.FC<VariantManagerProps> = (props) => {
                         conds.forEach((condId: any) => {
                             const pName = props.processors.find(x => x.id === pId)?.name;
                             const rName = props.rams.find(x => x.id === rId)?.name;
-                            const sName = props.storages.find(x => x.id === form.storageId)?.name;
+                            const sName = props.storages.find(x => x.id === form.storage_id)?.name;
                             const cName = props.colors.find(x => x.id === cId)?.name;
                             const regName = props.regions.find(x => x.id === regId)?.name;
                             const condName = props.conditions.find(x => x.id === condId)?.name;
 
                             payloads.push({
-                                productId: form.productId,
-                                processorId: pId, ramId: rId, storageId: form.storageId,
-                                colorId: cId, regionId: regId, conditionId: condId,
+                                product_id: form.product_id,
+                                processor_id: pId, ram_id: rId, storage_id: form.storage_id,
+                                color_id: cId, region_id: regId, condition_id: condId,
                                 price: parseFloat(form.price) || 0,
-                                stockQuantity: parseInt(form.stock) || 0,
+                                stock_quantity: parseInt(form.stock) || 0,
                                 sku: generateSku(product as any, undefined, undefined, undefined, sName, cName, regName, condName, rName, pName)
                             });
                         });
@@ -95,14 +95,14 @@ const VariantManager: React.FC<VariantManagerProps> = (props) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <FormSelect
                         label="Base Product"
-                        value={form.productId}
-                        onChange={e => setForm(v => ({...v, productId: e.target.value}))}
+                        value={form.product_id}
+                        onChange={e => setForm(v => ({...v, product_id: e.target.value}))}
                         options={props.products.map(p => ({ value: p.id, label: p.name }))}
                     />
                     <FormSelect
                         label="Common Storage"
-                        value={form.storageId}
-                        onChange={e => setForm(v => ({...v, storageId: e.target.value}))}
+                        value={form.storage_id}
+                        onChange={e => setForm(v => ({...v, storage_id: e.target.value}))}
                         options={props.storages.map(s => ({ value: s.id, label: s.name }))}
                     />
                     <FormInput

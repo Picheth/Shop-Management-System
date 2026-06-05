@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { 
-    DataProduct, 
+    Product, 
     Branch, 
     StockTransfer as StockTransferType,
     ToastType,
@@ -15,7 +15,7 @@ import StockTransferForm from './StockTransferForm';
 import { PrintIcon, ExportIcon, TrashIcon, CheckIcon, PdfIcon, LinkIcon, EmailIcon, WhatsAppIcon, TelegramIcon } from '../ui/Icons';
 
 interface StockTransferProps {
-    products: DataProduct[];
+    products: Product[];
     branches: Branch[];
     stockTransfers: StockTransferType[];
     onTransfer: (transfer: StockTransferType) => void;
@@ -122,7 +122,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
     const filteredAndSortedTransfers = useMemo(() => {
     let result = [...stockTransfers].sort((a, b) => 
-        new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+        new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
     );
     
     const term = searchTerm.toLowerCase();
@@ -130,7 +130,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
     if (isIdSearch) {
         return result.filter(t =>
             (t.id || '').toLowerCase().includes(term) ||
-            (t.shortCode || '').toLowerCase().includes(term)
+            (t.short_code || '').toLowerCase().includes(term)
         );
     }
 
@@ -142,8 +142,8 @@ const StockTransfer: React.FC<StockTransferProps> = ({
     // Filter by date range
     if (startDate || endDate) {
         result = result.filter(t => {
-            if (!t.createdAt) return false;
-            const transferDate = t.createdAt.split('T')[0];
+            if (!t.created_at) return false;
+            const transferDate = t.created_at.split('T')[0];
 
             if (startDate && transferDate < startDate) return false;
             if (endDate && transferDate > endDate) return false;
@@ -156,13 +156,13 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
     return result.filter(t => {
         const itemNames =
-            t.items?.map(i => i.productName.toLowerCase()).join(' ') || '';
+            t.items?.map(i => i.product_name.toLowerCase()).join(' ') || '';
 
         const fromBranchName =
-            branches.find(b => b.id === t.fromBranchId)?.name.toLowerCase() || '';
+            branches.find(b => b.id === t.from_branch_id)?.name.toLowerCase() || '';
 
         const toBranchName =
-            branches.find(b => b.id === t.toBranchId)?.name.toLowerCase() || '';
+            branches.find(b => b.id === t.to_branch_id)?.name.toLowerCase() || '';
 
         const transferId = t.id.toLowerCase();
 
@@ -170,7 +170,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
             (t as any).purpose?.toLowerCase() || '';
 
         const shortCodeVal =
-            t.shortCode?.toLowerCase() || '';
+            t.short_code?.toLowerCase() || '';
 
         const noteVal =
             (t as any).note?.toLowerCase() || '';
@@ -240,8 +240,8 @@ const StockTransfer: React.FC<StockTransferProps> = ({
     const totalProfit = useMemo(() => {
         return filteredAndSortedTransfers.reduce((sum, transfer) => {
             const itemsProfit = transfer.items?.reduce((s, i) => {
-                const product = products.find(p => p.id === i.productId);
-                const margin = (product?.salePrice || 0) - (product?.costPrice || 0);
+                const product = products.find(p => p.id === i.product_id);
+                const margin = (product?.sale_price || 0) - (product?.cost_price || 0);
                 return s + (i.quantity * margin);
             }, 0) || 0;
             return sum + itemsProfit;
@@ -251,7 +251,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
     const totalWeight = useMemo(() => {
         return filteredAndSortedTransfers.reduce((sum, transfer) => {
             const itemsWeight = transfer.items?.reduce((s, item) => {
-                const product = products.find(p => p.id === item.productId);
+                const product = products.find(p => p.id === item.product_id);
                 const weightAttr = product?.attributes?.find(a => a.name.toLowerCase() === 'weight');
                 const unitWeight = parseWeight(weightAttr?.value);
                 return s + (item.quantity * unitWeight);
@@ -263,7 +263,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
     const totalVolume = useMemo(() => {
         return filteredAndSortedTransfers.reduce((sum, transfer) => {
             const itemsVolume = transfer.items?.reduce((s, item) => {
-                const unitCBM = calculateItemCBM(item.dimensions || products.find(p => p.id === item.productId)?.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value);
+                const unitCBM = calculateItemCBM(item.dimensions || products.find(p => p.id === item.product_id)?.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value);
                 return s + (item.quantity * unitCBM);
             }, 0) || 0;
             return sum + itemsVolume;
@@ -279,7 +279,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
         const data = days.map(date => {
             const total = filteredAndSortedTransfers
-                .filter(t => t.createdAt && t.createdAt.startsWith(date))
+                .filter(t => t.created_at && t.created_at.startsWith(date))
                 .reduce((sum, t) => sum + (t.items?.reduce((s, i) => s + i.quantity, 0) || 0), 0);
             return { date, total };
         });
@@ -295,7 +295,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
         const previousTotal = prevDays.reduce((sum, date) => {
             const dayTotal = filteredAndSortedTransfers
-                .filter(t => t.createdAt && t.createdAt.startsWith(date))
+                .filter(t => t.created_at && t.created_at.startsWith(date))
                 .reduce((s, t) => s + (t.items?.reduce((si, i) => si + i.quantity, 0) || 0), 0);
             return sum + dayTotal;
         }, 0);
@@ -315,15 +315,15 @@ const StockTransfer: React.FC<StockTransferProps> = ({
         const headers = ['Date', 'Code', 'Transfer ID', 'Products', 'Source Branch', 'Destination Branch', 'Quantity', 'Purpose', 'Note', 'Status'];
         // Map filtered data to rows, resolving IDs to human-readable names
         const rows = filteredAndSortedTransfers.map(t => {
-            const productNames = t.items?.map(i => i.productName).join(' | ') || 'N/A';
-            const fromBranchName = branches.find(b => b.id === t.fromBranchId)?.name || 'Unknown';
-            const toBranchName = branches.find(b => b.id === t.toBranchId)?.name || 'Unknown';
+            const productNames = t.items?.map(i => i.product_name).join(' | ') || 'N/A';
+            const fromBranchName = branches.find(b => b.id === t.from_branch_id)?.name || 'Unknown';
+            const toBranchName = branches.find(b => b.id === t.to_branch_id)?.name || 'Unknown';
             const qty = t.items?.reduce((s, i) => s + i.quantity, 0) || 0;
-            const date = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A';
+            const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A';
 
             return [
                 date,
-                sanitizeCSV(t.shortCode || '-'),
+                sanitizeCSV(t.short_code || '-'),
                 `"${t.id}"`,
                 `"${productNames.replace(/"/g, '""')}"`, // Escape quotes
                 `"${fromBranchName.replace(/"/g, '""')}"`,
@@ -372,21 +372,21 @@ const StockTransfer: React.FC<StockTransferProps> = ({
         // Data Table
         const headers = [['Date', 'Code', 'Ref ID', 'Products', 'Source', 'Destination', 'Purpose', 'Note', 'Qty', 'Value', 'Est. Profit', 'Status']];
         const data = filteredAndSortedTransfers.map(t => {
-            const productNames = t.items?.map(i => i.productName).join('\n') || '-';
+            const productNames = t.items?.map(i => i.product_name).join('\n') || '-';
             const qty = t.items?.reduce((s, i) => s + i.quantity, 0) || 0;
             const value = t.items?.reduce((s, i) => s + (i.quantity * i.price), 0) || 0;
             const profit = t.items?.reduce((s, i) => {
-                const p = products.find(prod => prod.id === i.productId);
-                return s + (i.quantity * ((p?.salePrice || 0) - (p?.costPrice || 0)));
+                const p = products.find(prod => prod.id === i.product_id);
+                return s + (i.quantity * ((p?.sale_price || 0) - (p?.cost_price || 0)));
             }, 0) || 0;
 
             return [
-                t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A',
-                t.shortCode || '-',
+                t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A',
+                t.short_code || '-',
                 t.id,
                 productNames,
-                branches.find(b => b.id === t.fromBranchId)?.name || 'Unknown',
-                branches.find(b => b.id === t.toBranchId)?.name || 'Unknown',
+                branches.find(b => b.id === t.from_branch_id)?.name || 'Unknown',
+                branches.find(b => b.id === t.to_branch_id)?.name || 'Unknown',
                 (t as any).purpose || 'N/A',
                 (t as any).note || '-',
                 qty,
@@ -484,8 +484,8 @@ const StockTransfer: React.FC<StockTransferProps> = ({
         const selectedTransfers = filteredAndSortedTransfers.filter(t => selectedIds.has(t.id));
         const links = selectedTransfers.map(t => `${window.location.origin}${window.location.pathname}?page=StockTransfer&id=${t.id}`);
         const summary = selectedTransfers.map(t => {
-            const productNames = t.items?.map(i => i.productName).join(', ') || 'Items';
-            return `• ${productNames} (Code: ${t.shortCode || t.id})`;
+            const productNames = t.items?.map(i => i.product_name).join(', ') || 'Items';
+            return `• ${productNames} (Code: ${t.short_code || t.id})`;
         }).join('\n');
         return { links, summary, count: selectedTransfers.length };
     };
@@ -532,19 +532,19 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
     const handleShareEmail = (transfer: StockTransferType) => {
         const url = `${window.location.origin}${window.location.pathname}?page=StockTransfer&id=${transfer.id}`;
-        const productNames = transfer.items?.map(i => i.productName).join(', ') || 'Items';
-        const subject = encodeURIComponent(`Stock Transfer - ${transfer.shortCode || transfer.id}`);
-        const body = encodeURIComponent(`Hello,\n\nPlease review the stock transfer details for ${productNames} (Code: ${transfer.shortCode || transfer.id}).\n\nDirect Link: ${url}\n\nThank you.`);
+        const productNames = transfer.items?.map(i => i.product_name).join(', ') || 'Items';
+        const subject = encodeURIComponent(`Stock Transfer - ${transfer.short_code || transfer.id}`);
+        const body = encodeURIComponent(`Hello,\n\nPlease review the stock transfer details for ${productNames} (Code: ${transfer.short_code || transfer.id}).\n\nDirect Link: ${url}\n\nThank you.`);
         
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     };
 
     const handleShareWhatsApp = (transfer: StockTransferType) => {
         const url = `${window.location.origin}${window.location.pathname}?page=StockTransfer&id=${transfer.id}`;
-        const productNames = transfer.items?.map(i => i.productName).join(', ') || 'Items';
+        const productNames = transfer.items?.map(i => i.product_name).join(', ') || 'Items';
         const totalQty = transfer.items?.reduce((s, i) => s + i.quantity, 0) || 0;
         const message = `*Stock Transfer Record*\n\n` +
-                        `*Code:* ${transfer.shortCode || transfer.id}\n` +
+                        `*Code:* ${transfer.short_code || transfer.id}\n` +
                         `*Items:* ${productNames}\n` +
                         `*Total Qty:* ${totalQty}\n\n` +
                         `Link: ${url}`;
@@ -554,9 +554,9 @@ const StockTransfer: React.FC<StockTransferProps> = ({
 
     const handleShareTelegram = (transfer: StockTransferType) => {
         const url = `${window.location.origin}${window.location.pathname}?page=StockTransfer&id=${transfer.id}`;
-        const productNames = transfer.items?.map(i => i.productName).join(', ') || 'Items';
+        const productNames = transfer.items?.map(i => i.product_name).join(', ') || 'Items';
         const totalQty = transfer.items?.reduce((s, i) => s + i.quantity, 0) || 0;
-        const message = `Stock Transfer Record\n\nCode: ${transfer.shortCode || transfer.id}\nItems: ${productNames}\nTotal Qty: ${totalQty}`;
+        const message = `Stock Transfer Record\n\nCode: ${transfer.short_code || transfer.id}\nItems: ${productNames}\nTotal Qty: ${totalQty}`;
         
         window.open(
             `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(message)}`, 
@@ -784,25 +784,25 @@ const StockTransfer: React.FC<StockTransferProps> = ({
                                                 type="checkbox"
                                                 className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded cursor-pointer"
                                                 checked={selectedIds.has(transfer.id)}
-                                                onChange={() => toggleSelectOne(transfer.id)}
+                                                onChange={() => toggleSelectOne(transfer.id)} // This is already snake_case
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {new Date(transfer.createdAt || '').toLocaleDateString()}
+                                        {new Date(transfer.created_at || '').toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-sky-600 dark:text-sky-400 tabular-nums">
-                                            {transfer.shortCode || '-'}
+                                        {transfer.short_code || '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate" title={transfer.items?.map(i => i.productName).join(', ')}>
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate" title={transfer.items?.map(i => i.product_name).join(', ')}>
                                             {transfer.items?.length > 1 
-                                                ? `${transfer.items[0].productName} (+${transfer.items.length - 1} more)`
-                                                : transfer.items?.[0]?.productName || 'No Items'}
+                                                ? `${transfer.items[0].product_name} (+${transfer.items.length - 1} more)`
+                                                : transfer.items?.[0]?.product_name || 'No Items'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {branchMap[transfer.fromBranchId]?.name || 'Unknown'}
+                                            {branchMap[transfer.from_branch_id]?.name || 'Unknown'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {branches.find(b => b.id === transfer.toBranchId)?.name || 'Unknown'}
+                                            {branches.find(b => b.id === transfer.to_branch_id)?.name || 'Unknown'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-gray-900 dark:text-white">
                                             {transfer.items?.reduce((s, i) => s + i.quantity, 0) || 0}
@@ -946,8 +946,8 @@ const StockTransfer: React.FC<StockTransferProps> = ({
             <StockTransferSlip
                 transfer={activePrintTransfer.transfer}
                 products={products}
-                fromBranchName={branches.find(b => b.id === activePrintTransfer.transfer.fromBranchId)?.name || 'N/A'}
-                toBranchName={branches.find(b => b.id === activePrintTransfer.transfer.toBranchId)?.name || 'N/A'}
+                fromBranchName={branches.find(b => b.id === activePrintTransfer.transfer.from_branch_id)?.name || 'N/A'}
+                toBranchName={branches.find(b => b.id === activePrintTransfer.transfer.to_branch_id)?.name || 'N/A'}
                 purpose={(activePrintTransfer.transfer as any).purpose}
                 companyLogoUrl={companyLogoUrl}
                 companyName={companyName}
@@ -965,7 +965,7 @@ const StockTransfer: React.FC<StockTransferProps> = ({
  */
 const StockTransferSlip: React.FC<{
     transfer: StockTransferType;
-    products: DataProduct[];
+    products: Product[];
     fromBranchName: string;
     toBranchName: string;
     purpose?: string;
@@ -976,14 +976,14 @@ const StockTransferSlip: React.FC<{
     signatureUrl?: string;
 }> = ({ transfer, products, fromBranchName, toBranchName, purpose, companyLogoUrl, companyName, companyAddress, signatureUrl }) => {
     const transferTotalWeight = transfer.items?.reduce((sum, item) => {
-        const product = products.find(p => p.id === item.productId); // Use products prop directly
+        const product = products.find(p => p.id === item.product_id); // Use products prop directly
         const weightAttr = product?.attributes?.find(a => a.name.toLowerCase() === 'weight');
         const unitWeight = parseWeight(weightAttr?.value);
         return sum + (item.quantity * unitWeight);
     }, 0) || 0;
 
     const transferTotalVolume = transfer.items?.reduce((sum, item) => {
-        const dims = item.dimensions || products.find(p => p.id === item.productId)?.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value;
+        const dims = item.dimensions || products.find(p => p.id === item.product_id)?.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value;
         const unitCBM = calculateItemCBM(dims);
         return sum + (item.quantity * unitCBM);
     }, 0) || 0;
@@ -1015,7 +1015,7 @@ const StockTransferSlip: React.FC<{
                         </div>
                     )}
                     <h2 className="text-xl font-bold text-gray-800">STOCK TRANSFER SLIP</h2>
-                    <p className="text-sm font-mono mt-1">Ref: {transfer.shortCode || transfer.id}</p>
+                    <p className="text-sm font-mono mt-1">Ref: {transfer.short_code || transfer.id}</p>
                 </div>
             </div>
 
@@ -1024,7 +1024,7 @@ const StockTransferSlip: React.FC<{
                 <div className="space-y-4">
                     <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Transfer Date</p>
-                        <p className="font-semibold">{new Date(transfer.createdAt || '').toLocaleDateString('en-GB', { dateStyle: 'long' })}</p>
+                        <p className="font-semibold">{new Date(transfer.created_at || '').toLocaleDateString('en-GB', { dateStyle: 'long' })}</p>
                     </div>
                     {transferTotalWeight > 0 && (
                         <div>
@@ -1072,15 +1072,15 @@ const StockTransferSlip: React.FC<{
                     </thead>
                     <tbody className="border-b-2 border-gray-800">
                         {transfer.items?.map((item, idx) => {
-                            const product = products.find(p => p.id === item.productId);
+                            const product = products.find(p => p.id === item.product_id);
                             const weightAttr = product?.attributes?.find(a => a.name.toLowerCase() === 'weight');
                             const itemDims = item.dimensions || product?.attributes?.find(a => a.name.toLowerCase() === 'dimensions')?.value;
                             
                             return (
                             <tr key={idx} className={idx < transfer.items.length - 1 ? 'border-b border-gray-100' : ''}>
                                 <td className="py-4 px-4">
-                                    <p className="font-bold">{item.productName}</p>
-                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">SKU: {item.sku || item.productId}</p>
+                                    <p className="font-bold">{item.product_name}</p>
+                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">SKU: {item.sku || item.product_id}</p>
                                     {itemDims && <p className="text-[10px] text-gray-400 italic">Dims: {itemDims}</p>}
                                 </td>
                                 <td className="py-4 px-4 text-center text-sm">{weightAttr?.value || '-'}</td>

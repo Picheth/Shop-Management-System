@@ -1,10 +1,10 @@
 import React from 'react';
-import { DataProduct, MasterAttribute, Category, ProductType, Brand } from '../../types';
+import { Product, MasterAttribute, Category, ProductType, Brand } from '../../types';
 import { SortableKeys } from '../../hooks/useProducts';
 import ProductRow from './ProductRow';
 
 interface ProductTableProps {
-    products: DataProduct[];
+    products: Product[];
     sortConfig: { key: SortableKeys; direction: 'ascending' | 'descending' } | null;
     requestSort: (key: SortableKeys) => void;
     // Master Resolvers
@@ -17,10 +17,10 @@ interface ProductTableProps {
     colors: MasterAttribute[];
     regions: MasterAttribute[];
     // Callbacks
-    onView: (product: DataProduct) => void;
-    onEdit: (product: DataProduct) => void;
+    onView: (product: Product) => void;
+    onEdit: (product: Product) => void;
     onDeleteVariant: (id: string) => void;
-    onDeleteProduct: (product: DataProduct) => void;
+    onDeleteProduct: (product: Product) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -54,11 +54,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
                     <tr>
                         {renderHeader('Product', 'name')}
                         {renderHeader('SKU', 'sku')}
-                        {renderHeader('Type', 'typeId')}
-                        {renderHeader('Brand', 'brandId')}
-                        {renderHeader('Category', 'categoryId')}
+                        {renderHeader('Type', 'type_id')} 
+                        {renderHeader('Brand', 'brand_id')} 
+                        {renderHeader('Category', 'category_id')} 
                         {renderHeader('Configuration', 'configuration')}
-                        {renderHeader('Stock', 'totalStock', 'center')}
+                        {renderHeader('Stock', 'stock_quantity', 'center')}
                         {renderHeader('Status', 'status', 'center')}
                         <th className="px-6 py-3 text-right text-[10px] font-black uppercase tracking-widest text-gray-400">
                             Actions

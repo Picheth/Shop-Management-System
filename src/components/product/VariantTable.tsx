@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { ProductVariant, MasterAttribute, DataProduct } from '../../types';
+import { ProductVariant, MasterAttribute, Product } from '../../types';
 import { getAttributeName, sanitizeCSV } from '../../utils/productHelpers';
 import Modal from '../ui/Modal';
 import FormInput from '../ui/FormInput';
@@ -9,7 +9,7 @@ import { PdfIcon, ExportIcon } from '../ui/Icons';
 
 interface VariantTableProps {
     variants: ProductVariant[];
-    products: DataProduct[];
+    products: Product[];
     colors: MasterAttribute[];
     storages: MasterAttribute[];
     search: string;
@@ -17,7 +17,7 @@ interface VariantTableProps {
     onUpdate: (variant: ProductVariant) => Promise<void>;
 }
 
-type SortableKeys = 'sku' | 'productName' | 'color' | 'storage' | 'price' | 'stock' | 'status';
+type SortableKeys = 'sku' | 'product_name' | 'color_id' | 'storage_id' | 'price' | 'stock_quantity' | 'status';
 
 const AVAILABLE_COLUMNS = [
     { id: 'sku', label: 'SKU' },
@@ -64,7 +64,7 @@ const VariantTable: React.FC<VariantTableProps> = ({
     }, [showColumnSelector]);
 
     const getProductName = (id: string) => {
-        const product = products.find(p => p.id === id || p.productSpecId === id);
+        const product = products.find(p => p.id === id || p.product_spec_id === id);
         return product?.name || '-';
     };
 
@@ -75,9 +75,9 @@ const VariantTable: React.FC<VariantTableProps> = ({
         if (search.trim()) {
             const term = search.toLowerCase();
             result = result.filter(v => {
-                const productName = getProductName(v.productId).toLowerCase();
-                const colorName = getAttributeName(colors, v.colorId, '').toLowerCase();
-                const storageName = getAttributeName(storages, v.storageId, '').toLowerCase();
+                const productName = getProductName(v.product_id).toLowerCase();
+                const colorName = getAttributeName(colors, v.color_id, '').toLowerCase();
+                const storageName = getAttributeName(storages, v.storage_id, '').toLowerCase();
                 return (
                     productName.includes(term) ||
                     v.sku.toLowerCase().includes(term) ||
@@ -89,7 +89,7 @@ const VariantTable: React.FC<VariantTableProps> = ({
 
         // 2. Filter by Color
         if (colorFilter !== 'All') {
-            result = result.filter(v => v.colorId === colorFilter);
+            result = result.filter(v => v.color_id === colorFilter);
         }
 
         // 3. Sort
@@ -101,18 +101,18 @@ const VariantTable: React.FC<VariantTableProps> = ({
                 switch (sortConfig.key) {
                     case 'sku': 
                         aVal = a.sku; bVal = b.sku; break;
-                    case 'productName': 
-                        aVal = getProductName(a.productId); bVal = getProductName(b.productId); break;
-                    case 'color': 
-                        aVal = getAttributeName(colors, a.colorId); bVal = getAttributeName(colors, b.colorId); break;
-                    case 'storage': 
-                        aVal = getAttributeName(storages, a.storageId); bVal = getAttributeName(storages, b.storageId); break;
+                    case 'product_name': 
+                        aVal = getProductName(a.product_id); bVal = getProductName(b.product_id); break;
+                    case 'color_id': 
+                        aVal = getAttributeName(colors, a.color_id); bVal = getAttributeName(colors, b.color_id); break;
+                    case 'storage_id': 
+                        aVal = getAttributeName(storages, a.storage_id); bVal = getAttributeName(storages, b.storage_id); break;
                     case 'price': 
                         aVal = a.price || 0; bVal = b.price || 0; break;
-                    case 'stock': 
-                        aVal = a.stockQuantity || 0; bVal = b.stockQuantity || 0; break;
+                    case 'stock_quantity': 
+                        aVal = a.stock_quantity || 0; bVal = b.stock_quantity || 0; break;
                     case 'status': 
-                        aVal = a.isActive ? 1 : 0; bVal = b.isActive ? 1 : 0; break;
+                        aVal = a.is_active ? 1 : 0; bVal = b.is_active ? 1 : 0; break;
                     default: 
                         aVal = ''; bVal = '';
                 }
@@ -144,12 +144,12 @@ const VariantTable: React.FC<VariantTableProps> = ({
             ...activeCols.map(col => {
                 switch(col.id) {
                     case 'sku': return sanitizeCSV(v.sku);
-                    case 'productName': return `"${getProductName(v.productId).replace(/"/g, '""')}"`;
-                    case 'color': return `"${getAttributeName(colors, v.colorId).replace(/"/g, '""')}"`;
-                    case 'storage': return `"${getAttributeName(storages, v.storageId).replace(/"/g, '""')}"`;
+                    case 'product_name': return `"${getProductName(v.product_id).replace(/"/g, '""')}"`;
+                    case 'color_id': return `"${getAttributeName(colors, v.color_id).replace(/"/g, '""')}"`;
+                    case 'storage_id': return `"${getAttributeName(storages, v.storage_id).replace(/"/g, '""')}"`;
                     case 'price': return v.price || 0;
-                    case 'stock': return v.stockQuantity || 0;
-                    case 'status': return v.isActive ? 'Active' : 'Inactive';
+                    case 'stock_quantity': return v.stock_quantity || 0;
+                    case 'status': return v.is_active ? 'Active' : 'Inactive';
                     default: return '';
                 }
             })
@@ -177,12 +177,12 @@ const VariantTable: React.FC<VariantTableProps> = ({
             return activeCols.map(col => {
                 switch(col.id) {
                     case 'sku': return v.sku;
-                    case 'productName': return getProductName(v.productId);
-                    case 'color': return getAttributeName(colors, v.colorId);
-                    case 'storage': return getAttributeName(storages, v.storageId);
+                    case 'product_name': return getProductName(v.product_id);
+                    case 'color_id': return getAttributeName(colors, v.color_id);
+                    case 'storage_id': return getAttributeName(storages, v.storage_id);
                     case 'price': return `$${(v.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-                    case 'stock': return v.stockQuantity || 0;
-                    case 'status': return v.isActive ? 'Active' : 'Inactive';
+                    case 'stock_quantity': return v.stock_quantity || 0;
+                    case 'status': return v.is_active ? 'Active' : 'Inactive';
                     default: return '';
                 }
             });
@@ -257,12 +257,12 @@ const VariantTable: React.FC<VariantTableProps> = ({
             // Apply the update to each currently filtered variant
             const updatePromises = sortedAndFilteredVariants.map(v => {
                 const newStock = bulkStockUpdateMode === 'add' 
-                    ? (v.stockQuantity || 0) + val
+                    ? (v.stock_quantity || 0) + val
                     : val;
 
                 return onUpdate({ 
                     ...v, 
-                    stockQuantity: Math.max(0, newStock) 
+                    stock_quantity: Math.max(0, newStock) 
                 });
             });
             await Promise.all(updatePromises);
@@ -274,7 +274,7 @@ const VariantTable: React.FC<VariantTableProps> = ({
     };
 
     const toggleStatus = async (variant: ProductVariant) => {
-        await onUpdate({ ...variant, isActive: !variant.isActive });
+        await onUpdate({ ...variant, is_active: !variant.is_active });
     };
 
     const handleDragStart = (index: number) => {
@@ -394,11 +394,11 @@ const VariantTable: React.FC<VariantTableProps> = ({
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
                         <tr>
                             {renderHeader('SKU', 'sku')}
-                            {renderHeader('Product Name', 'productName')}
-                            {renderHeader('Color', 'color')}
-                            {renderHeader('Storage', 'storage')}
+                            {renderHeader('Product Name', 'product_name')}
+                            {renderHeader('Color', 'color_id')}
+                            {renderHeader('Storage', 'storage_id')}
                             {renderHeader('Price', 'price', 'right')}
-                            {renderHeader('Stock', 'stock', 'center')}
+                            {renderHeader('Stock', 'stock_quantity', 'center')}
                             {renderHeader('Status', 'status', 'center')}
                             <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-300">Actions</th>
                         </tr>
@@ -408,16 +408,16 @@ const VariantTable: React.FC<VariantTableProps> = ({
                             sortedAndFilteredVariants.map(item => (
                                 <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                     <td className="px-4 py-3 text-sm font-medium text-sky-600 dark:text-sky-400 font-mono">{item.sku}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-bold">{getProductName(item.productId)}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getAttributeName(colors, item.colorId)}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getAttributeName(storages, item.storageId)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-bold">{getProductName(item.product_id)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getAttributeName(colors, item.color_id)}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{getAttributeName(storages, item.storage_id)}</td>
                                     <td className="px-4 py-3 text-right text-sm font-bold text-gray-900 dark:text-white tabular-nums">
                                         ${(item.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums">{item.stockQuantity}</td>
+                                    <td className="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums">{item.stock_quantity}</td> {/* This is already snake_case */}
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${item.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                            {item.isActive ? 'Active' : 'Inactive'}
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${item.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                            {item.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">

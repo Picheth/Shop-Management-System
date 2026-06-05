@@ -182,7 +182,19 @@ export const mockStockTransfers: StockTransfer[] = [
    REPAIRS
 ========================================================= */
 
-export const Repairs: Repair[] = [];
+export const mockRepairs: Repair[] = [
+    {
+        id: 'R1',
+        repair_number: 'REP-001',
+        branch_id: 'B1',
+        customer_id: 'C1',
+        customer: 'Walk-in Customer',
+        product_id: 'P1',
+        product_name: 'iPhone 15 128GB',
+        serial_number: 'SN1',
+        
+    },
+];
 
 /* =========================================================
    NAVIGATION MENU

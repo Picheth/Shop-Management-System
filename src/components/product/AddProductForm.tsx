@@ -14,7 +14,7 @@ import {
   Category as CategoryInterface,
   SubCategory as SubCategoryInterface,
   Brand as BrandInterface,
-  DataProduct,
+  Product,
   MasterAttribute,
 } from '../../types';
 
@@ -45,36 +45,36 @@ type AddProductFormData = {
   name: string;
   sku: string;
 
-  categoryId: string;
-  typeId: string;
-  subCategoryId: string;
-  brandId: string;
+  category_id: string;
+  type_id: string;
+  sub_category_id: string;
+  brand_id: string;
 
   model: string;
-  displaySize: string;
+  display_size: string;
 
-  salePrice: number;
-  costPrice: number;
-  initialStock: number;
-  isActive: boolean;
+  sale_price: number;
+  cost_price: number;
+  initial_stock: number;
+  is_active: boolean;
 
-  branchId: string;
+  branch_id: string;
 
-  hasSerialNumber: boolean;
-  hasIMEI: boolean;
+  has_serial_number: boolean;
+  has_imei: boolean;
 
-  imageUrl: string;
+  image_url: string;
 
-  regionId: string;
-  processorId: string;
-  ramId: string;
-  storageId: string;
-  colorId: string;
-  conditionId: string;
+  region_id: string;
+  processor_id: string;
+  ram_id: string;
+  storage_id: string;
+  color_id: string;
+  condition_id: string;
 
-  skuSeparator: string;
-  skuExcludeSegments: string[];
-  isSkuLocked: boolean;
+  sku_separator: string;
+  sku_exclude_segments: string[];
+  is_sku_locked: boolean;
 
   attributes: ProductAttribute[];
 
@@ -85,8 +85,8 @@ interface AddProductFormProps {
   onSubmit: (data: AddProductFormData) => void;
   onCancel: () => void;
 
-  products: DataProduct[];
-  initialData?: Partial<DataProduct>;
+  products: Product[];
+  initialData?: Partial<Product>;
 
   existingCategories: CategoryInterface[];
   branches: Branch[];
@@ -154,47 +154,47 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [form, setForm] = useState<AddProductFormData>({
     name: initialData?.name || '',
     sku: initialData?.sku || '',
+    
+    category_id: initialData?.category_id || '', // This is already snake_case
+    type_id: initialData?.type_id || '', // This is already snake_case
+    sub_category_id: initialData?.sub_category_id || '', // This is already snake_case
+    brand_id: initialData?.brand_id || '', // This is already snake_case
 
-    categoryId: initialData?.categoryId || '',
-    typeId: initialData?.typeId || '',
-    subCategoryId: initialData?.subCategoryId || '',
-    brandId: initialData?.brandId || '',
+    model: initialData?.model || '', // This is already snake_case
+    display_size: initialData?.display_size || '', // This is already snake_case
 
-    model: initialData?.model || '',
-    displaySize: initialData?.displaySize || '',
+    sale_price: initialData?.sale_price || 0, // This is already snake_case
+    cost_price: initialData?.cost_price || 0, // This is already snake_case
 
-    salePrice: initialData?.salePrice || 0,
-    costPrice: initialData?.costPrice || 0,
-
-    initialStock: initialData?.stockByLocation
-      ? Object.values(initialData.stockByLocation).reduce(
+    initial_stock: initialData?.stock_by_location // This is already snake_case
+      ? Object.values(initialData.stock_by_location).reduce( // This is already snake_case
           (sum, qty) => sum + qty,
           0
         )
       : 0,
 
-    isActive: initialData?.isActive ?? true,
+    is_active: initialData?.is_active ?? true, // This is already snake_case
 
-    branchId:
-      initialData?.stockByLocation
-        ? Object.keys(initialData.stockByLocation)[0]
+    branch_id: // This is already snake_case
+      initialData?.stock_by_location // This is already snake_case
+        ? Object.keys(initialData.stock_by_location)[0] // This is already snake_case
         : branches[0]?.id || '',
 
-    hasSerialNumber: initialData?.hasSerialNumber || false,
-    hasIMEI: initialData?.hasIMEI || false,
+    has_serial_number: initialData?.has_serial_number || false, // This is already snake_case
+    has_imei: initialData?.has_imei || false, // This is already snake_case
 
-    imageUrl: initialData?.imageUrl || '',
+    image_url: initialData?.image_url || '', // This is already snake_case
 
-    regionId: '',
-    processorId: '',
-    ramId: '',
-    storageId: '',
-    colorId: '',
-    conditionId: '',
+    region_id: '', // This is already snake_case
+    processor_id: '', // This is already snake_case
+    ram_id: '', // This is already snake_case
+    storage_id: '', // This is already snake_case
+    color_id: '', // This is already snake_case
+    condition_id: '', // This is already snake_case
 
-    skuSeparator: '-',
-    skuExcludeSegments: [],
-    isSkuLocked: !!initialData?.sku,
+    sku_separator: '-', // This is already snake_case
+    sku_exclude_segments: [], // This is already snake_case
+    is_sku_locked: !!initialData?.sku, // This is already snake_case
 
     attributes: initialData?.attributes || [],
 
@@ -210,16 +210,16 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     );
 
   const { isInvalid, errors: fieldErrors } = useFormValidation(form, {
-    required: ['name', 'sku', 'branchId'],
+    required: ['name', 'sku', 'branch_id'], // This is already snake_case
 
     patterns: {
       sku: /^[A-Z]{3}-\d{5}$/, // Enforces pattern like ABC-12345
     },
 
     minMax: {
-      salePrice: { min: 0.01 },
-      costPrice: { min: 0.01 },
-      initialStock: { min: 0 },
+      sale_price: { min: 0.01 }, // This is already snake_case
+      cost_price: { min: 0.01 }, // This is already snake_case
+      initial_stock: { min: 0 }, // This is already snake_case
     },
 
     maxLength: {
@@ -229,10 +229,10 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     labels: {
       name: 'Product Name',
       sku: 'SKU',
-      salePrice: 'Sale Price',
-      costPrice: 'Cost Price',
-      branchId: 'Branch',
-      initialStock: 'Initial Stock',
+      sale_price: 'Sale Price', // This is already snake_case
+      cost_price: 'Cost Price', // This is already snake_case
+      branch_id: 'Branch', // This is already snake_case
+      initial_stock: 'Initial Stock', // This is already snake_case
     },
   });
 
@@ -241,18 +241,18 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
    * Respects the "Clear History" action by checking against dismissed categories.
    */
   const skuHistory = useMemo(() => {
-    if (!form.categoryId || !products || clearedHistoryCategories.has(form.categoryId)) return [];
+    if (!form.category_id || !products || clearedHistoryCategories.has(form.category_id)) return [];
     return products
-      .filter((p) => p.categoryId === form.categoryId && p.sku && p.id !== initialData?.id)
+      .filter((p) => p.category_id === form.category_id && p.sku && p.id !== initialData?.id)
       .sort((a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
           return dateB - dateA;
       })
       .map((p) => p.sku)
       .filter((sku, index, self) => self.indexOf(sku) === index)
       .slice(0, 5);
-  }, [form.categoryId, products, initialData?.id, clearedHistoryCategories]);
+  }, [form.category_id, products, initialData?.id, clearedHistoryCategories]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -270,20 +270,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
    * Helper to automatically select cascading fields (Category/Sub-Category) 
    * when only one option is available.
    */
-  const autoSelectCascading = (typeId: string, categoryId: string) => {
-    let finalCatId = categoryId;
+  const autoSelectCascading = (type_id: string, category_id: string) => {
+    let finalCatId = category_id;
     let finalSubCatId = '';
 
     // Auto-select category if type is provided and category is currently empty
-    if (typeId && !finalCatId) {
-      const cats = existingCategories.filter(c => c.typeId === typeId);
-      if (cats.length === 1) finalCatId = cats[0].id;
+    if (type_id && !finalCatId) {
+      const cats = existingCategories.filter(c => c.type_id === type_id);
+      if (cats.length === 1) finalCatId = cats[0].id; // This is already snake_case
     }
 
     // Auto-select sub-category if category is set
     if (finalCatId) {
-      const subs = existingSubCategories.filter(sc => sc.categoryId === finalCatId);
-      if (subs.length === 1) finalSubCatId = subs[0].id;
+      const subs = existingSubCategories.filter(sc => sc.category_id === finalCatId);
+      if (subs.length === 1) finalSubCatId = subs[0].id; // This is already snake_case
     }
 
     return { categoryId: finalCatId, subCategoryId: finalSubCatId };
@@ -293,14 +293,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
    * Auto-select Product Type on mount if only one option exists.
    */
   useEffect(() => {
-    if (!initialData && existingProductTypes.length === 1 && !form.typeId) {
+    if (!initialData && existingProductTypes.length === 1 && !form.type_id) {
       const typeId = existingProductTypes[0].id;
-      const { categoryId, subCategoryId } = autoSelectCascading(typeId, '');
+      const { categoryId, subCategoryId } = autoSelectCascading(typeId, ''); // This is already snake_case
       setForm(prev => ({
         ...prev,
-        typeId,
-        categoryId,
-        subCategoryId
+        type_id: typeId,
+        category_id: categoryId,
+        sub_category_id: subCategoryId
       }));
     }
   }, [existingProductTypes, initialData]);
@@ -324,12 +324,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
    * Category-specific templates appear first, followed by all other common attributes.
    */
   const attributeSuggestions = useMemo(() => {
-    const category = existingCategories.find((c) => c.id === form.categoryId);
+    const category = existingCategories.find((c) => c.id === form.category_id);
     const categorySpecific = category
       ? CATEGORY_ATTRIBUTE_TEMPLATES[category.name] || []
       : [];
     return Array.from(new Set([...categorySpecific, ...ALL_COMMON_ATTRIBUTES]));
-  }, [form.categoryId, existingCategories]);
+  }, [form.category_id, existingCategories]);
 
   /**
    * Merges hardcoded common values with dynamic "most used" values from the database.
@@ -355,20 +355,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   }, [products, clearedDynamicSuggestions, disableDynamicSuggestions]);
 
   const currentCategory = useMemo(() => 
-    existingCategories.find((c) => c.id === form.categoryId),
-  [form.categoryId, existingCategories]);
+    existingCategories.find((c) => c.id === form.category_id),
+  [form.category_id, existingCategories]);
 
   const filteredCategories = useMemo(() => {
     return existingCategories.filter(
-      (c) => c.typeId === form.typeId
+      (c) => c.type_id === form.type_id
     );
-  }, [existingCategories, form.typeId]);
+  }, [existingCategories, form.type_id]);
 
   const filteredSubCategories = useMemo(() => {
     return existingSubCategories.filter(
-      (sc) => sc.categoryId === form.categoryId
+      (sc) => sc.category_id === form.category_id
     );
-  }, [existingSubCategories, form.categoryId]);
+  }, [existingSubCategories, form.category_id]);
 
   const filteredAttributeOptions = useMemo(() => {
     if (!selectedTemplate) {
@@ -383,24 +383,24 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     }
 
     return {
-      processors: processors.filter((p) =>
-        selectedTemplate.processor?.includes(p.name)
+      processors: processors.filter((p) => // This is already snake_case
+        selectedTemplate.Variant?.processors?.includes(p.name) // This is already snake_case
       ),
 
-      rams: rams.filter((r) =>
-        selectedTemplate.ram?.includes(r.name)
+      rams: rams.filter((r) => // This is already snake_case
+        selectedTemplate.Variant?.ram?.includes(r.name) // This is already snake_case
       ),
 
-      storages: storages.filter((s) =>
-        selectedTemplate.storages?.includes(s.name)
+      storages: storages.filter((s) => // This is already snake_case
+        selectedTemplate.Variant?.storages?.includes(s.name) // This is already snake_case
       ),
 
-      colors: colors.filter((c) =>
-        selectedTemplate.colors?.includes(c.name)
+      colors: colors.filter((c) => // This is already snake_case
+        selectedTemplate.Variant?.colors?.includes(c.name) // This is already snake_case
       ),
 
-      regions: regions.filter((r) =>
-        selectedTemplate.regions?.includes(r.name)
+      regions: regions.filter((r) => // This is already snake_case
+        selectedTemplate.Variant?.regions?.includes(r.name) // This is already snake_case
       ),
 
       conditions: conditions.filter((c) =>
@@ -423,31 +423,31 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     if (!selectedTemplate) return updatedForm.sku;
 
     const categoryName =
-      existingCategories.find((c) => c.id === updatedForm.categoryId)?.name || '';
+      existingCategories.find((c) => c.id === updatedForm.category_id)?.name || '';
 
     const brandName =
-      existingBrands.find((b) => b.id === updatedForm.brandId)?.name || '';
+      existingBrands.find((b) => b.id === updatedForm.brand_id)?.name || '';
 
     const subCategoryName =
-      existingSubCategories.find((s) => s.id === updatedForm.subCategoryId)?.name || '';
+      existingSubCategories.find((s) => s.id === updatedForm.sub_category_id)?.name || '';
 
     const storageName =
-      storages.find((s) => s.id === updatedForm.storageId)?.name || '';
+      storages.find((s) => s.id === updatedForm.storage_id)?.name || '';
 
     const colorName =
-      colors.find((c) => c.id === updatedForm.colorId)?.name || '';
+      colors.find((c) => c.id === updatedForm.color_id)?.name || '';
 
     const regionName =
-      regions.find((r) => r.id === updatedForm.regionId)?.name || '';
+      regions.find((r) => r.id === updatedForm.region_id)?.name || '';
 
     const conditionName =
-      conditions.find((c) => c.id === updatedForm.conditionId)?.name || '';
+      conditions.find((c) => c.id === updatedForm.condition_id)?.name || '';
 
     const ramName =
-      rams.find((r) => r.id === updatedForm.ramId)?.name || '';
+      rams.find((r) => r.id === updatedForm.ram_id)?.name || '';
 
     const processorName =
-      processors.find((p) => p.id === updatedForm.processorId)?.name || '';
+      processors.find((p) => p.id === updatedForm.processor_id)?.name || '';
 
     return generateSku(
       selectedTemplate,
@@ -460,8 +460,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       conditionName,
       ramName,
       processorName,
-      updatedForm.skuSeparator,
-      updatedForm.skuExcludeSegments
+      updatedForm.sku_separator, // This is already snake_case
+      updatedForm.sku_exclude_segments // This is already snake_case
     );
   };
 
@@ -534,22 +534,22 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
       name: template.name,
 
-      brandId: brand?.id || '',
-      categoryId: autoCat,
-      typeId: productType?.id || '',
-      subCategoryId: subCategory?.id || autoSub,
+      brand_id: brand?.id || '',
+      category_id: autoCat,
+      type_id: productType?.id || '',
+      sub_category_id: subCategory?.id || autoSub,
 
-      model: template.model,
-      displaySize: template.displaySize || '',
+      model: template.model, // This is already snake_case
+      display_size: template.display_size || '',
 
-      storageId: '',
-      ramId: '',
-      colorId: '',
-      processorId: '',
-      regionId: '',
-      conditionId: '',
+      storage_id: '',
+      ram_id: '',
+      color_id: '',
+      processor_id: '',
+      region_id: '',
+      condition_id: '',
 
-      isSkuLocked: false,
+      is_sku_locked: false,
     }));
   };
 
@@ -586,34 +586,34 @@ const inputType =
       } as AddProductFormData;
 
       if (name === 'sku' && newValue !== prev.sku) {
-        updated.isSkuLocked = true;
+        updated.is_sku_locked = true; // This is already snake_case
       }
 
-      if (name === 'typeId') {
+      if (name === 'type_id') { // This is already snake_case
         const { categoryId, subCategoryId } = autoSelectCascading(newValue, '');
-        updated.categoryId = categoryId;
-        updated.subCategoryId = subCategoryId;
+        updated.category_id = categoryId; // This is already snake_case
+        updated.sub_category_id = subCategoryId; // This is already snake_case
       }
 
-      if (name === 'categoryId') {
-        const { subCategoryId } = autoSelectCascading(updated.typeId, newValue);
-        updated.subCategoryId = subCategoryId;
+      if (name === 'category_id') { // This is already snake_case
+        const { subCategoryId } = autoSelectCascading(updated.type_id, newValue); // This is already snake_case
+        updated.sub_category_id = subCategoryId; // This is already snake_case
       }
 
       if (
         [
-          'brandId',
-          'categoryId',
-          'subCategoryId',
-          'storageId',
-          'ramId',
-          'colorId',
-          'conditionId',
-          'processorId',
-          'regionId',
+          'brand_id', // This is already snake_case
+          'category_id', // This is already snake_case
+          'sub_category_id', // This is already snake_case
+          'storage_id', // This is already snake_case
+          'ram_id', // This is already snake_case
+          'color_id', // This is already snake_case
+          'condition_id', // This is already snake_case
+          'processor_id', // This is already snake_case
+          'region_id', // This is already snake_case
         ].includes(name)
       ) {
-        if (!updated.isSkuLocked) {
+        if (!updated.is_sku_locked) { // This is already snake_case
           updated.sku = updateGeneratedSku(updated);
         }
       }
@@ -627,7 +627,7 @@ const inputType =
     setForm((prev) => ({
       ...prev,
       sku: newSku,
-      isSkuLocked: false,
+      is_sku_locked: false, // This is already snake_case
     }));
   };
 
@@ -670,10 +670,10 @@ const inputType =
   };
 
   const handleRestoreHistory = () => {
-    if (form.categoryId) {
+    if (form.category_id) { // This is already snake_case
       setClearedHistoryCategories(prev => {
         const next = new Set(prev);
-        next.delete(form.categoryId);
+        next.delete(form.category_id);
         return next;
       });
     }
@@ -791,7 +791,7 @@ const inputType =
                     </svg>
                   </button>
                 )}
-                {form.isSkuLocked && (
+                {form.is_sku_locked && (
                   <button
                     type="button"
                     onClick={handleRegenerateSku}
@@ -826,15 +826,15 @@ const inputType =
                 </button>
                 <button
                   type="button"
-                  onClick={() => setForm(prev => ({ ...prev, isSkuLocked: !prev.isSkuLocked }))}
+                  onClick={() => setForm(prev => ({ ...prev, isSkuLocked: !prev.is_sku_locked }))}
                   className={`p-1 rounded-md transition-colors ${
-                    form.isSkuLocked 
+                    form.is_sku_locked 
                       ? 'text-amber-500 hover:text-amber-600 bg-amber-50 dark:bg-amber-900/20' 
                       : 'text-gray-400 hover:text-sky-500'
                   }`}
-                  title={form.isSkuLocked ? "SKU Locked (Manual)" : "SKU Unlocked (Auto-generate)"}
+                  title={form.is_sku_locked ? "SKU Locked (Manual)" : "SKU Unlocked (Auto-generate)"}
                 >
-                  {form.isSkuLocked ? (
+                  {form.is_sku_locked ? (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
@@ -856,8 +856,8 @@ const inputType =
                     <button
                       type="button"
                       onClick={() => {
-                        if (form.categoryId) {
-                          setClearedHistoryCategories(prev => new Set(prev).add(form.categoryId));
+                        if (form.category_id) {
+                          setClearedHistoryCategories(prev => new Set(prev).add(form.category_id));
                           setShowSkuHistory(false);
                         }
                       }}
@@ -871,7 +871,7 @@ const inputType =
                       key={sku}
                       type="button"
                       onClick={() => {
-                        setForm(prev => ({ ...prev, sku, isSkuLocked: true }));
+                        setForm(prev => ({ ...prev, sku, is_sku_locked: true }));
                         setShowSkuHistory(false);
                         setManualValidationResult(null);
                       }}
@@ -886,8 +886,8 @@ const inputType =
 
             <FormSelect
               label="Product Type"
-              name="typeId"
-              value={form.typeId}
+              name="type_id"
+              value={form.type_id}
               onChange={handleChange}
               options={existingProductTypes.map((t) => ({
                 value: t.id,
@@ -897,8 +897,7 @@ const inputType =
 
             <FormSelect
               label="Category"
-              name="categoryId"
-              value={form.categoryId}
+              name="category_id"
               onChange={handleChange}
               options={filteredCategories.map((c) => ({
                 value: c.id,
@@ -908,8 +907,7 @@ const inputType =
 
             <FormSelect
               label="Sub Category"
-              name="subCategoryId"
-              value={form.subCategoryId}
+              name="sub_category_id"
               onChange={handleChange}
               options={filteredSubCategories.map((s) => ({
                 value: s.id,
@@ -919,8 +917,7 @@ const inputType =
 
             <FormSelect
               label="Brand"
-              name="brandId"
-              value={form.brandId}
+              name="brand_id"
               onChange={handleChange}
               options={existingBrands.map((b) => ({
                 value: b.id,
@@ -937,11 +934,11 @@ const inputType =
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
+            
             <FormSelect
-              label="Processor"
-              name="processorId"
-              value={form.processorId}
+              label="Processor" // This is already snake_case
+              name="processor_id"
+              value={form.processor_id}
               onChange={handleChange}
               options={filteredAttributeOptions.processors.map((p) => ({
                 value: p.id,
@@ -951,8 +948,7 @@ const inputType =
 
             <FormSelect
               label="RAM"
-              name="ramId"
-              value={form.ramId}
+              name="ram_id"
               onChange={handleChange}
               options={filteredAttributeOptions.rams.map((r) => ({
                 value: r.id,
@@ -962,8 +958,7 @@ const inputType =
 
             <FormSelect
               label="Storage"
-              name="storageId"
-              value={form.storageId}
+              name="storage_id"
               onChange={handleChange}
               options={filteredAttributeOptions.storages.map((s) => ({
                 value: s.id,
@@ -973,8 +968,7 @@ const inputType =
 
             <FormSelect
               label="Color"
-              name="colorId"
-              value={form.colorId}
+              name="color_id"
               onChange={handleChange}
               options={filteredAttributeOptions.colors.map((c) => ({
                 value: c.id,
@@ -984,8 +978,7 @@ const inputType =
 
             <FormSelect
               label="Region"
-              name="regionId"
-              value={form.regionId}
+              name="region_id"
               onChange={handleChange}
               options={filteredAttributeOptions.regions.map((r) => ({
                 value: r.id,
@@ -995,8 +988,7 @@ const inputType =
 
             <FormSelect
               label="Condition"
-              name="conditionId"
-              value={form.conditionId}
+              name="condition_id"
               onChange={handleChange}
               options={filteredAttributeOptions.conditions.map((c) => ({
                 value: c.id,
@@ -1013,46 +1005,44 @@ const inputType =
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+            
             <FormInput
-              label="Cost Price"
-              name="costPrice"
+              label="Cost Price" // This is already snake_case
+              name="cost_price"
               type="number"
-              value={form.costPrice}
+              value={form.cost_price}
               onChange={handleChange}
-              error={fieldErrors.costPrice}
+              error={fieldErrors.cost_price}
               required
             />
 
             <FormInput
               label="Sale Price"
-              name="salePrice"
+              name="sale_price"
               type="number"
-              value={form.salePrice}
-              onChange={handleChange}
-              error={fieldErrors.salePrice}
+              value={form.sale_price}
               required
             />
 
             <FormInput
               label="Initial Stock"
-              name="initialStock"
+              name="initial_stock"
               type="number"
-              value={form.initialStock}
+              value={form.initial_stock}
               onChange={handleChange}
-              error={fieldErrors.initialStock}
+              error={fieldErrors.initial_stock}
             />
 
             <FormSelect
               label="Branch"
-              name="branchId"
-              value={form.branchId}
+              name="branch_id"
+              value={form.branch_id}
               onChange={handleChange}
-              options={branches.map((b) => ({
+              options={branches.map((b) => ({ // This is already snake_case
                 value: b.id,
                 label: b.name,
               }))}
-              error={fieldErrors.branchId}
+              error={fieldErrors.branch_id}
             />
           </div>
         </section>
@@ -1068,41 +1058,41 @@ const inputType =
             <div className="flex flex-wrap gap-6">
 
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
+                <input // This is already snake_case
                   type="checkbox"
-                  name="isActive"
-                  checked={form.isActive}
+                  name="is_active"
+                  checked={form.is_active}
                   onChange={handleChange}
                   className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Product</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Product</span> {/* This is already snake_case */}
               </label>
 
               <label className="flex items-center gap-2">
-                <input
+                <input // This is already snake_case
                   type="checkbox"
-                  name="hasSerialNumber"
-                  checked={form.hasSerialNumber}
+                  name="has_serial_number"
+                  checked={form.has_serial_number}
                   onChange={handleChange}
                 />
-                Serial Tracking
+                Serial Tracking // This is already snake_case
               </label>
 
               <label className="flex items-center gap-2">
-                <input
+                <input // This is already snake_case
                   type="checkbox"
-                  name="hasIMEI"
-                  checked={form.hasIMEI}
+                  name="has_imei"
+                  checked={form.has_imei}
                   onChange={handleChange}
                 />
-                IMEI Tracking
+                IMEI Tracking // This is already snake_case
               </label>
             </div>
 
             <FormInput
               label="Image URL"
-              name="imageUrl"
-              value={form.imageUrl}
+              name="image_url"
+              value={form.image_url}
               onChange={handleChange}
             />
           </div>
@@ -1134,7 +1124,7 @@ const inputType =
                   Bulk Add {currentCategory.name} Fields
                 </button>
               )}
-              {form.categoryId && clearedHistoryCategories.has(form.categoryId) && (
+              {form.category_id && clearedHistoryCategories.has(form.category_id) && (
                 <button
                   type="button"
                   onClick={handleRestoreHistory}

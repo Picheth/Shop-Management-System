@@ -1,14 +1,15 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { DataProduct, LineItem, Sale, Branch } from '../../types';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Product, LineItem, Sale, Branch } from '../../types';
 import FormInput from '../ui/FormInput';
 import FormSelect from '../ui/FormSelect';
 import InlineFormInput from '../ui/InlineFormInput';
 import InlineFormSelect from '../ui/InlineFormSelect';
+import SalesTrendChart from '../core/SalesTrendChart';
 
 type SaleFormData = Omit<Sale, 'id' | 'total'>;
 
 interface SaleFormProps {
-    products: DataProduct[];
+    products: Product[];
     branches: Branch[];
     onAdd: (data: SaleFormData) => Promise<void>;
     isSaving?: boolean;
@@ -17,8 +18,8 @@ interface SaleFormProps {
 
 const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving = false, onCancel }) => {
     const [customer, setCustomer] = useState('Walk-in Customer');
-    const [branchId, setBranchId] = useState(branches[0]?.id || '');
-    const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
+    const [branch_id, setBranch_id] = useState(branches[0]?.id || ''); // This is already snake_case
+    const [sale_date, setSale_date] = useState(new Date().toISOString().split('T')[0]); // This is already snake_case
     const [items, setItems] = useState<LineItem[]>([]);
     const [error, setError] = useState('');
     const [scanValue, setScanValue] = useState('');
@@ -36,7 +37,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
 
         // 1. Search for a product that has this serial in the selected branch
         const productWithSerial = products.find(p => 
-            p.serialNumbersByLocation?.[branchId]?.includes(barcode)
+            p.serial_numbers_by_location?.[branch_id]?.includes(barcode) // This is already snake_case
         );
 
         if (!productWithSerial) {
@@ -46,7 +47,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
         }
 
         // 2. Check if this specific serial is already in our items list
-        const isDuplicate = items.some(item => item.serialNumbers?.includes(barcode));
+        const isDuplicate = items.some(item => item.serial_numbers?.includes(barcode));
         if (isDuplicate) {
             setError(`Serial "${barcode}" has already been added to this sale.`);
             setScanValue('');
@@ -54,22 +55,22 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
         }
 
         // 3. Find if the product is already in the items list to update quantity, or add new
-        const existingItemIndex = items.findIndex(item => item.productId === productWithSerial.id);
+        const existingItemIndex = items.findIndex(item => item.product_id === productWithSerial.id); // productId is camelCase
 
         if (existingItemIndex > -1) {
             const updatedItems = [...items];
             const item = updatedItems[existingItemIndex];
             
             item.quantity += 1;
-            item.serialNumbers = [...(item.serialNumbers || []), barcode];
+            item.serial_numbers = [...(item.serial_numbers || []), barcode];
             setItems(updatedItems);
         } else {
             setItems([...items, {
-                productId: productWithSerial.id,
-                productName: productWithSerial.name,
+                product_id: productWithSerial.id, // productId is camelCase
+                product_name: productWithSerial.name, // productName is camelCase
                 quantity: 1,
-                price: productWithSerial.salePrice,
-                serialNumbers: [barcode]
+                price: productWithSerial.sale_price,
+                serial_numbers: [barcode]
             }]);
         }
 
@@ -80,9 +81,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
     };
     
     const availableProducts = useMemo(() => {
-        if (!branchId) return [];
-        return products.filter(p => (p.stockByLocation[branchId] || 0) > 0); // Correctly filter available products
-    }, [products, branchId]);
+        if (!branch_id) return []; // This is already snake_case
+        return products.filter(p => (p.stock_by_location[branch_id] || 0) > 0);
+    }, [products, branch_id]); // This is already snake_case
 
     const handleAddItem = () => {
         if (availableProducts.length === 0) {
@@ -91,31 +92,31 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
         }
         setError('');
         const firstProduct = availableProducts[0];
-        setItems([...items, { productId: firstProduct.id, productName: firstProduct.name, quantity: 1, price: firstProduct.salePrice, serialNumbers: [] }]);
+        setItems([...items, { product_id: firstProduct.id, product_name: firstProduct.name, quantity: 1, price: firstProduct.sale_price, serial_numbers: [] }]);
     };
 
     const handleItemChange = (index: number, field: keyof LineItem, value: string | number | string[]) => {
         setError('');
         const newItems = [...items];
         const currentItem = newItems[index];
-        const product = products.find(p => p.id === currentItem.productId);
-        const stockAtBranch = product?.stockByLocation[branchId] || 0;
+        const product = products.find(p => p.id === currentItem.product_id);
+        const stockAtBranch = product?.stock_by_location[branch_id] || 0;
         
-        if (field === 'productId') {
+        if (field === 'product_id') {
             const selectedProduct = products.find(p => p.id === value);
             if (selectedProduct) {
-                currentItem.productId = selectedProduct.id;
-                currentItem.productName = selectedProduct.name;
-                currentItem.price = selectedProduct.salePrice;
-                currentItem.serialNumbers = []; // Reset serial numbers when product changes
-                const newStockAtBranch = selectedProduct.stockByLocation[branchId] || 0;
+                currentItem.product_id = selectedProduct.id; // productId is camelCase
+                currentItem.product_name = selectedProduct.name; // productName is camelCase
+                currentItem.price = selectedProduct.sale_price; // salePrice is camelCase
+                currentItem.serial_numbers = []; // Reset serial numbers when product changes
+                const newStockAtBranch = selectedProduct.stock_by_location[branch_id] || 0; // This is already snake_case
                 if (currentItem.quantity > newStockAtBranch) {
                     currentItem.quantity = newStockAtBranch;
                     setError(`Quantity for ${selectedProduct.name} adjusted to max available stock.`);
                 }
             }
-        } else if (field === 'serialNumbers') {
-            currentItem.serialNumbers = value as string[]; // Value is already an array from checkbox handler
+        } else if (field === 'serial_numbers') {
+            currentItem.serial_numbers = value as string[]; // Value is already an array from checkbox handler
         } else if (field === 'quantity') {
             const newQuantity = Number(value);
             if (newQuantity > stockAtBranch) {
@@ -124,9 +125,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
             } else {
                 (currentItem[field] as any) = newQuantity;
                 // If quantity is reduced, truncate selected serial numbers
-                if (currentItem.serialNumbers && currentItem.serialNumbers.length > newQuantity) {
-                    currentItem.serialNumbers = currentItem.serialNumbers.slice(0, newQuantity);
-                    setError(`Selected serial numbers for ${currentItem.productName} adjusted to match new quantity.`);
+                if (currentItem.serial_numbers && currentItem.serial_numbers.length > newQuantity) {
+                    currentItem.serial_numbers = currentItem.serial_numbers.slice(0, newQuantity);
+                    setError(`Selected serial numbers for ${currentItem.product_name} adjusted to match new quantity.`);
                 }
             }
         } else {
@@ -148,9 +149,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
         }
 
         for (const item of items) {
-            const serialCount = item.serialNumbers?.length || 0;
+            const serialCount = item.serial_numbers?.length || 0;
             if (serialCount !== item.quantity) {
-                setError(`Product "${item.productName}" expects ${item.quantity} serial number(s), but ${serialCount} were provided.`);
+                setError(`Product "${item.product_name}" expects ${item.quantity} serial number(s), but ${serialCount} were provided.`); // productName is camelCase
                 return;
             }
         }
@@ -158,9 +159,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
         setError('');
         onAdd({
             customer,
-            branchId,
-            saleDate,
-            items,
+            branch_id: branch_id,
+            sale_date: sale_date,
+            items: items as any, // items is camelCase
             status: 'Completed',
         });
     };
@@ -224,9 +225,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
 
                 <FormSelect
                     label="Branch"
-                    name="branchId"
-                    value={branchId}
-                    onChange={e => {setBranchId(e.target.value); setItems([]); setError('');}}
+                    name="branch_id" // This is already snake_case
+                    value={branch_id} // This is already snake_case
+                    onChange={e => {setBranch_id(e.target.value); setItems([]); setError('');}} // This is already snake_case
                     options={branches.map(branch => ({ value: branch.id, label: branch.name }))}
                     required
                 />
@@ -242,9 +243,9 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
                 <FormInput
                     label="Sale Date"
                     type="date"
-                    name="saleDate"
-                    value={saleDate}
-                    onChange={e => {setSaleDate(e.target.value); setError('');}}
+                    name="sale_date" // This is already snake_case
+                    value={sale_date} // This is already snake_case
+                    onChange={e => {setSale_date(e.target.value); setError('');}} // This is already snake_case
                     className="md:col-span-2"
                     required
                 />
@@ -253,19 +254,27 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
             <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Items Sold</h3>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                 {items.map((item, index) => {
-                    const productInStock = products.find(p => p.id === item.productId);
-                    const stock = productInStock?.stockByLocation[branchId] || 0;
-                    const availableSerials = productInStock?.serialNumbersByLocation?.[branchId] || [];
+                    const productInStock = products.find(p => p.id === item.product_id);
+                    const stock = productInStock?.stock_by_location[branch_id] || 0;
+                    const availableSerials = productInStock?.serial_numbers_by_location?.[branch_id] || [];
+                    
+                    // Determine if the price has been manually overridden
+                    const isPriceOverridden = productInStock && item.price !== productInStock.sale_price;
+
                     return (
-                        <div key={index} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-100 dark:border-gray-700">
+                        <div key={index} className={`space-y-2 p-3 rounded-md border transition-all duration-200 ${
+                            isPriceOverridden 
+                                ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800' 
+                                : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700'
+                        }`}>
                             <div className="grid grid-cols-12 gap-2 items-center">
                                 <div className="col-span-5">
                                     <InlineFormSelect 
-                                        value={item.productId}
-                                        onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                        value={item.product_id}
+                                        onChange={(e) => handleItemChange(index, 'product_id', e.target.value)}
                                         options={availableProducts.map(p => ({ 
                                             value: p.id, 
-                                            label: `${p.name} (${p.stockByLocation[branchId] || 0})` 
+                                            label: `${p.name} (${p.stock_by_location[branch_id] || 0})`
                                         }))}
                                     />
                                 </div>
@@ -279,15 +288,28 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
                                         max={stock}
                                     />
                                 </div>
-                                <div className="col-span-3">
+                                <div className="col-span-3 relative group/price">
                                     <InlineFormInput 
                                         type="number" 
                                         placeholder="Price" 
                                         value={item.price}
                                         onChange={(e) => handleItemChange(index, 'price', Number(e.target.value))}
-                                        min="0" 
+                                        className={isPriceOverridden ? 'text-amber-700 dark:text-amber-400 font-bold border-amber-300 dark:border-amber-700' : ''}
+                                        min="0"
                                         step="0.01"
                                     />
+                                    {isPriceOverridden && (
+                                        <div className="absolute -top-1.5 -right-1.5">
+                                            <span 
+                                                className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 shadow-sm border border-white dark:border-gray-800 cursor-help" 
+                                                title={`Price Override: Original master price was $${productInStock.sale_price.toFixed(2)}`}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                     <button 
@@ -304,17 +326,17 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
                             </div>
                             {availableSerials.length > 0 && (
                                 <div className="mt-2">
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Serial Numbers ({item.serialNumbers?.length || 0}/{item.quantity})</label>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Select Serial Numbers ({item.serial_numbers?.length || 0}/{item.quantity})</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-24 overflow-y-auto p-2 border border-gray-200 dark:border-gray-600 rounded-md">
                                         {availableSerials.map(serial => (
                                             <label key={serial} className="flex items-center text-sm text-gray-900 dark:text-gray-200">
                                                 <input
                                                     type="checkbox"
                                                     value={serial}
-                                                    checked={item.serialNumbers?.includes(serial) || false}
+                                                    checked={item.serial_numbers?.includes(serial) || false}
                                                     onChange={(e) => {
                                                         const isChecked = e.target.checked;
-                                                        const currentSerials = item.serialNumbers ? [...item.serialNumbers] : [];
+                                                        const currentSerials = item.serial_numbers ? [...item.serial_numbers] : [];
                                                         let updatedSerials: string[];
 
                                                         if (isChecked) {
@@ -325,22 +347,22 @@ const SaleForm: React.FC<SaleFormProps> = ({ products, branches, onAdd, isSaving
 
                                                         // Enforce quantity limit
                                                         if (updatedSerials.length > item.quantity) {
-                                                            setError(`You can only select ${item.quantity} serial number(s) for ${item.productName}.`);
+                                                            setError(`You can only select ${item.quantity} serial number(s) for ${item.product_name}.`);
                                                             // Do not update items state if quantity exceeded
                                                             return;
                                                         }
-                                                        handleItemChange(index, 'serialNumbers', updatedSerials);
+                                                        handleItemChange(index, 'serial_numbers', updatedSerials);
                                                     }}
                                                     className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
-                                                    disabled={!item.serialNumbers?.includes(serial) && (item.serialNumbers?.length || 0) >= item.quantity}
+                                                    disabled={!item.serial_numbers?.includes(serial) && (item.serial_numbers?.length || 0) >= item.quantity}
                                                 />
                                                 <span className="ml-2">{serial}</span>
                                             </label>
                                         ))}
                                     </div>
-                                    {item.serialNumbers?.length !== item.quantity && item.quantity > 0 && (
+                                    {item.serial_numbers?.length !== item.quantity && item.quantity > 0 && (
                                         <p className="text-red-500 text-xs mt-1">
-                                            Please select {item.quantity} serial number(s). Currently selected: {item.serialNumbers?.length || 0}.
+                                            Please select {item.quantity} serial number(s). Currently selected: {item.serial_numbers?.length || 0}.
                                         </p>
                                     )}
                                 </div>

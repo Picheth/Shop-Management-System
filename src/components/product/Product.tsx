@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import {
-    DataProduct,
+    Product as ProductInterface,
     Branch,
     ProductType as ProductTypeInterface,
     Category as CategoryInterface,
@@ -23,7 +23,7 @@ import ProductDetail from './ProductDetail';
 import AddProductForm from './AddProductForm';
 
 interface ProductProps {
-    products: DataProduct[];
+    products: ProductInterface[];
     branches: Branch[];
 
     allCategories: CategoryInterface[];
@@ -35,7 +35,7 @@ interface ProductProps {
     onAddBrand: (brand: any) => Promise<BrandInterface>;
     onAddCategory: (category: any) => Promise<CategoryInterface>;
 
-    onUpdate: (product: DataProduct) => Promise<void>;
+    onUpdate: (product: ProductInterface) => Promise<void>;
     onDeleteVariant: (id: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
 
@@ -104,13 +104,13 @@ const Product: React.FC<ProductProps> = ({
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [editingProduct, setEditingProduct] =
-        useState<DataProduct | null>(null);
+        useState<ProductInterface | null>(null);
 
     const [productToDelete, setProductToDelete] =
-        useState<DataProduct | null>(null);
+        useState<ProductInterface | null>(null);
 
     const [selectedProduct, setSelectedProduct] =
-        useState<DataProduct | null>(null);
+        useState<ProductInterface | null>(null);
 
     const handleFormSave = async (formData: any) => {
         if (editingProduct) {

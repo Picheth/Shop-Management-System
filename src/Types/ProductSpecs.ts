@@ -3,8 +3,8 @@ export interface ProductAttribute {
     value: string;
     description?: string;
     id?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 // Auto-generated from productSpecs.json
@@ -36,13 +36,13 @@ export interface ProductTemplate {
   regionCodes?: { [key: string]: string };
   conditions: string[];
   conditionCodes?: { [key: string]: string };
-
-  displaySize?: string; // Added for Tablets and Laptops
+  
+  display_size?: string; // Added for Tablets and Laptops
 }
 status: string;
-isActive?: boolean;
-createdAt?: string;
-updatedAt?: string;
+is_active?: boolean; // This is already snake_case
+created_at?: string;
+updated_at?: string;
 }
 
 
@@ -85,7 +85,7 @@ export const generateSku = (
   condition?: string,
   ram?: string,
   processor?: string,
-  separator: string = '-',
+  separator: string = '-', // This is already snake_case
   excludeSegments: string[] = [],
   // New parameter for custom fallbacks per segment type
   customSegmentFallbacks: {

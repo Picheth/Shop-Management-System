@@ -22,10 +22,10 @@ const TechnicianLeaderboard: React.FC<TechnicianLeaderboardProps> = ({ repairs }
 
         // 1. Filter for completed repairs based on view mode
         const filteredRepairs = repairs.filter(r => {
-            if (r.status !== 'Completed' || !r.commissionAmount) return false;
+            if (r.status !== 'Completed' || !r.commission_amount) return false;
             
             if (viewMode === 'Month') {
-                const date = new Date(r.completedDate || r.entryDate);
+                const date = new Date(r.completed_date || r.entry_date);
                 return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
             }
             
@@ -34,21 +34,21 @@ const TechnicianLeaderboard: React.FC<TechnicianLeaderboardProps> = ({ repairs }
 
         // 2. We always need current vs prev month totals for the growth stat
         const currentMonthMap = repairs.reduce((acc, r) => {
-            if (r.status !== 'Completed' || !r.commissionAmount) return acc;
-            const date = new Date(r.completedDate || r.entryDate);
+            if (r.status !== 'Completed' || !r.commission_amount) return acc;
+            const date = new Date(r.completed_date || r.entry_date);
             if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
                 const tech = r.technician || 'Unassigned';
-                acc[tech] = (acc[tech] || 0) + (r.commissionAmount || 0);
+                acc[tech] = (acc[tech] || 0) + (r.commission_amount || 0);
             }
             return acc;
         }, {} as Record<string, number>);
 
         const prevMonthMap = repairs.reduce((acc, r) => {
-            if (r.status !== 'Completed' || !r.commissionAmount) return acc;
-            const date = new Date(r.completedDate || r.entryDate);
+            if (r.status !== 'Completed' || !r.commission_amount) return acc;
+            const date = new Date(r.completed_date || r.entry_date);
             if (date.getMonth() === prevMonth && date.getFullYear() === prevYear) {
                 const tech = r.technician || 'Unassigned';
-                acc[tech] = (acc[tech] || 0) + (r.commissionAmount || 0);
+                acc[tech] = (acc[tech] || 0) + (r.commission_amount || 0);
             }
             return acc;
         }, {} as Record<string, number>);
@@ -56,7 +56,7 @@ const TechnicianLeaderboard: React.FC<TechnicianLeaderboardProps> = ({ repairs }
         // 3. Aggregate commissions for the active view
         const totals = filteredRepairs.reduce((acc, r) => {
             const tech = r.technician || 'Unassigned';
-            acc[tech] = (acc[tech] || 0) + (r.commissionAmount || 0);
+            acc[tech] = (acc[tech] || 0) + (r.commission_amount || 0);
             return acc;
         }, {} as Record<string, number>);
 

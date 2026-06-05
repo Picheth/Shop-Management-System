@@ -5,7 +5,7 @@ import InlineFormInput from '../ui/InlineFormInput';
 import InlineFormSelect from '../ui/InlineFormSelect';
 
 import {
-    DataProduct,
+    Product,
     LineItem,
     Purchase,
     Branch,
@@ -14,7 +14,7 @@ import {
 type PurchaseFormData = Omit<Purchase, 'id' | 'total'>;
 
 interface PurchaseFormProps {
-    products: DataProduct[];
+    products: Product[];
 
     branches: Branch[];
 
@@ -33,17 +33,17 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
     onCancel,
 }) => {
 
-    const [purchaseNumber] = useState(
+    const [purchase_number] = useState(
         `PUR-${Date.now()}`
     );
 
-    const [supplier, setSupplier] = useState('');
+    const [supplier_id, setSupplier] = useState('');
 
-    const [branchId, setBranchId] = useState(
+    const [branch_id, setBranchId] = useState(
         branches[0]?.id || ''
     );
 
-    const [purchaseDate, setPurchaseDate] = useState(
+    const [purchase_date, setPurchaseDate] = useState(
         new Date().toISOString().split('T')[0]
     );
 
@@ -73,7 +73,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
         const product = products.find(
             p =>
                 p.sku === barcode ||
-                p.productNumber === barcode
+                p.product_number === barcode
         );
 
         if (!product) {
@@ -88,7 +88,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
         }
 
         const existingIndex = items.findIndex(
-            item => item.productId === product.id
+            item => item.product_id === product.id
         );
 
         if (existingIndex > -1) {
@@ -106,21 +106,21 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                 {
                     sku: product.sku,
 
-                    productId: product.id,
+                    product_id: product.id,
 
-                    productName: product.name,
+                    product_name: product.name,
 
                     quantity: 1,
 
-                    price: product.costPrice,
+                    price: product.cost_price,
 
-                    serialNumbers:
-                        product.hasSerialNumber
+                    serial_numbers:
+                        product.has_serial_number
                             ? []
                             : undefined,
 
                     imeis:
-                        product.hasIMEI
+                        product.has_imei
                             ? []
                             : undefined,
                 },
@@ -149,21 +149,21 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
             {
                 sku: firstProduct.sku,
 
-                productId: firstProduct.id,
+                product_id: firstProduct.id,
 
-                productName: firstProduct.name,
+                product_name: firstProduct.name,
 
                 quantity: 1,
 
-                price: firstProduct.costPrice,
+                price: firstProduct.cost_price,
 
-                serialNumbers:
-                    firstProduct.hasSerialNumber
+                serial_numbers:
+                    firstProduct.has_serial_number
                         ? []
                         : undefined,
 
                 imeis:
-                    firstProduct.hasIMEI
+                    firstProduct.has_imei
                         ? []
                         : undefined,
             },
@@ -184,7 +184,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
         const current = updated[index];
 
-        if (field === 'productId') {
+        if (field === 'product_id') {
 
             const product = products.find(
                 p => p.id === value
@@ -192,27 +192,27 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
             if (!product) return;
 
-            current.productId = product.id;
+            current.product_id = product.id;
 
-            current.productName = product.name;
+            current.product_name = product.name;
 
-            current.price = product.costPrice;
+            current.price = product.cost_price;
 
             current.sku = product.sku;
 
-            current.serialNumbers =
-                product.hasSerialNumber
+            current.serial_numbers =
+                product.has_serial_number
                     ? []
                     : undefined;
 
             current.imeis =
-                product.hasIMEI
+                product.has_imei
                     ? []
                     : undefined;
 
-        } else if (field === 'serialNumbers') {
+        } else if (field === 'serial_numbers') {
 
-            current.serialNumbers =
+            current.serial_numbers =
                 value
                     .split('\n')
                     .map((v: string) => v.trim())
@@ -269,24 +269,24 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
         for (const item of items) {
 
             const product = products.find(
-                p => p.id === item.productId
+                p => p.id === item.product_id
             );
 
             if (!product) continue;
 
             /* SERIAL VALIDATION */
 
-            if (product.hasSerialNumber) {
+            if (product.has_serial_number) {
 
                 const serialCount =
-                    item.serialNumbers?.length || 0;
+                    item.serial_numbers?.length || 0;
 
                 if (
                     serialCount !== item.quantity
                 ) {
 
                     setError(
-                        `"${item.productName}" requires ${item.quantity} serial number(s).`
+                        `"${item.product_name}" requires ${item.quantity} serial number(s).`
                     );
 
                     return;
@@ -295,7 +295,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
             /* IMEI VALIDATION */
 
-            if (product.hasIMEI) {
+            if (product.has_imei) {
 
                 const imeiCount =
                     item.imeis?.length || 0;
@@ -305,7 +305,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                 ) {
 
                     setError(
-                        `"${item.productName}" requires ${item.quantity} IMEI number(s).`
+                        `"${item.product_name}" requires ${item.quantity} IMEI number(s).`
                     );
 
                     return;
@@ -316,13 +316,13 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
         setError('');
 
         onAdd({
-            purchaseNumber,
+            purchase_number,
 
-            supplier,
+            supplier_id,
 
-            branchId,
+            branch_id,
 
-            purchaseDate,
+            purchase_date,
 
             items,
 
@@ -429,7 +429,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                 <FormSelect
                     label="Branch"
                     name="branchId"
-                    value={branchId}
+                    value={branch_id}
                     onChange={(e) => setBranchId(e.target.value)}
                     options={branches.map(branch => ({ 
                         value: branch.id, 
@@ -444,7 +444,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                     label="Supplier"
                     name="supplier"
                     placeholder="Supplier name"
-                    value={supplier}
+                    value={supplier_id}
                     onChange={(e) => setSupplier(e.target.value)}
                     required
                 />
@@ -454,8 +454,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                 <FormInput
                     label="Purchase Date"
                     type="date"
-                    name="purchaseDate"
-                    value={purchaseDate}
+                    name="purchase_date"
+                    value={purchase_date}
                     onChange={(e) => setPurchaseDate(e.target.value)}
                     className="md:col-span-2"
                     required
@@ -474,7 +474,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
 
                     const selectedProduct =
                         products.find(
-                            p => p.id === item.productId
+                            p => p.id === item.product_id
                         );
 
                     return (
@@ -491,8 +491,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                                 {/* PRODUCT */}
                                 <div className="col-span-5">
                                     <InlineFormSelect
-                                        value={item.productId}
-                                        onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                                        value={item.product_id}
+                                        onChange={(e) => handleItemChange(index, 'product_id', e.target.value)}
                                         options={products.map(p => ({ value: p.id, label: p.name }))}
                                     />
                                 </div>
@@ -534,18 +534,18 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({
                             </div>
 
                             {/* SERIAL */}
-                            {selectedProduct?.hasSerialNumber && (
+                            {selectedProduct?.has_serial_number && (
                                 <InlineFormInput
                                     isTextArea
                                     placeholder="Serial Numbers (one per line)"
-                                    value={item.serialNumbers?.join('\n') || ''}
-                                    onChange={(e) => handleItemChange(index, 'serialNumbers', e.target.value)}
+                                    value={item.serial_numbers?.join('\n') || ''}
+                                    onChange={(e) => handleItemChange(index, 'serial_numbers', e.target.value)}
                                     rows={3}
                                 />
                             )}
 
                             {/* IMEI */}
-                            {selectedProduct?.hasIMEI && (
+                            {selectedProduct?.has_imei && (
                                 <InlineFormInput
                                     isTextArea
                                     placeholder="IMEI Numbers (one per line)"

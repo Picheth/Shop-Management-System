@@ -1,4 +1,4 @@
-import React, {
+import {
     useState,
     useCallback,
     useEffect,
@@ -6,7 +6,7 @@ import React, {
 
 import {
     Sale as SaleType,
-    DataProduct,
+    Product,
     Branch,
     SaleStatus,
 } from '../../types';
@@ -16,17 +16,15 @@ import Modal from '../ui/Modal';
 import SaleForm from './SaleForm';
 import { StatusBadge } from '../ui/StatusBadge';
 
-import { supabase } from '../../utils/supabase';
+import { supabase } from '../../supabase/supabase';
 
 import { useProductHistory } from '../../hooks/useProductHistory';
 
-import { mockSales } from '../../data';
-
 interface SaleProps {
-    products: DataProduct[];
+    products: Product[];
 
     setProducts: React.Dispatch<
-        React.SetStateAction<DataProduct[]>
+        React.SetStateAction<Product[]>
     >;
 
     branches: Branch[];
@@ -39,7 +37,7 @@ const Sale: React.FC<SaleProps> = ({
 }) => {
 
     const [sales, setSales] =
-        useState<SaleType[]>(mockSales);
+        useState<SaleType[]>([]);
 
     const [isModalOpen, setIsModalOpen] =
         useState(false);
@@ -84,7 +82,36 @@ const Sale: React.FC<SaleProps> = ({
 
                 let query = supabase
                     .from('sales')
-                    .select('*', {
+                    .select(` 
+                        id,
+                        customer,
+                        branchId:branch_id,
+                        saleDate:sale_date,
+                        saleNumber:sale_number,
+                        total,
+                        status,
+                        items:sales_items(
+                            id,
+                            saleId:sale_id,
+                            productId:product_id,
+                            productName:product_name,
+                            sku,
+                            quantity,
+                            price,
+                            discount,
+                            total,
+                            serialNumbers:serial_numbers,
+                            imeis,
+                            dimensions,
+                            createdAt:created_at
+                        ), -- Join sales_items
+                        *,
+                        branchId:branch_id,
+                        saleDate:sale_date,
+                        saleNumber:sale_number,
+                        createdAt:created_at,
+                        updatedAt:updated_at
+                    `, {
                         count: 'exact',
                     });
 
@@ -132,7 +159,7 @@ const Sale: React.FC<SaleProps> = ({
                 }
 
                 setSales(
-                    (data as SaleType[]) ||
+                    (data as unknown as SaleType[]) ||
                         []
                 );
 
@@ -226,7 +253,7 @@ const Sale: React.FC<SaleProps> = ({
                 id: `SALE-${Date.now()}`,
 
                 total,
-
+ 
                 status:
                     newSaleData.status ??
                     'Completed',
@@ -236,7 +263,7 @@ const Sale: React.FC<SaleProps> = ({
                 branches.find(
                     b =>
                         b.id ===
-                        newSale.branchId
+                        newSale.branch_id
                 )?.name ||
                 'Unknown Branch';
 
@@ -244,22 +271,22 @@ const Sale: React.FC<SaleProps> = ({
 
                 const { error } =
                     await supabase.rpc(
-                        'create_sale_and_update_stock',
+                        'createSaleAndUpdateStock',
                         {
                             p_sale_id:
                                 newSale.id,
 
-                            p_customer:
+                            p_customer: // This is already snake_case
                                 newSale.customer,
 
                             p_branch_id:
-                                newSale.branchId,
+                                newSale.branch_id,
 
                             p_branch_name:
                                 branchName,
 
                             p_sale_date:
-                                newSale.saleDate,
+                                newSale.sale_date, // This is already snake_case
 
                             p_status:
                                 newSale.status,
@@ -332,16 +359,16 @@ const Sale: React.FC<SaleProps> = ({
                         branches.find(
                             b =>
                                 b.id ===
-                                sale.branchId
+                                sale.branch_id
                         )?.name ||
                         'Unknown';
 
                     for (const item of sale.items) {
 
                         await recordStockChange(
-                            item.productId,
+                            item.product_id,
 
-                            sale.branchId,
+                            sale.branch_id,
 
                             branchName,
 
@@ -547,7 +574,7 @@ const Sale: React.FC<SaleProps> = ({
                                                 branches.find(
                                                     b =>
                                                         b.id ===
-                                                        sale.branchId
+                                                        sale.branch_id
                                                 )
                                                     ?.name
                                             }
@@ -561,24 +588,23 @@ const Sale: React.FC<SaleProps> = ({
 
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             {
-                                                sale.saleDate
+                                                sale.sale_date
                                             }
                                         </td>
 
                                         <td className="px-6 py-4 whitespace-nowrap text-sm max-w-xs truncate">
 
                                             {sale.items.flatMap(
-                                                item =>
-                                                    item.serialNumbers ||
+                                                item => // serialNumbers is camelCase
+                                                    item.serial_numbers ||
                                                     []
                                             )
                                                 .length >
                                             0
                                                 ? sale.items
                                                       .flatMap(
-                                                          item =>
-                                                              item.serialNumbers ||
-                                                              []
+                                                          item => // serialNumbers is camelCase
+                                                              item.serial_numbers || []
                                                       )
                                                       .join(
                                                           ', '

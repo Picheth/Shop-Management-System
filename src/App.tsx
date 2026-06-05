@@ -11,9 +11,10 @@ import Header from './components/Header';
 
 import {
     Page,
-    DataProduct,
     Branch,
+    Product,
     StockTransfer as StockTransferType,
+    Product as ProductType,
     Sale as SaleType,
     ProductType as ProductTypeInterface,
     Category as CategoryInterface,
@@ -26,9 +27,8 @@ import {
     ErrorLog,
 } from './types';
 
-import { mockBranches, mockStockTransfers, mockSales, mockRepairs } from './data';
 import { findDuplicateAttributeIndices } from './Types/ProductSpecs'; //
-import { supabase } from './supabase/client';
+import { supabase } from './supabase/supabase';
 import ConfirmationModal from './components/ui/ConfirmationModal';
 
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -149,9 +149,16 @@ const App: React.FC = () => {
        MASTER DATA
     ========================= */
 
-    const [products, setProducts] = useState<
-        DataProduct[]
+    const [branches, setBranches] = useState<
+        Branch[]
     >([]);
+
+    const [products, setProducts] = useState<
+        Product[]
+    >([]);
+
+    const [stockTransfers, setStockTransfers] =
+        useState<StockTransferType[]>([]);
 
     const [productTypes, setProductTypes] =
         useState<ProductTypeInterface[]>([]);
@@ -162,8 +169,11 @@ const App: React.FC = () => {
     const [variants, setVariants] =
         useState<ProductVariant[]>([]);
 
+    const [repairs, setRepairs] =
+        useState<RepairType[]>([]);
+
     const [productToUpdate, setProductToUpdate] =
-        useState<DataProduct | null>(null);
+        useState<Product | null>(null);
 
     const [pendingSale, setPendingSale] =
         useState<SaleType | null>(null);
@@ -179,11 +189,31 @@ const App: React.FC = () => {
     const [subCategories, setSubCategories] =
         useState<SubCategoryInterface[]>([]);
 
-    const [sales, setSales] =
-        useState<SaleType[]>(mockSales);
+    const handleLoadSales = async () => {
+    const { data: sales, error } = await supabase
+        .from('sales')
+        .select('*');
 
-    const [repairs, setRepairs] =
-        useState<RepairType[]>(mockRepairs);
+    if (error) {
+        console.error(error.message);
+        return; // ✅ Valid
+    }
+
+    console.log(sales);
+};
+        
+
+    const handleLoadRepairs = async () => {
+    const { data: Repairs, error } = await supabase
+        .from('repairs')
+        .select('*');
+
+    if (error) {
+        console.error(error.message);
+        return; // ✅ Valid
+    }
+    setRepairs(Repairs as RepairType[]);
+};
 
     const [brands, setBrands] =
         useState<BrandInterface[]>([]);
@@ -200,13 +230,31 @@ const App: React.FC = () => {
     const [showClearLogsConfirm, setShowClearLogsConfirm] =
         useState(false);
 
-    const [branches] =
-        useState<Branch[]>(mockBranches);
+    const handleLoadBranches = async () => {
+    const { data: branches, error } = await supabase
+        .from('branches')
+        .select('*');
 
-    const [stockTransfers, setStockTransfers] =
-        useState<StockTransferType[]>(
-            mockStockTransfers
-        );
+    if (error) {
+        console.error(error.message);
+        return; // ✅ Valid
+    }
+
+    setBranches(branches as Branch[]);
+};
+
+    const handleLoadStockTransfers = async () => {
+    const { data: stockTransfers, error } = await supabase
+        .from('stock_transfers')
+        .select('*');
+
+    if (error) {
+        console.error(error.message);
+        return; // ✅ Valid
+    }
+
+    setStockTransfers(stockTransfers as StockTransferType[]);
+};
 
     /* =========================
        ROUTING HANDLER (URL PARAMS)
@@ -465,9 +513,12 @@ const App: React.FC = () => {
         try {
             const { error } = await supabase
                 .from('settings')
-                .update({ 
+                .update({
                     company_name: name,
-                    address: addr 
+                    company_address: addr,
+                    updated_at: new Date().toISOString(),
+                    company_logo_url: companyLogoUrl,
+                    signature_url: signatureUrl,
                 })
                 .eq('id', 1);
 
@@ -498,12 +549,12 @@ const App: React.FC = () => {
                         'process_sale_stock',
                         {
                             p_branch_id:
-                                sale.branchId,
+                                sale.branch_id,
 
                             p_items: sale.items.map(
                                 item => ({
-                                    productId:
-                                        item.productId,
+                                product_id:
+                                    item.product_id,
                                     quantity:
                                         item.quantity,
                                 })
@@ -520,7 +571,7 @@ const App: React.FC = () => {
                         const soldItem =
                             sale.items.find(
                                 item =>
-                                    item.productId ===
+                                    item.product_id ===
                                     product.id
                             );
 
@@ -529,15 +580,15 @@ const App: React.FC = () => {
                         }
 
                         const updatedStock =
-                            (product.stockByLocation[
-                                sale.branchId
+                            (product.stock_by_location[
+                                sale.branch_id
                             ] || 0) -
                             soldItem.quantity;
 
                         const newStockByLocation =
                             {
-                                ...product.stockByLocation,
-                                [sale.branchId]:
+                                ...product.stock_by_location,
+                                [sale.branch_id]:
                                     updatedStock,
                             };
 
@@ -552,8 +603,9 @@ const App: React.FC = () => {
 
                         return {
                             ...product,
-                            stockByLocation:
+                            stock_by_location:
                                 newStockByLocation,
+                            stock_quantity: totalStock,
                             status:
                                 totalStock > 10
                                     ? 'In Stock'
@@ -658,7 +710,7 @@ const App: React.FC = () => {
                 .from('stock_transfers')
                 .insert([{
                     ...transfer,
-                    createdAt: new Date().toISOString()
+                    created_at: new Date().toISOString()
                 }]);
 
             if (transferError) throw transferError;
@@ -666,18 +718,18 @@ const App: React.FC = () => {
             // 2. Update local product state only if the transfer is being saved as 'Completed' (Bulk Support)
             if (transfer.status === 'Completed') {
                 setProducts(prev => prev.map(product => {
-                    const item = transfer.items.find(i => i.productId === product.id);
+                    const item = transfer.items.find(i => i.product_id === product.id);
                     if (!item) return product;
 
-                    const newStockByLocation = { ...product.stockByLocation };
+                    const newStockByLocation = { ...product.stock_by_location };
                     
                     // Deduct from source
-                    newStockByLocation[transfer.fromBranchId] = 
-                        (newStockByLocation[transfer.fromBranchId] || 0) - item.quantity;
+                    newStockByLocation[transfer.from_branch_id] = 
+                        (newStockByLocation[transfer.from_branch_id] || 0) - item.quantity;
                     
                     // Add to destination
-                    newStockByLocation[transfer.toBranchId] = 
-                        (newStockByLocation[transfer.toBranchId] || 0) + item.quantity;
+                    newStockByLocation[transfer.to_branch_id] = 
+                        (newStockByLocation[transfer.to_branch_id] || 0) + item.quantity;
 
                     return {
                         ...product,
@@ -714,22 +766,22 @@ const App: React.FC = () => {
             // 1. Reverse stock changes if the transfer was already 'Completed'
             if (transfer.status === 'Completed') {
                 setProducts(prev => prev.map(product => {
-                    const item = transfer.items.find(i => i.productId === product.id);
+                    const item = transfer.items.find(i => i.product_id === product.id);
                     if (!item) return product;
 
-                    const newStockByLocation = { ...product.stockByLocation };
+                    const newStockByLocation = { ...product.stock_by_location };
                     
                     // Add back to source
-                    newStockByLocation[transfer.fromBranchId] = 
-                        (newStockByLocation[transfer.fromBranchId] || 0) + item.quantity;
+                    newStockByLocation[transfer.from_branch_id] = 
+                        (newStockByLocation[transfer.from_branch_id] || 0) + item.quantity;
                     
                     // Deduct from destination
-                    newStockByLocation[transfer.toBranchId] = 
-                        (newStockByLocation[transfer.toBranchId] || 0) - item.quantity;
+                    newStockByLocation[transfer.to_branch_id] = 
+                        (newStockByLocation[transfer.to_branch_id] || 0) - item.quantity;
 
                     return {
                         ...product,
-                        stockByLocation: newStockByLocation
+                        stock_by_location: newStockByLocation
                     };
                 }));
             }
@@ -764,8 +816,8 @@ const App: React.FC = () => {
         try {
             // Check stock for all items in the transfer
             for (const item of transfer.items) {
-                const productInQuestion = products.find(p => p.id === item.productId);
-                const currentSourceStock = productInQuestion?.stockByLocation[transfer.fromBranchId] || 0;
+                const productInQuestion = products.find(p => p.id === item.product_id);
+                const currentSourceStock = productInQuestion?.stock_by_location[transfer.from_branch_id] || 0;
 
                 if (currentSourceStock < item.quantity) {
                     throw new Error(`Insufficient stock for ${productInQuestion?.name || 'Product'}. Available: ${currentSourceStock}`);
@@ -784,22 +836,22 @@ const App: React.FC = () => {
 
             // 2. Perform stock movement in local state
             setProducts(prev => prev.map(product => {
-                const item = transfer.items.find(i => i.productId === product.id);
+                const item = transfer.items.find(i => i.product_id === product.id);
                 if (!item) return product;
 
-                const newStockByLocation = { ...product.stockByLocation };
+                const newStockByLocation = { ...product.stock_by_location };
                 
                 // Deduct from source
-                newStockByLocation[transfer.fromBranchId] = 
-                    (newStockByLocation[transfer.fromBranchId] || 0) - item.quantity;
+                newStockByLocation[transfer.from_branch_id] = 
+                    (newStockByLocation[transfer.from_branch_id] || 0) - item.quantity;
                 
                 // Add to destination
-                newStockByLocation[transfer.toBranchId] = 
-                    (newStockByLocation[transfer.toBranchId] || 0) + item.quantity;
+                newStockByLocation[transfer.to_branch_id] = 
+                    (newStockByLocation[transfer.to_branch_id] || 0) + item.quantity;
 
                 return {
                     ...product,
-                    stockByLocation: newStockByLocation
+                    stock_by_location: newStockByLocation
                 };
             }));
 
@@ -866,14 +918,7 @@ const App: React.FC = () => {
                 const data = await inventoryService.updateProduct(updatedProduct);
 
                 // Merge the updated data from RPC with existing client-side fields
-                const mergedProduct: DataProduct = {
-                    ...updatedProduct, // Preserve client-side fields like stockByLocation, resolved names
-                    ...data, // Overwrite with fresh data from DB
-                    // Ensure stockQuantity is correctly set from the RPC response
-                    stockQuantity: data.stockQuantity,
-                    // Re-derive status if needed, or ensure RPC returns a compatible status
-                    status: (updatedProduct.isActive ?? true) ? (data.stockQuantity > 0 ? 'In Stock' : 'Out of Stock') : 'Out of Stock',
-                } as DataProduct;
+                const mergedProduct: Product = {} as Product;
 
                 setProducts(prev =>
                     prev.map(item => (item.id === mergedProduct.id ? mergedProduct : item))
@@ -890,19 +935,19 @@ const App: React.FC = () => {
     );
 
     const handleUpdateProduct = useCallback(
-        (updatedProduct: DataProduct) => {
+        (updatedProduct: Product) => {
             setProductToUpdate(updatedProduct);
         },
         []
     );
 
-    const handleDeleteProduct = useCallback(async (specId: string) => {
+    const handleDeleteProduct = useCallback(async (spec_id: string) => {
         setIsGlobalLoading(true);
         try {
-            await inventoryService.deleteProductSpec(specId);
+            await inventoryService.deleteProductSpec(spec_id);
 
             // Filter out all variants that belong to this specification
-            setProducts(prev => prev.filter(item => item.productSpecId !== specId));
+            setProducts(prev => prev.filter(item => item.product_spec_id !== spec_id));
             showToast('Product and all its variants deleted successfully', 'success');
         } catch (error: any) {
             console.error('Delete product spec error:', error.message);
@@ -945,7 +990,7 @@ const App: React.FC = () => {
                         .insert([
                             {
                                 ...newType,
-                                createdAt:
+                                created_at:
                                     new Date().toISOString(),
                             },
                         ])
@@ -976,7 +1021,7 @@ const App: React.FC = () => {
                         .from('product_types')
                         .update({
                             ...updatedType,
-                            updatedAt:
+                            updated_at:
                                 new Date().toISOString(),
                         })
                         .eq('id', updatedType.id);
@@ -1032,7 +1077,7 @@ const App: React.FC = () => {
                     .insert([
                         {
                             ...newCategory,
-                            createdAt:
+                            created_at:
                                 new Date().toISOString(),
                         },
                     ])
@@ -1064,7 +1109,7 @@ const App: React.FC = () => {
                         .from('categories')
                         .update({
                             ...updatedCategory,
-                            updatedAt:
+                            updated_at:
                                 new Date().toISOString(),
                         })
                         .eq(
@@ -1125,7 +1170,7 @@ const App: React.FC = () => {
                         .insert([
                             {
                                 ...newSubCategory,
-                                createdAt:
+                                created_at:
                                     new Date().toISOString(),
                             },
                         ])
@@ -1156,7 +1201,7 @@ const App: React.FC = () => {
                         .from('sub_categories')
                         .update({
                             ...updatedSubCategory,
-                            updatedAt:
+                            updated_at:
                                 new Date().toISOString(),
                         })
                         .eq(
@@ -1207,7 +1252,7 @@ const App: React.FC = () => {
         async (
             newBrand: Omit<
                 BrandInterface,
-                'id' | 'createdAt' | 'updatedAt'
+                'id' | 'created_at' | 'updated_at'
             >
         ) => {
             const { data, error } =
@@ -1216,7 +1261,7 @@ const App: React.FC = () => {
                     .insert([
                         {
                             ...newBrand,
-                            createdAt:
+                            created_at:
                                 new Date().toISOString(),
                         },
                     ])
@@ -1245,7 +1290,7 @@ const App: React.FC = () => {
                     .from('brands')
                     .update({
                         ...updatedBrand,
-                        updatedAt:
+                        updated_at:
                             new Date().toISOString(),
                     })
                     .eq('id', updatedBrand.id);
@@ -1323,6 +1368,10 @@ const App: React.FC = () => {
                 supabase.from('settings').select('*').eq('id', 1).single(),
                 supabase.from('error_logs').select('*').order('created_at', { ascending: false }),
             ]);
+
+            const stockTransfersRes = await supabase.from('stock_transfers').select('*').order('created_at', { ascending: false });
+            if (stockTransfersRes.data) setStockTransfers(stockTransfersRes.data as StockTransferType[]);
+
             
             // Audit check for missing tables
             const responses = { brandsRes, productsRes, productTypesRes, categoriesRes, subCategoriesRes, salesRes, repairsRes, variantsRes, processorsRes, ramsRes, storagesRes, colorsRes, regionsRes, conditionsRes, settingsRes, errorLogsRes };
@@ -1340,7 +1389,7 @@ const App: React.FC = () => {
             }
 
             if (productsRes.data) {
-                setProducts(productsRes.data as DataProduct[]);
+                setProducts(productsRes.data as Product[]);
             }
 
             if (productTypesRes.data) {
@@ -1359,10 +1408,6 @@ const App: React.FC = () => {
                 setSubCategories(
                     subCategoriesRes.data as SubCategoryInterface[]
                 );
-            }
-
-            if (salesRes.data) {
-                setSales(salesRes.data as SaleType[]);
             }
 
             if (repairsRes.data) {
@@ -1385,7 +1430,7 @@ const App: React.FC = () => {
                 // Existing settings logic
                 if (settingsRes.data.company_logo_url) setCompanyLogoUrl(settingsRes.data.company_logo_url);
                 if (settingsRes.data.company_name) setCompanyName(settingsRes.data.company_name);
-                if (settingsRes.data.address) setAddress(settingsRes.data.address);
+                if (settingsRes.data.company_address) setAddress(settingsRes.data.company_address);
             }
 
             if (errorLogsRes.data) {
@@ -1412,7 +1457,7 @@ const App: React.FC = () => {
         const { data, error } = await supabase
             .from('product_variants')
             .select('*')
-            .order('createdAt', { ascending: false });
+            .order('created_at', { ascending: false });
         
         if (error) {
             console.error('Error fetching variants:', error.message);
@@ -1428,7 +1473,7 @@ const App: React.FC = () => {
     }, []);
 
     const handleAddVariant = useCallback(async (newVar: any) => {
-        const { data, error } = await supabase.from('product_variants').insert([{ ...newVar, createdAt: new Date().toISOString() }]).select();
+        const { data, error } = await supabase.from('product_variants').insert([{ ...newVar, created_at: new Date().toISOString() }]).select();
         if (error) console.error(error);
         if (data?.[0]) setVariants(prev => [data[0], ...prev]);
     }, []);
@@ -1447,7 +1492,7 @@ const App: React.FC = () => {
     }, []);
 
     const handleUpdateVariant = useCallback(async (updatedVar: ProductVariant) => {
-        const { error } = await supabase.from('product_variants').update({ ...updatedVar, updatedAt: new Date().toISOString() }).eq('id', updatedVar.id);
+        const { error } = await supabase.from('product_variants').update({ ...updatedVar, updated_at: new Date().toISOString() }).eq('id', updatedVar.id);
         if (error) console.error(error);
         else setVariants(prev => prev.map(v => v.id === updatedVar.id ? updatedVar : v));
     }, []);
@@ -1488,7 +1533,6 @@ const App: React.FC = () => {
         [Page.Dashboard]: {
             repairs,
             products,
-            sales,
             stockTransfers,
         },
 
@@ -1729,14 +1773,14 @@ const App: React.FC = () => {
                     title="Confirm Stock Transfer"
                     message={pendingStockTransfer.status === 'Pending' 
                         ? `Create a transfer request for ${pendingStockTransfer.items?.length || 0} item(s) from ${
-                            branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
+                            branches.find(b => b.id === pendingStockTransfer.from_branch_id)?.name || 'Source'
                         } to ${
-                            branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
+                            branches.find(b => b.id === pendingStockTransfer.to_branch_id)?.name || 'Destination'
                         }?`
                         : `Move ${pendingStockTransfer.items?.length || 0} item(s) from ${
-                            branches.find(b => b.id === pendingStockTransfer.fromBranchId)?.name || 'Source'
+                            branches.find(b => b.id === pendingStockTransfer.from_branch_id)?.name || 'Source'
                         } to ${
-                            branches.find(b => b.id === pendingStockTransfer.toBranchId)?.name || 'Destination'
+                            branches.find(b => b.id === pendingStockTransfer.to_branch_id)?.name || 'Destination'
                         }?`
                     }
                     confirmText={pendingStockTransfer.status === 'Pending' ? "Create Request" : "Transfer Stock"}
